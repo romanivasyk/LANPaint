@@ -9,6 +9,7 @@
   <ItemGroup>
     <None Remove="Resources\cancel.png" />
     <None Remove="Resources\eraser.png" />
+    <None Remove="Resources\open.png" />
     <None Remove="Resources\pen.png" />
     <None Remove="Resources\save.png" />
     <None Remove="Resources\settings.png" />
@@ -23,6 +24,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Resources\eraser.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\open.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Resources\pen.png">

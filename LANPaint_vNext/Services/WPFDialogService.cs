@@ -1,0 +1,32 @@
+﻿using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace LANPaint_vNext.Services
+{
+    public class WPFDialogService : IDialogWindowService
+    {
+        public string OpenFileDialog(string startPath = null)
+        {
+            var dialog = new OpenFileDialog();
+            if(dialog.ShowDialog() == true)
+            {
+                return dialog.FileName;
+            }
+
+            return string.Empty;
+        }
+
+        public string SaveFileDialog(string startPath = null)
+        {
+            var dialog = new SaveFileDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                return dialog.FileName;
+            }
+
+            return string.Empty;
+        }
+    }
+}

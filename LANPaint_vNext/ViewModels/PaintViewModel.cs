@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using LANPaint_vNext.Services;
+using System.Diagnostics;
 using System.Windows.Ink;
 using System.Windows.Media;
 
@@ -45,6 +46,8 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand SaveCommand { get; private set; }
         public RelayCommand OpenCommand { get; private set; }
 
+        private IDialogWindowService _dialogService;
+
         public PaintViewModel()
         {
             Color = Color.FromRgb(255, 10, 10);
@@ -55,16 +58,20 @@ namespace LANPaint_vNext.ViewModels
             ChooseEraserCommand = new RelayCommand(param => IsEraser = true, param => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
+            _dialogService = new WPFDialogService();
         }
 
         private void OnSaveExecuted(object param)
         {
-            Debug.WriteLine("State saved");
+            var savePath = _dialogService.SaveFileDialog();
+            //TODO: Save all drawing data into object, serialize it and save to file
         }
 
         private void OnOpenExecuted(object param)
         {
-            Debug.WriteLine("State opened");
+            var openPath = _dialogService.OpenFileDialog();
+            //TODO: Add suggestion to save current work in case board not empty???
+            //TODO: Read file, deserialize to object and apply to current border
         }
 
         private void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)

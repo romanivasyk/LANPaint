@@ -38,11 +38,11 @@
                         </Style.Triggers>
                     </Style>
                 </ToolBar.Resources>
+                <Button Style="{StaticResource ToolBarButton}" Command="{Binding OpenCommand}">
+                    <Image Source="Resources/open.png" Height="24"/>
+                </Button>
                 <Button Style="{StaticResource ToolBarButton}" Command="{Binding SaveCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="Resources\save.png" Height="24"/>
-                        <TextBlock Margin="3,0,0,0" VerticalAlignment="Center">Save as...</TextBlock>
-                    </StackPanel>
+                    <Image Source="Resources/save.png" Height="24"/>
                 </Button>
                 <Separator Margin="5,0"/>
                 <Label Content="Tool width:"/>
