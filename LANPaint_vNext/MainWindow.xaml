@@ -1,0 +1,90 @@
+﻿<Window x:Class="LANPaint_vNext.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xceedwpftoolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
+        xmlns:local="clr-namespace:LANPaint_vNext"
+        xmlns:vm="clr-namespace:LANPaint_vNext.ViewModels"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="500" Width="920">
+
+    <Window.Resources>
+        <local:ThicknessConverter x:Key="ThicknessConverter"/>
+        <local:StrokeConverter x:Key="StrokeConverter"/>
+        <local:ColorBrushConverter x:Key="ColorBrushConverter"/>
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:PaintViewModel/>
+    </Window.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ToolBarTray>
+            <ToolBar>
+                <ToolBar.OverflowMode>
+                    <OverflowMode>Never</OverflowMode>
+                </ToolBar.OverflowMode>
+                <ToolBar.Resources>
+                    <Style x:Key="ToolBarButton" TargetType="Button">
+                        <Style.Triggers>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="BorderBrush" Value="Black"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ToolBar.Resources>
+                <Button Style="{StaticResource ToolBarButton}" Command="{Binding SaveCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="Resources\save.png" Height="24"/>
+                        <TextBlock Margin="3,0,0,0" VerticalAlignment="Center">Save as...</TextBlock>
+                    </StackPanel>
+                </Button>
+                <Separator Margin="5,0"/>
+                <Label Content="Tool width:"/>
+                <ComboBox x:Name="ToolThickness" SelectedIndex="3">
+                    <ComboBoxItem>2</ComboBoxItem>
+                    <ComboBoxItem>4</ComboBoxItem>
+                    <ComboBoxItem>8</ComboBoxItem>
+                    <ComboBoxItem>12</ComboBoxItem>
+                    <ComboBoxItem>16</ComboBoxItem>
+                </ComboBox>
+                <Label Content="Pen Color:"/>
+                <xceedwpftoolkit:ColorPicker MaxWidth="50" SelectedColor="{Binding ElementName=DrawingBoard,Path=StrokeColor, Mode=TwoWay}"/>
+                <Separator Margin="5,0"/>
+                <Label Content="Background Color:"/>
+                <xceedwpftoolkit:ColorPicker MaxWidth="50" SelectedColor="{Binding ElementName=DrawingBoard, Path=Background, Mode=TwoWay, Converter={StaticResource ColorBrushConverter}}"/>
+                <Separator Margin="5,0"/>
+                <Label Content="Tools:"/>
+                <Button Style="{StaticResource ToolBarButton}" Command="{Binding ChoosePenCommand}">
+                    <Image Height="24" Source="Resources/pen.png"/>
+                </Button>
+                <Button Style="{StaticResource ToolBarButton}" Command="{Binding ChooseEraserCommand}">
+                    <Image Height="24" Source="Resources/eraser.png"/>
+                </Button>
+                <Separator Margin="5,0"/>
+                <Label Content="Clean Up:"/>
+                <Button Style="{StaticResource ToolBarButton}" Command="{Binding ClearCommand}">
+                    <Image Height="24" Source="Resources/cancel.png"/>
+                </Button>
+                <Separator Margin="5,0"/>
+                <Label Content="Broadcasting:"/>
+                <Button Style="{StaticResource ToolBarButton}" Content="On"/>
+                <Separator Margin="5,0"/>
+                <Label Content="Receiving:"/>
+                <Button Style="{StaticResource ToolBarButton}" Content="On"/>
+                <Separator Margin="5,0"/>
+                <Button Style="{StaticResource ToolBarButton}">
+                    <Image Height="24" Source="Resources/settings.png"/>
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
+        <local:Board UseCustomCursor="True" Cursor="Arrow" x:Name="DrawingBoard" Grid.Row="1" StrokeThickness="{Binding ElementName=ToolThickness,Path=Text, Converter={StaticResource ThicknessConverter}}" 
+               StrokeColor="{Binding Color}" IsEraser="{Binding IsEraser}" Strokes="{Binding Strokes, Mode=TwoWay}"/>
+        <Label Name="Coordinates" Grid.Row="2" Content="{Binding ElementName=DrawingBoard,Path=MousePosition}" d:Content="Here should be current mouse coordinates for InkCanvas"/>
+    </Grid>
+</Window>

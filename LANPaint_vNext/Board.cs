@@ -1,0 +1,183 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Ink;
+using System.Windows.Input;
+using System.Windows.Media;
+
+namespace LANPaint_vNext
+{
+    public class Board : InkCanvas
+    {
+        public static readonly DependencyProperty MousePositionProperty = DependencyProperty.Register("MousePosition", typeof(Point), typeof(Board));
+
+        public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
+            "StrokeThickness", typeof(double), typeof(Board),
+            new FrameworkPropertyMetadata(default(double), FrameworkPropertyMetadataOptions.AffectsRender, OnThicknessChanged));
+
+        public static readonly DependencyProperty StrokeColorProperty = DependencyProperty.Register(
+            "StrokeColor", typeof(Color), typeof(Board),
+            new FrameworkPropertyMetadata(default(Color), FrameworkPropertyMetadataOptions.AffectsRender, OnColorChanged));
+
+        public static readonly DependencyProperty IsEraserProperty = DependencyProperty.Register(
+            "IsEraser", typeof(bool), typeof(Board),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, OnIsEraserChanged));
+
+        public static readonly DependencyProperty StylusTipProperty = DependencyProperty.Register(
+            "StylusTip", typeof(StylusTip), typeof(Board),
+            new FrameworkPropertyMetadata(StylusTip.Ellipse, FrameworkPropertyMetadataOptions.AffectsRender, OnStylusTipChanged));
+
+
+        public Point MousePosition
+        {
+            get => (Point)GetValue(MousePositionProperty);
+            private set => SetValue(MousePositionProperty, value);
+        }
+
+        public double StrokeThickness
+        {
+            get => DefaultDrawingAttributes.Width;
+            set
+            {
+                SetValue(StrokeThicknessProperty, value);
+            }
+        }
+
+        public Color StrokeColor
+        {
+            get => DefaultDrawingAttributes.Color;
+            set
+            {
+                SetValue(StrokeColorProperty, value);
+            }
+        }
+
+        public bool IsEraser
+        {
+            get => (bool)GetValue(IsEraserProperty);
+            set => SetValue(IsEraserProperty, value);
+        }
+
+        public StylusTip StylusTip
+        {
+            get => DefaultDrawingAttributes.StylusTip;
+            set
+            {
+                SetValue(StylusTipProperty, value);
+            }
+        }
+
+        public new DrawingAttributes DefaultDrawingAttributes
+        {
+            get => base.DefaultDrawingAttributes;
+            private set => base.DefaultDrawingAttributes = value;
+        }
+
+        //Field used to store StrokeColor in case erasing mode enabled
+        //and restore it after erasing mode disabled
+        private Color _cachedStrokeColor;
+        private List<Stroke> _eraserStrokes;
+
+        static Board()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(Board), new FrameworkPropertyMetadata(typeof(Board)));
+        }
+
+        public Board()
+        {
+            _cachedStrokeColor = DefaultDrawingAttributes.Color;
+            _eraserStrokes = new List<Stroke>();
+        }
+
+        protected override void OnStrokesReplaced(InkCanvasStrokesReplacedEventArgs e)
+        {
+            base.OnStrokesReplaced(e);
+            if (e.PreviousStrokes != null)
+            {
+                e.PreviousStrokes.StrokesChanged -= OnStrokesChanged;
+            }
+            e.NewStrokes.StrokesChanged += OnStrokesChanged;
+        }
+
+        private void OnStrokesChanged(object sender, StrokeCollectionChangedEventArgs e)
+        {
+            if (e.Added.Count > 0)
+            {
+                if (IsEraser)
+                {
+                    _eraserStrokes.AddRange(e.Added);
+                }
+            }
+            if (e.Removed.Count > 0)
+            {
+                foreach (var item in e.Removed)
+                {
+                    _eraserStrokes.Remove(item);
+                }
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            MousePosition = e.GetPosition(this);
+        }
+
+        protected override void OnInitialized(EventArgs e)
+        {
+            base.OnInitialized(e);
+            DefaultDrawingAttributes.IgnorePressure = true;
+
+            //Add additional callback for BackgroundProperty to handle background change
+            //and set approptiate StrokeColor in case eraser in use
+            var overridedMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
+            BackgroundProperty.OverrideMetadata(typeof(Board), overridedMetadata);
+        }
+
+        private void OnBackgroundChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (Board)boardControl;
+            var newBackgroundColor = ((SolidColorBrush)e.NewValue).Color;
+
+            if (IsEraser)
+            {
+                control.DefaultDrawingAttributes.Color = newBackgroundColor;
+            }
+            _eraserStrokes.ForEach(stroke => stroke.DrawingAttributes.Color = newBackgroundColor);
+        }
+
+        private static void OnThicknessChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (Board)boardControl;
+            control.DefaultDrawingAttributes.Width = (double)e.NewValue;
+            control.DefaultDrawingAttributes.Height = (double)e.NewValue;
+        }
+
+        private static void OnColorChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (Board)boardControl;
+            control.DefaultDrawingAttributes.Color = (Color)e.NewValue;
+        }
+
+        private static void OnIsEraserChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (Board)boardControl;
+            if ((bool)e.NewValue)
+            {
+                control._cachedStrokeColor = control.DefaultDrawingAttributes.Color;
+                control.DefaultDrawingAttributes.Color = ((SolidColorBrush)control.Background).Color;
+            }
+            else
+            {
+                control.DefaultDrawingAttributes.Color = control._cachedStrokeColor;
+            }
+        }
+
+        private static void OnStylusTipChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (Board)boardControl;
+            control.DefaultDrawingAttributes.StylusTip = (StylusTip)e.NewValue;
+        }
+    }
+}
