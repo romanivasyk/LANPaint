@@ -7,6 +7,18 @@ namespace LANPaint_vNext.ViewModels
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
+        {
+            if (storage != null && !storage.Equals(value) || value != null)
+            {
+                storage = value;
+                NotifyPropertyChanged(propertyName);
+                return true;
+            }
+
+            return false;
+        }
+
         protected void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

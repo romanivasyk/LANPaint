@@ -1,4 +1,5 @@
-﻿using LANPaint_vNext.Services;
+﻿using LANPaint_vNext.Model;
+using LANPaint_vNext.Services;
 using System.Diagnostics;
 using System.Windows.Ink;
 using System.Windows.Media;
@@ -7,38 +8,37 @@ namespace LANPaint_vNext.ViewModels
 {
     public class PaintViewModel : BindableBase
     {
-        private Color _color;
-        public Color Color
-        {
-            get => _color;
-            set
-            {
-                _color = value;
-                NotifyPropertyChanged();
-            }
-        }
-
         private bool _isEraser;
+        private StrokeCollection _strokes;
+        private Color _backgroundColor;
+
         public bool IsEraser
         {
             get { return _isEraser; }
             set
             {
-                _isEraser = value;
-                NotifyPropertyChanged();
+                SetProperty(ref _isEraser, value);
             }
         }
-
-        private StrokeCollection _strokes;
         public StrokeCollection Strokes
         {
             get => _strokes;
             set
             {
-                _strokes = value;
-                NotifyPropertyChanged();
+                SetProperty(ref _strokes, value);
             }
         }
+        public Color Background
+        {
+            get => _backgroundColor;
+            set
+            {
+                SetProperty(ref _backgroundColor, value);
+            }
+        }
+        public bool BroadcastEnabled { get; set; }
+        public bool ReceiveEnabled { get; set; }
+
 
         public RelayCommand ClearCommand { get; private set; }
         public RelayCommand ChoosePenCommand { get; private set; }
@@ -47,10 +47,13 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand OpenCommand { get; private set; }
 
         private IDialogWindowService _dialogService;
+        private UDPSender _sender;
 
-        public PaintViewModel()
+        public PaintViewModel(IDialogWindowService dialogService)
         {
-            Color = Color.FromRgb(255, 10, 10);
+            _dialogService = dialogService;
+            _sender = new UDPSender();
+
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
             ClearCommand = new RelayCommand(param => Strokes.Clear(), param => Strokes.Count > 0);
@@ -58,7 +61,6 @@ namespace LANPaint_vNext.ViewModels
             ChooseEraserCommand = new RelayCommand(param => IsEraser = true, param => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
-            _dialogService = new WPFDialogService();
         }
 
         private void OnSaveExecuted(object param)
@@ -76,8 +78,20 @@ namespace LANPaint_vNext.ViewModels
 
         private void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
-            Debug.WriteLine($"Strokes added: {e.Added.Count}");
-            Debug.WriteLine($"Strokes removed: {e.Removed.Count}");
+            if (e.Added.Count > 0)
+            {
+                Debug.WriteLine($"Strokes added: {e.Added.Count}");
+                if (BroadcastEnabled)
+                {
+                    Debug.WriteLine($"Sending stroke...");
+                    var info = new DrawingInfo(Background, e.Added[0], IsEraser);
+                    _sender.SendPackage(info);
+                }
+            }
+            if (e.Removed.Count > 0)
+            {
+                Debug.WriteLine($"Strokes removed: {e.Removed.Count}");
+            }
         }
     }
 }

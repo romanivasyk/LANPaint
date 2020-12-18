@@ -1,22 +1,22 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using System.Windows.Data;
-using System.Windows.Ink;
 
 namespace LANPaint_vNext
 {
-    [ValueConversion(typeof(ObservableCollection<Stroke>), typeof(StrokeCollection))]
-    class StrokeConverter : IValueConverter
+    [ValueConversion(typeof(bool), typeof(bool))]
+    public class InverseBooleanConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return new StrokeCollection((ObservableCollection<Stroke>)value);
+            return !(bool)value;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return new ObservableCollection<Stroke>((StrokeCollection)value);
+            return !(bool)value;
         }
     }
 }

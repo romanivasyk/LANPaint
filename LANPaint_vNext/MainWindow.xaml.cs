@@ -1,8 +1,7 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
+﻿using LANPaint_vNext.Services;
+using LANPaint_vNext.ViewModels;
 using System.Windows.Media;
 using System.Windows;
-using System.Windows.Ink;
 
 namespace LANPaint_vNext
 {
@@ -15,6 +14,10 @@ namespace LANPaint_vNext
         public MainWindow()
         {
             InitializeComponent();
+            var context = new PaintViewModel(new WPFDialogService());
+            DataContext = context;
+
+            context.Background = Color.FromRgb(255, 255, 255);
         }
     }
 }

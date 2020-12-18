@@ -24,10 +24,6 @@ namespace LANPaint_vNext
             "IsEraser", typeof(bool), typeof(Board),
             new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, OnIsEraserChanged));
 
-        public static readonly DependencyProperty StylusTipProperty = DependencyProperty.Register(
-            "StylusTip", typeof(StylusTip), typeof(Board),
-            new FrameworkPropertyMetadata(StylusTip.Ellipse, FrameworkPropertyMetadataOptions.AffectsRender, OnStylusTipChanged));
-
 
         public Point MousePosition
         {
@@ -59,15 +55,6 @@ namespace LANPaint_vNext
             set => SetValue(IsEraserProperty, value);
         }
 
-        public StylusTip StylusTip
-        {
-            get => DefaultDrawingAttributes.StylusTip;
-            set
-            {
-                SetValue(StylusTipProperty, value);
-            }
-        }
-
         public new DrawingAttributes DefaultDrawingAttributes
         {
             get => base.DefaultDrawingAttributes;
@@ -88,6 +75,18 @@ namespace LANPaint_vNext
         {
             _cachedStrokeColor = DefaultDrawingAttributes.Color;
             _eraserStrokes = new List<Stroke>();
+        }
+
+        protected override void OnInitialized(EventArgs e)
+        {
+            base.OnInitialized(e);
+
+            StrokeThickness = 2;
+            StrokeColor = Color.FromRgb(0, 0, 0);
+            DefaultDrawingAttributes.IgnorePressure = true;
+
+            var overridedMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
+            BackgroundProperty.OverrideMetadata(typeof(Board), overridedMetadata);
         }
 
         protected override void OnStrokesReplaced(InkCanvasStrokesReplacedEventArgs e)
@@ -122,17 +121,6 @@ namespace LANPaint_vNext
         {
             base.OnMouseMove(e);
             MousePosition = e.GetPosition(this);
-        }
-
-        protected override void OnInitialized(EventArgs e)
-        {
-            base.OnInitialized(e);
-            DefaultDrawingAttributes.IgnorePressure = true;
-
-            //Add additional callback for BackgroundProperty to handle background change
-            //and set approptiate StrokeColor in case eraser in use
-            var overridedMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
-            BackgroundProperty.OverrideMetadata(typeof(Board), overridedMetadata);
         }
 
         private void OnBackgroundChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
@@ -172,12 +160,6 @@ namespace LANPaint_vNext
             {
                 control.DefaultDrawingAttributes.Color = control._cachedStrokeColor;
             }
-        }
-
-        private static void OnStylusTipChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
-        {
-            var control = (Board)boardControl;
-            control.DefaultDrawingAttributes.StylusTip = (StylusTip)e.NewValue;
         }
     }
 }
