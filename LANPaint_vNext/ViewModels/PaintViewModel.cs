@@ -1,6 +1,9 @@
 ﻿using LANPaint_vNext.Model;
 using LANPaint_vNext.Services;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Text.Json;
 using System.Windows.Ink;
 using System.Windows.Media;
 
@@ -45,14 +48,15 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand ChooseEraserCommand { get; private set; }
         public RelayCommand SaveCommand { get; private set; }
         public RelayCommand OpenCommand { get; private set; }
+        public object SoapFormatter { get; private set; }
 
         private IDialogWindowService _dialogService;
-        private UDPSender _sender;
+        private UDPBroadcastService _broadcastService;
 
         public PaintViewModel(IDialogWindowService dialogService)
         {
             _dialogService = dialogService;
-            _sender = new UDPSender();
+            _broadcastService = new UDPBroadcastService();
 
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
@@ -76,7 +80,7 @@ namespace LANPaint_vNext.ViewModels
             //TODO: Read file, deserialize to object and apply to current border
         }
 
-        private void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
+        private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
             if (e.Added.Count > 0)
             {
@@ -84,8 +88,17 @@ namespace LANPaint_vNext.ViewModels
                 if (BroadcastEnabled)
                 {
                     Debug.WriteLine($"Sending stroke...");
-                    var info = new DrawingInfo(Background, e.Added[0], IsEraser);
-                    _sender.SendPackage(info);
+                    //var info = new DrawingInfo(Background, e.Added[0], IsEraser);
+
+                    //var jsonString = JsonSerializer.Serialize(info, typeof(DrawingInfo));
+
+                    //using(var stream = new MemoryStream())
+                    //{
+                    //    var buffer = Encoding.UTF8.GetBytes(jsonString);
+                    //    await _broadcastService.SendAsync(buffer);
+                    //}
+                    var buffer = Encoding.UTF8.GetBytes("Stroke sended!");
+                    await _broadcastService.SendAsync(buffer);
                 }
             }
             if (e.Removed.Count > 0)

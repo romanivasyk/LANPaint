@@ -1,29 +1,29 @@
-﻿using LANPaint_vNext.Model;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace LANPaint_vNext.Services
 {
-    public class UDPBroadcastService:IDisposable
+    public class UDPBroadcastService : IDisposable
     {
         private UdpClient _client;
-        private IPEndPoint _broadcastEndpoint;
+        private const int Port = 9876;
 
         public UDPBroadcastService()
         {
-            _broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, 36555);
+            _client = new UdpClient(new IPEndPoint(IPAddress.Any, Port));
         }
 
-        public int Send(byte[] bytes)
+        public Task<int> SendAsync(byte[] bytes)
         {
-            return _client.Send(bytes, bytes.Length);
+            return Task.Run(() => _client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), Port));
         }
 
-        public byte[] Receive()
+        public async Task<byte[]> ReceiveAsync()
         {
-            return _client.Receive(ref _broadcastEndpoint);
+            var result = await _client.ReceiveAsync();
+            return result.Buffer;
         }
 
         public void Dispose()

@@ -11,11 +11,11 @@ namespace UDPBroadcastTest
         static UdpClient udpClient;
         static int PORT = 9876;
 
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, PORT));
-
-            ReceiveAndWrite();
+            Receive();
+            Task.Delay(100).Wait();
 
             var input = string.Empty;
             while (true)
@@ -23,18 +23,20 @@ namespace UDPBroadcastTest
                 Console.Write("Send->");
                 input = Console.ReadLine();
                 var data = Encoding.UTF8.GetBytes(input);
-                await udpClient.SendAsync(data, data.Length, IPAddress.Broadcast.ToString(), PORT);
+                udpClient.Send(data, data.Length, IPAddress.Broadcast.ToString(), PORT);
+                Task.Delay(100).Wait();
             }
         }
 
-        static Task ReceiveAndWrite()
+        static void Receive()
         {
-            return Task.Run(async () =>
+            var from = new IPEndPoint(IPAddress.Broadcast, PORT);
+            Task.Run(() =>
             {
                 while (true)
                 {
-                    var recvBuffer = await udpClient.ReceiveAsync();
-                    Console.WriteLine($"Received: {Encoding.UTF8.GetString(recvBuffer.Buffer)}");
+                    var recvBuffer = udpClient.Receive(ref from);
+                    Console.WriteLine($"Received: {Encoding.UTF8.GetString(recvBuffer)}");
                 }
             });
 
