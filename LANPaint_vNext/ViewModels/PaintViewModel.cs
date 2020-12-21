@@ -88,6 +88,7 @@ namespace LANPaint_vNext.ViewModels
                 if (BroadcastEnabled)
                 {
                     Debug.WriteLine($"Sending stroke...");
+
                     //var info = new DrawingInfo(Background, e.Added[0], IsEraser);
 
                     //var jsonString = JsonSerializer.Serialize(info, typeof(DrawingInfo));
@@ -97,8 +98,8 @@ namespace LANPaint_vNext.ViewModels
                     //    var buffer = Encoding.UTF8.GetBytes(jsonString);
                     //    await _broadcastService.SendAsync(buffer);
                     //}
-                    var buffer = Encoding.UTF8.GetBytes("Stroke sended!");
-                    await _broadcastService.SendAsync(buffer);
+                    //var buffer = Encoding.UTF8.GetBytes("Stroke sended!");
+                    //await _broadcastService.SendAsync(buffer);
                 }
             }
             if (e.Removed.Count > 0)
