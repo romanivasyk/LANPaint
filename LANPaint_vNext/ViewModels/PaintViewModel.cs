@@ -1,11 +1,13 @@
 ﻿using LANPaint_vNext.Model;
 using LANPaint_vNext.Services;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
@@ -14,7 +16,7 @@ using System.Windows.Media;
 
 namespace LANPaint_vNext.ViewModels
 {
-    public class PaintViewModel : BindableBase
+    public class PaintViewModel : BindableBase, IDisposable
     {
         private bool _isEraser;
         private StrokeCollection _strokes;
@@ -45,8 +47,33 @@ namespace LANPaint_vNext.ViewModels
             }
         }
         public bool BroadcastEnabled { get; set; }
-        public bool ReceiveEnabled { get; set; }
 
+        private CancellationTokenSource _receiveCancellationSource;
+
+        private bool _receiveEnabled;
+        public bool ReceiveEnabled
+        {
+            get => _receiveEnabled;
+            set
+            {
+                if (_receiveEnabled == value)
+                {
+                    return;
+                }
+
+                if (value)
+                {
+                    _receiveCancellationSource = new CancellationTokenSource();
+                    Receive(_receiveCancellationSource.Token);
+                    //TODO: Setup CancellationToken and start a Task to receive packets. Probably we should synchronize Strokes collection
+                    //before adding received stroke
+                }
+                else
+                {
+                    //TODO: Use CancellationToken to cancel the receiving task(is it possible in case the thread is blocked by synchrornys Receive or await???)
+                }
+            }
+        }
 
         public RelayCommand ClearCommand { get; private set; }
         public RelayCommand ChoosePenCommand { get; private set; }
@@ -74,7 +101,7 @@ namespace LANPaint_vNext.ViewModels
         private async ValueTask ClearCommandHandler(object obj)
         {
             Strokes.Clear();
-            if(BroadcastEnabled)
+            if (BroadcastEnabled)
             {
                 var info = new DrawingInfo(ARGBColor.Default, new SerializableStroke(), IsEraser, true);
                 var serializer = new BinarySerializerService();
@@ -96,6 +123,43 @@ namespace LANPaint_vNext.ViewModels
             //TODO: Read file, deserialize to object and apply to current border
         }
 
+
+
+        private Task Receive(CancellationToken token)
+        {
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    var data = _broadcastService.ReceiveAsync().WithCancellation(token).GetAwaiter().GetResult();
+
+                    if (_receiveEnabled)
+                    {
+                        var binarySerializator = new BinarySerializerService();
+                        var info = binarySerializator.Deserialize<DrawingInfo>(data);
+                        var receivedStroke = info.Stroke;
+
+                        var stroke = new Stroke(new System.Windows.Input.StylusPointCollection(info.Stroke.Points),
+                            new DrawingAttributes
+                            {
+                                Color = receivedStroke.Attributes.Color.AsColor(),
+                                Height = receivedStroke.Attributes.Height,
+                                Width = receivedStroke.Attributes.Width,
+                                IgnorePressure = receivedStroke.Attributes.IgnorePressure,
+                                IsHighlighter = receivedStroke.Attributes.IsHighlighter,
+                                StylusTip = receivedStroke.Attributes.StylusTip
+                            });
+
+                        Strokes.Add(stroke);
+                    }
+                    else
+                    {
+                        throw new TaskCanceledException();
+                    }
+                }
+            }, token);
+        }
+
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
             if (e.Added.Count > 0)
@@ -106,8 +170,12 @@ namespace LANPaint_vNext.ViewModels
                     Debug.WriteLine($"Sending stroke...");
                     foreach (var stroke in e.Added)
                     {
-                        var attr = new StrokeAttributes { Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color), Height = stroke.DrawingAttributes.Height,
-                                                          Width = stroke.DrawingAttributes.Width };
+                        var attr = new StrokeAttributes
+                        {
+                            Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
+                            Height = stroke.DrawingAttributes.Height,
+                            Width = stroke.DrawingAttributes.Width
+                        };
                         var points = new List<Point>();
                         foreach (var point in stroke.StylusPoints)
                         {
@@ -126,6 +194,11 @@ namespace LANPaint_vNext.ViewModels
             {
                 Debug.WriteLine($"Strokes removed: {e.Removed.Count}");
             }
+        }
+
+        public void Dispose()
+        {
+            _broadcastService?.Dispose();
         }
     }
 }
