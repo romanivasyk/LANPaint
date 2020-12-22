@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Windows.Media;
 using System.Windows.Ink;
-
+using System.Collections.Generic;
+using System.Windows;
 
 namespace LANPaint_vNext.Model
 {
@@ -11,9 +12,9 @@ namespace LANPaint_vNext.Model
         public ARGBColor Background { get; }
         public bool IsEraser { get; }
         public bool ClearBoard { get; }
-        public Stroke Stroke { get; }
+        public SerializableStroke Stroke { get; }
 
-        public DrawingInfo(Color background, Stroke stroke,
+        public DrawingInfo(Color background, SerializableStroke stroke,
                            bool isEraser = false, bool clearBoard = false)
         {
             Background = new ARGBColor(background.A, background.R, background.G, background.B);
@@ -24,8 +25,7 @@ namespace LANPaint_vNext.Model
 
         public override string ToString()
         {
-#warning TODO: Add Stroke representation
-            return $"Background:{Background}, IsEraser:{IsEraser}, ClearBoard:{ClearBoard}";
+            return $"Background:{Background}, IsEraser:{IsEraser}, ClearBoard:{ClearBoard}, Stroke:{Stroke}";
         }
 
         [Serializable]
@@ -48,6 +48,22 @@ namespace LANPaint_vNext.Model
             {
                 return Color.FromArgb(A, R, G, B);
             }
+        }
+
+        public class SerializableStroke
+        {
+            public IEnumerable<Point> Points { get; }
+            public StrokeAttributes Attributes { get; }
+        }
+
+        public readonly struct StrokeAttributes
+        {
+            public ARGBColor Color { get; }
+            public double Width { get; }
+            public double Height { get; }
+            public bool IgnorePressure { get; }
+            public bool IsHighlighter { get; }
+            public StylusTip StylusTip { get; }
         }
     }
 }
