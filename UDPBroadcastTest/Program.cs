@@ -1,43 +1,33 @@
-﻿using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿using LANPaint_vNext.Model;
+using LANPaint_vNext.Services;
+using System.Collections.Generic;
+using System.Windows;
 
 namespace UDPBroadcastTest
 {
     class Program
     {
-        static UdpClient udpClient;
-        static int PORT = 9876;
-
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, PORT));
+            var strokeAttr = new StrokeAttributes();
+            strokeAttr.Color = ARGBColor.Default;
+            strokeAttr.IgnorePressure = true;
+            strokeAttr.StylusTip = System.Windows.Ink.StylusTip.Ellipse;
+            strokeAttr.Width = 3;
+            strokeAttr.Height = 3;
 
-            ReceiveAndWrite();
+            List<Point> points = new List<Point>() { new Point { X = 25, Y = 100 }, new Point { X = 26, Y = 100 }, new Point { X = 27, Y = 100 },
+                                                    new Point { X=28, Y=100},new Point { X=29, Y=100},new Point { X=30, Y=100},new Point { X=31, Y=100},};
 
-            var input = string.Empty;
-            while (true)
-            {
-                Console.Write("Send->");
-                input = Console.ReadLine();
-                var data = Encoding.UTF8.GetBytes(input);
-                await udpClient.SendAsync(data, data.Length, IPAddress.Broadcast.ToString(), PORT);
-            }
-        }
+            var stroke = new SerializableStroke(strokeAttr, points);
+            var info = new DrawingInfo(new ARGBColor(255, 180, 190, 200), stroke);
 
-        static Task ReceiveAndWrite()
-        {
-            return Task.Run(async () =>
-            {
-                while (true)
-                {
-                    var recvBuffer = await udpClient.ReceiveAsync();
-                    Console.WriteLine($"Received: {Encoding.UTF8.GetString(recvBuffer.Buffer)}");
-                }
-            });
+            var serializer = new BinarySerializerService();
 
+            var bytes = serializer.Serialize(info);
+            var deserializedInfo = serializer.Deserialize<DrawingInfo>(bytes);
+
+            System.Console.WriteLine(info.Equals(deserializedInfo));
         }
     }
 }

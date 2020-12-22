@@ -1,11 +1,16 @@
 ﻿using LANPaint_vNext.Model;
 using LANPaint_vNext.Services;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
+
 
 namespace LANPaint_vNext.ViewModels
 {
@@ -48,7 +53,6 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand ChooseEraserCommand { get; private set; }
         public RelayCommand SaveCommand { get; private set; }
         public RelayCommand OpenCommand { get; private set; }
-        public object SoapFormatter { get; private set; }
 
         private IDialogWindowService _dialogService;
         private UDPBroadcastService _broadcastService;
@@ -60,11 +64,23 @@ namespace LANPaint_vNext.ViewModels
 
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
-            ClearCommand = new RelayCommand(param => Strokes.Clear(), param => Strokes.Count > 0);
+            ClearCommand = new RelayCommand(async (param) => await ClearCommandHandler(param), param => Strokes.Count > 0);
             ChoosePenCommand = new RelayCommand(param => IsEraser = false, param => IsEraser);
             ChooseEraserCommand = new RelayCommand(param => IsEraser = true, param => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
+        }
+
+        private async ValueTask ClearCommandHandler(object obj)
+        {
+            Strokes.Clear();
+            if(BroadcastEnabled)
+            {
+                var info = new DrawingInfo(ARGBColor.Default, new SerializableStroke(), IsEraser, true);
+                var serializer = new BinarySerializerService();
+                var bytes = serializer.Serialize(info);
+                await _broadcastService.SendAsync(bytes);
+            }
         }
 
         private void OnSaveExecuted(object param)
@@ -88,18 +104,22 @@ namespace LANPaint_vNext.ViewModels
                 if (BroadcastEnabled)
                 {
                     Debug.WriteLine($"Sending stroke...");
+                    foreach (var stroke in e.Added)
+                    {
+                        var attr = new StrokeAttributes { Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color), Height = stroke.DrawingAttributes.Height,
+                                                          Width = stroke.DrawingAttributes.Width };
+                        var points = new List<Point>();
+                        foreach (var point in stroke.StylusPoints)
+                        {
+                            points.Add(point.ToPoint());
+                        }
 
-                    //var info = new DrawingInfo(Background, e.Added[0], IsEraser);
-
-                    //var jsonString = JsonSerializer.Serialize(info, typeof(DrawingInfo));
-
-                    //using(var stream = new MemoryStream())
-                    //{
-                    //    var buffer = Encoding.UTF8.GetBytes(jsonString);
-                    //    await _broadcastService.SendAsync(buffer);
-                    //}
-                    //var buffer = Encoding.UTF8.GetBytes("Stroke sended!");
-                    //await _broadcastService.SendAsync(buffer);
+                        var serializableStroke = new SerializableStroke(attr, points);
+                        var info = new DrawingInfo(Background, serializableStroke, IsEraser);
+                        var serializer = new BinarySerializerService();
+                        var bytes = serializer.Serialize(info);
+                        await _broadcastService.SendAsync(bytes);
+                    }
                 }
             }
             if (e.Removed.Count > 0)

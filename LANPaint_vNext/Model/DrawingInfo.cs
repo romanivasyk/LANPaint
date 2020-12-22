@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Windows.Media;
-using System.Windows.Ink;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Ink;
+using System.Windows.Media;
+using System.Linq;
 
 namespace LANPaint_vNext.Model
 {
@@ -15,9 +16,20 @@ namespace LANPaint_vNext.Model
         public SerializableStroke Stroke { get; }
 
         public DrawingInfo(Color background, SerializableStroke stroke,
-                           bool isEraser = false, bool clearBoard = false)
+                           bool isEraser = false, bool clearBoard = false) : this(stroke, isEraser, clearBoard)
         {
-            Background = new ARGBColor(background.A, background.R, background.G, background.B);
+            Background = ARGBColor.FromColor(background);
+        }
+
+        public DrawingInfo(ARGBColor background, SerializableStroke stroke,
+                   bool isEraser = false, bool clearBoard = false) : this(stroke, isEraser, clearBoard)
+        {
+            Background = background;
+        }
+
+        private DrawingInfo(SerializableStroke stroke, bool isEraser = false, bool clearBoard = false)
+        {
+            Background = ARGBColor.Default;
             Stroke = stroke;
             IsEraser = isEraser;
             ClearBoard = clearBoard;
@@ -27,43 +39,78 @@ namespace LANPaint_vNext.Model
         {
             return $"Background:{Background}, IsEraser:{IsEraser}, ClearBoard:{ClearBoard}, Stroke:{Stroke}";
         }
+    }
 
-        [Serializable]
-        public readonly struct ARGBColor
+    [Serializable]
+    public readonly struct ARGBColor
+    {
+        public static readonly ARGBColor Default = new ARGBColor(255, 0, 0, 0);
+        public byte A { get; }
+        public byte R { get; }
+        public byte G { get; }
+        public byte B { get; }
+
+        public ARGBColor(byte a, byte r, byte g, byte b)
         {
-            public byte A { get; }
-            public byte R { get; }
-            public byte G { get; }
-            public byte B { get; }
+            A = a;
+            R = r;
+            G = g;
+            B = b;
+        }
 
-            public ARGBColor(byte a, byte r, byte g, byte b)
+        public readonly Color AsColor()
+        {
+            return Color.FromArgb(A, R, G, B);
+        }
+
+        public static ARGBColor FromColor(Color color)
+        {
+            return new ARGBColor(color.A, color.R, color.G, color.B);
+        }
+
+        public override string ToString()
+        {
+            return $"A:{A}, R:{R}, G:{G}, B:{B}";
+        }
+    }
+
+    [Serializable]
+    public readonly struct SerializableStroke
+    {
+        public IEnumerable<Point> Points { get; }
+        public StrokeAttributes Attributes { get; }
+
+        public SerializableStroke(StrokeAttributes attributes, IEnumerable<Point> points = null)
+        {
+            Attributes = attributes;
+            Points = points;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is SerializableStroke stroke ? Attributes.Equals(stroke.Attributes) && Points.SequenceEqual(stroke.Points) : false;
+        }
+
+        public override int GetHashCode()
+        {
+            int pointsHash = default;
+            foreach (var point in Points)
             {
-                A = a;
-                R = r;
-                G = g;
-                B = b;
+                pointsHash += point.GetHashCode() ^ pointsHash;
             }
 
-            public readonly Color AsColor()
-            {
-                return Color.FromArgb(A, R, G, B);
-            }
+            return Attributes.GetHashCode() ^ pointsHash;
         }
+    }
 
-        public class SerializableStroke
-        {
-            public IEnumerable<Point> Points { get; }
-            public StrokeAttributes Attributes { get; }
-        }
-
-        public readonly struct StrokeAttributes
-        {
-            public ARGBColor Color { get; }
-            public double Width { get; }
-            public double Height { get; }
-            public bool IgnorePressure { get; }
-            public bool IsHighlighter { get; }
-            public StylusTip StylusTip { get; }
-        }
+    [Serializable]
+    public struct StrokeAttributes
+    {
+        public ARGBColor Color { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+        public bool IgnorePressure { get; set; }
+        public bool IsHighlighter { get; set; }
+        public StylusTip StylusTip { get; set; }
     }
 }
