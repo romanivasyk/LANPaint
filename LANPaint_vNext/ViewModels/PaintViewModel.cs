@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
-
+using System.Windows.Threading;
 
 namespace LANPaint_vNext.ViewModels
 {
@@ -64,13 +64,16 @@ namespace LANPaint_vNext.ViewModels
                 if (value)
                 {
                     _receiveCancellationSource = new CancellationTokenSource();
-                    Receive(_receiveCancellationSource.Token);
+                    Receive(_receiveCancellationSource.Token, Dispatcher.CurrentDispatcher);
+                    _receiveEnabled = value;
                     //TODO: Setup CancellationToken and start a Task to receive packets. Probably we should synchronize Strokes collection
                     //before adding received stroke
                 }
                 else
                 {
                     //TODO: Use CancellationToken to cancel the receiving task(is it possible in case the thread is blocked by synchrornys Receive or await???)
+                    _receiveCancellationSource?.Cancel();
+                    _receiveEnabled = value;
                 }
             }
         }
@@ -125,9 +128,9 @@ namespace LANPaint_vNext.ViewModels
 
 
 
-        private Task Receive(CancellationToken token)
+        private Task Receive(CancellationToken token, Dispatcher dispatcher)
         {
-            Task.Run(() =>
+            return Task.Run(() =>
             {
                 while (true)
                 {
@@ -150,7 +153,7 @@ namespace LANPaint_vNext.ViewModels
                                 StylusTip = receivedStroke.Attributes.StylusTip
                             });
 
-                        Strokes.Add(stroke);
+                        dispatcher.Invoke(() => Strokes.Add(stroke));
                     }
                     else
                     {

@@ -1,6 +1,9 @@
 ﻿using LANPaint_vNext.Model;
 using LANPaint_vNext.Services;
+using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using System.Windows;
 
 namespace UDPBroadcastTest
@@ -25,6 +28,11 @@ namespace UDPBroadcastTest
             var serializer = new BinarySerializerService();
 
             var bytes = serializer.Serialize(info);
+
+            using var _client = new UdpClient(new IPEndPoint(IPAddress.Any, 30000));
+            Console.ReadLine();
+            _client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), 9876);
+
             var deserializedInfo = serializer.Deserialize<DrawingInfo>(bytes);
 
             System.Console.WriteLine(info.Equals(deserializedInfo));
