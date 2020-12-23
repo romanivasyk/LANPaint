@@ -9,10 +9,14 @@ namespace LANPaint_vNext.Services
     {
         private UdpClient _client;
         private const int Port = 9876;
+        private IPAddress _localIp;
 
         public UDPBroadcastService()
         {
-            _client = new UdpClient(new IPEndPoint(IPAddress.Any, Port));
+            _localIp = IPAddress.Parse("192.168.0.103");
+            _client = new UdpClient(new IPEndPoint(_localIp, Port));
+            _client.MulticastLoopback = false;
+            _client.DontFragment = false;
         }
 
         public Task<int> SendAsync(byte[] bytes)
@@ -23,6 +27,11 @@ namespace LANPaint_vNext.Services
         public async Task<byte[]> ReceiveAsync()
         {
             var result = await _client.ReceiveAsync();
+            if(result.RemoteEndPoint.Address.ToString() == _localIp.ToString())
+            {
+                return null;
+            }
+
             return result.Buffer;
         }
 

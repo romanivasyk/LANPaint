@@ -2,17 +2,15 @@
 using LANPaint_vNext.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Linq;
 
 namespace LANPaint_vNext.ViewModels
 {
@@ -86,6 +84,7 @@ namespace LANPaint_vNext.ViewModels
 
         private IDialogWindowService _dialogService;
         private UDPBroadcastService _broadcastService;
+        private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
 
         public PaintViewModel(IDialogWindowService dialogService)
         {
@@ -126,8 +125,6 @@ namespace LANPaint_vNext.ViewModels
             //TODO: Read file, deserialize to object and apply to current border
         }
 
-
-
         private Task Receive(CancellationToken token, Dispatcher dispatcher)
         {
             return Task.Run(() =>
@@ -138,6 +135,11 @@ namespace LANPaint_vNext.ViewModels
 
                     if (_receiveEnabled)
                     {
+                        if(data == null)
+                        {
+                            continue;
+                        }
+
                         var binarySerializator = new BinarySerializerService();
                         var info = binarySerializator.Deserialize<DrawingInfo>(data);
                         var receivedStroke = info.Stroke;
@@ -153,6 +155,7 @@ namespace LANPaint_vNext.ViewModels
                                 StylusTip = receivedStroke.Attributes.StylusTip
                             });
 
+                        _receivedStrokes.Add(stroke);
                         dispatcher.Invoke(() => Strokes.Add(stroke));
                     }
                     else
@@ -173,23 +176,26 @@ namespace LANPaint_vNext.ViewModels
                     Debug.WriteLine($"Sending stroke...");
                     foreach (var stroke in e.Added)
                     {
-                        var attr = new StrokeAttributes
+                        if(!_receivedStrokes.Contains(stroke))
                         {
-                            Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
-                            Height = stroke.DrawingAttributes.Height,
-                            Width = stroke.DrawingAttributes.Width
-                        };
-                        var points = new List<Point>();
-                        foreach (var point in stroke.StylusPoints)
-                        {
-                            points.Add(point.ToPoint());
-                        }
+                            var attr = new StrokeAttributes
+                            {
+                                Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
+                                Height = stroke.DrawingAttributes.Height,
+                                Width = stroke.DrawingAttributes.Width
+                            };
+                            var points = new List<Point>();
+                            foreach (var point in stroke.StylusPoints)
+                            {
+                                points.Add(point.ToPoint());
+                            }
 
-                        var serializableStroke = new SerializableStroke(attr, points);
-                        var info = new DrawingInfo(Background, serializableStroke, IsEraser);
-                        var serializer = new BinarySerializerService();
-                        var bytes = serializer.Serialize(info);
-                        await _broadcastService.SendAsync(bytes);
+                            var serializableStroke = new SerializableStroke(attr, points);
+                            var info = new DrawingInfo(Background, serializableStroke, IsEraser);
+                            var serializer = new BinarySerializerService();
+                            var bytes = serializer.Serialize(info);
+                            await _broadcastService.SendAsync(bytes);
+                        }
                     }
                 }
             }
@@ -202,6 +208,7 @@ namespace LANPaint_vNext.ViewModels
         public void Dispose()
         {
             _broadcastService?.Dispose();
+            _receiveCancellationSource?.Dispose();
         }
     }
 }
