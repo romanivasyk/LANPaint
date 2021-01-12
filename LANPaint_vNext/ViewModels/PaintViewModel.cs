@@ -11,6 +11,7 @@ using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Linq;
+using LANPaint_vNext.Services.UDP;
 
 namespace LANPaint_vNext.ViewModels
 {
@@ -83,13 +84,13 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand OpenCommand { get; private set; }
 
         private IDialogWindowService _dialogService;
-        private UDPBroadcastService _broadcastService;
+        private ChainedBroadcast _broadcastService;
         private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
 
         public PaintViewModel(IDialogWindowService dialogService)
         {
             _dialogService = dialogService;
-            _broadcastService = new UDPBroadcastService();
+            _broadcastService = new ChainedBroadcast();
 
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
@@ -135,13 +136,13 @@ namespace LANPaint_vNext.ViewModels
 
                     if (_receiveEnabled)
                     {
-                        if(data == null)
+                        if (data == null)
                         {
                             continue;
                         }
 
-                        var binarySerializator = new BinarySerializerService();
-                        var info = binarySerializator.Deserialize<DrawingInfo>(data);
+                        var binarySerializer = new BinarySerializerService();
+                        var info = binarySerializer.Deserialize<DrawingInfo>(data);
                         var receivedStroke = info.Stroke;
 
                         var stroke = new Stroke(new System.Windows.Input.StylusPointCollection(info.Stroke.Points),
