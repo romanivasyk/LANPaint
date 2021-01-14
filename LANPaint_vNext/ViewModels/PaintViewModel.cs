@@ -84,13 +84,13 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand OpenCommand { get; private set; }
 
         private IDialogWindowService _dialogService;
-        private ChainedBroadcast _broadcastService;
+        private BroadcastChainer _broadcastService;
         private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
 
         public PaintViewModel(IDialogWindowService dialogService)
         {
             _dialogService = dialogService;
-            _broadcastService = new ChainedBroadcast();
+            _broadcastService = new BroadcastChainer();
 
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;

@@ -1,17 +1,19 @@
 ﻿using LANPaint_vNext.Model;
 using LANPaint_vNext.Services;
+using LANPaint_vNext.Services.UDP;
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace UDPBroadcastTest
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            Console.ReadKey();
+
             var strokeAttr = new StrokeAttributes();
             strokeAttr.Color = ARGBColor.Default;
             strokeAttr.IgnorePressure = true;
@@ -29,9 +31,9 @@ namespace UDPBroadcastTest
 
             var bytes = serializer.Serialize(info);
 
-            using var _client = new UdpClient(new IPEndPoint(IPAddress.Any, 30000));
+            using var _client = new BroadcastChainer();
             Console.ReadLine();
-            _client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), 9876);
+            await _client.SendAsync(bytes);
 
             var deserializedInfo = serializer.Deserialize<DrawingInfo>(bytes);
 

@@ -1,16 +1,12 @@
-﻿using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Threading.Tasks;
 
 namespace LANPaint_vNext.Services.UDP
 {
     public class UDPBroadcastImpl : UDPBroadcastBase
     {
-        public UDPBroadcastImpl() : base("192.168.0.103", 9876)
-        {
-            Client.MulticastLoopback = false;
-            Client.DontFragment = false;
-        }
+        public UDPBroadcastImpl()
+        { }
 
         public override Task<int> SendAsync(byte[] bytes)
         {
@@ -19,8 +15,8 @@ namespace LANPaint_vNext.Services.UDP
 
         public async override Task<byte[]> ReceiveAsync()
         {
-            var result = await Client.ReceiveAsync();
-            if (result.RemoteEndPoint.Address.ToString() == LocalIp.ToString())
+            var result = await Client.ReceiveAsync().ConfigureAwait(false);
+            if (result.RemoteEndPoint.Address.Equals(LocalIp))
             {
                 return null;
             }

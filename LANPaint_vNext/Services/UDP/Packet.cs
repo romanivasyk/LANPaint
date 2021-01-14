@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LANPaint_vNext.Services.UDP
 {
     [Serializable]
-    public struct Packet
+    public readonly struct Packet
     {
         public Guid SequenceGUID { get; }
         public long SequenceLength { get; }
@@ -20,14 +18,14 @@ namespace LANPaint_vNext.Services.UDP
     }
 
     [Serializable]
-    public struct Segment
+    public readonly struct Segment
     {
-        public long Index { get; }
+        public long SequenceIndex { get; }
         public byte[] Payload { get; }
 
-        public Segment(long index, byte[] payload)
+        public Segment(long sequenceIndex, byte[] payload)
         {
-            this.Index = index;
+            SequenceIndex = sequenceIndex;
             Payload = payload;
         }
     }

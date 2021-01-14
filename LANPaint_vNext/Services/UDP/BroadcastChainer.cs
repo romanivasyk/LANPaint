@@ -1,31 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Buffers;
+using System.Threading.Tasks;
 
 namespace LANPaint_vNext.Services.UDP
 {
-    public class ChainedBroadcast : IDisposable
+    public class BroadcastChainer : IDisposable
     {
         public int ChainLength { get; } = 8192;
-        private UDPBroadcastBase _udpWrapper;
+        private UDPBroadcastBase _udpBroadcaster;
         private IFormatter _formatter;
 
-        private Dictionary<Guid, SortedList<long, Segment>> _receivedPackets = new Dictionary<Guid, SortedList<long, Segment>>();
-        public ChainedBroadcast()
+        private Dictionary<Guid, SortedList<long, Segment>> _receivePacketBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
+        public BroadcastChainer()
         {
-            _udpWrapper = new UDPBroadcastImpl();
+            _udpBroadcaster = new UDPBroadcastImpl();
             _formatter = new BinaryFormatter();
+        }
+
+        public BroadcastChainer(UDPBroadcastBase udpBroadcaster) : this(new UDPBroadcastImpl(), new BinaryFormatter())
+        { }
+
+        public BroadcastChainer(UDPBroadcastBase udpBroadcaster, IFormatter formatter)
+        {
+            _udpBroadcaster = udpBroadcaster;
+            _formatter = formatter;
         }
 
         public Task<long> SendAsync(byte[] payload)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 var sequenceGUID = Guid.NewGuid();
                 var sequenceLength = payload.LongLength % ChainLength > 0 ?
@@ -56,19 +63,20 @@ namespace LANPaint_vNext.Services.UDP
                         bytes = stream.ToArray();
                     }
 
-                    _udpWrapper.SendAsync(bytes).GetAwaiter().GetResult();
+                    await _udpBroadcaster.SendAsync(bytes);
                 }
 
                 return payload.LongLength;
             });
         }
+
         public async Task<byte[]> ReceiveAsync()
         {
             while (true)
             {
-                var bytes = await _udpWrapper.ReceiveAsync();
+                var bytes = await _udpBroadcaster.ReceiveAsync();
 
-                if(bytes == null)
+                if (bytes == null)
                 {
                     continue;
                 }
@@ -79,20 +87,20 @@ namespace LANPaint_vNext.Services.UDP
                     packet = (Packet)_formatter.Deserialize(stream);
                 }
 
-                if (_receivedPackets.ContainsKey(packet.SequenceGUID))
+                if (_receivePacketBuffer.ContainsKey(packet.SequenceGUID))
                 {
-                    _receivedPackets[packet.SequenceGUID].Add(packet.Segment.Index, packet.Segment);
-                    if (_receivedPackets[packet.SequenceGUID].Last().Key + 1 == packet.SequenceLength)
+                    _receivePacketBuffer[packet.SequenceGUID].Add(packet.Segment.SequenceIndex, packet.Segment);
+                    if (_receivePacketBuffer[packet.SequenceGUID].Last().Key + 1 == packet.SequenceLength)
                     {
-                        var messageLength = _receivedPackets[packet.SequenceGUID].Values.Sum(segment => segment.Payload.LongLength);
+                        var messageLength = _receivePacketBuffer[packet.SequenceGUID].Values.Sum(segment => segment.Payload.LongLength);
                         var message = new byte[messageLength];
                         var messageOffset = 0;
-                        foreach (var segment in _receivedPackets[packet.SequenceGUID].Values)
+                        foreach (var segment in _receivePacketBuffer[packet.SequenceGUID].Values)
                         {
                             Buffer.BlockCopy(segment.Payload, 0, message, messageOffset, segment.Payload.Length);
                             messageOffset += segment.Payload.Length;
                         }
-                        _receivedPackets.Remove(packet.SequenceGUID);
+                        _receivePacketBuffer.Remove(packet.SequenceGUID);
                         return message;
                     }
                 }
@@ -104,15 +112,15 @@ namespace LANPaint_vNext.Services.UDP
                     }
 
                     var segments = new SortedList<long, Segment>();
-                    segments.Add(packet.Segment.Index, packet.Segment);
-                    _receivedPackets.Add(packet.SequenceGUID, segments);
+                    segments.Add(packet.Segment.SequenceIndex, packet.Segment);
+                    _receivePacketBuffer.Add(packet.SequenceGUID, segments);
                 }
             }
         }
 
         public void Dispose()
         {
-            _udpWrapper?.Dispose();
+            _udpBroadcaster?.Dispose();
         }
     }
 }
