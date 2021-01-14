@@ -72,10 +72,10 @@
                 </Button>
                 <Separator Margin="5,0"/>
                 <Label Content="Broadcasting:"/>
-                <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding BroadcastEnabled, Mode=OneWayToSource}"/>
+                <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsBroadcast, Mode=OneWayToSource}" Command="{Binding BroadcastChangedCommand}"/>
                 <Separator Margin="5,0"/>
                 <Label Content="Receiving:"/>
-                <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding ReceiveEnabled, Mode=OneWayToSource}"/>
+                <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsReceive, Mode=OneWayToSource}" Command="{Binding ReceiveChangedCommand}"/>
                 <Separator Margin="5,0"/>
                 <Button>
                     <Image Height="24" Source="Resources/settings.png"/>

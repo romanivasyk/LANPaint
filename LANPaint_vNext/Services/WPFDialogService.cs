@@ -1,7 +1,4 @@
 ﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LANPaint_vNext.Services
 {
@@ -10,7 +7,7 @@ namespace LANPaint_vNext.Services
         public string OpenFileDialog(string startPath = null)
         {
             var dialog = new OpenFileDialog();
-            if(dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() == true)
             {
                 return dialog.FileName;
             }

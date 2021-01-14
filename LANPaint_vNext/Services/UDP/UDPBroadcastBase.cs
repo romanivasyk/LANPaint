@@ -13,20 +13,15 @@ namespace LANPaint_vNext.Services.UDP
 
         public UDPBroadcastBase()
         {
-            var ipHelper = new IPAddressHelper();
-            LocalIp = ipHelper.GetEthernetLocalIP();
-
-            if(LocalIp.Equals(IPAddress.None))
-            {
-                LocalIp = ipHelper.GetWirelessLocalIP();
-
-                if (LocalIp.Equals(IPAddress.None))
-                {
-                    throw new Exception("Local NIC with IPv4 address not found!");
-                }
-            } 
-
+            LocalIp = GetLocalIP();
             Port = 9876;
+            Client = new UdpClient(new IPEndPoint(LocalIp, Port));
+        }
+
+        public UDPBroadcastBase(int port)
+        {
+            LocalIp = GetLocalIP();
+            Port = port;
             Client = new UdpClient(new IPEndPoint(LocalIp, Port));
         }
 
@@ -39,6 +34,24 @@ namespace LANPaint_vNext.Services.UDP
 
         public abstract Task<int> SendAsync(byte[] bytes);
         public abstract Task<byte[]> ReceiveAsync();
+        
+        protected virtual IPAddress GetLocalIP()
+        {
+            var ipHelper = new IPAddressHelper();
+            var address = ipHelper.GetEthernetLocalIP();
+
+            if (address.Equals(IPAddress.None))
+            {
+                address = ipHelper.GetWirelessLocalIP();
+
+                if (LocalIp.Equals(IPAddress.None))
+                {
+                    throw new Exception("Local NIC with IPv4 address not found!");
+                }
+            }
+
+            return address;
+        }
 
         public void Dispose()
         {

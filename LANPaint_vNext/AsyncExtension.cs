@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LANPaint_vNext
+namespace LANPaint_vNext.Extensions
 {
     internal static class AsyncExtension
     {
@@ -18,6 +18,18 @@ namespace LANPaint_vNext
             }
 
             return task.Result;
+        }
+
+        public static async void SafeFireAndForget(this Task task, bool continueOnCapturedContext = true, Action<Exception> OnError = null)
+        {
+            try
+            {
+                await task.ConfigureAwait(continueOnCapturedContext);
+            }
+            catch (Exception ex) when (OnError != null)
+            {
+                OnError(ex);
+            }
         }
     }
 }

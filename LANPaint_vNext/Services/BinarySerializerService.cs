@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 
 namespace LANPaint_vNext.Services
 {
     public class BinarySerializerService
     {
-        private static readonly object _locker = new object();
         private static BinaryFormatter formatter = new BinaryFormatter();
 
         public byte[] Serialize(object data)
@@ -17,10 +13,7 @@ namespace LANPaint_vNext.Services
 
             using (var stream = new MemoryStream())
             {
-                lock (_locker)
-                {
-                    formatter.Serialize(stream, data);
-                }
+                formatter.Serialize(stream, data);
                 bytes = stream.ToArray();
             }
             return bytes;
@@ -33,13 +26,9 @@ namespace LANPaint_vNext.Services
             using (var stream = new MemoryStream(data))
             {
                 stream.Seek(0, SeekOrigin.Begin);
-
-                lock (_locker)
+                if (formatter.Deserialize(stream) is TData convertedObject)
                 {
-                    if (formatter.Deserialize(stream) is TData convertedObject)
-                    {
-                        deserializedData = convertedObject;
-                    }
+                    deserializedData = convertedObject;
                 }
             }
             return deserializedData;

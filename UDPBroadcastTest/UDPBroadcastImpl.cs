@@ -1,17 +1,16 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
 
-namespace LANPaint_vNext.Services.UDP
+namespace LANPaint_vNext.Services.UDP.Test
 {
     public class UDPBroadcastImpl : UDPBroadcastBase
     {
         public UDPBroadcastImpl() { }
-        public UDPBroadcastImpl(int port) : base(port) { }
         public UDPBroadcastImpl(int port, string ipAddress) : base(ipAddress, port) { }
 
         public override Task<int> SendAsync(byte[] bytes)
         {
-            return Task.Run(() => Client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), Port));
+            return Task.Run(() => Client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), 9876));
         }
 
         public async override Task<byte[]> ReceiveAsync()
