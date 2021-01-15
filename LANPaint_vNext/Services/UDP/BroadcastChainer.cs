@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LANPaint_vNext.Services.UDP
 {
-    public class BroadcastChainer : IDisposable
+    public class BroadcastChainer : INetworkBroadcaster
     {
         public int PayloadSegmentLength { get; } = 8192;
 
@@ -91,9 +91,8 @@ namespace LANPaint_vNext.Services.UDP
             }
         }
 
-        public void Dispose()
-        {
-            UDPBroadcaster?.Dispose();
-        }
+        public ValueTask ClearBufferAsync() => UDPBroadcaster.ClearBufferAsync();
+
+        public void Dispose() => UDPBroadcaster?.Dispose();
     }
 }

@@ -12,9 +12,9 @@ namespace LANPaint_vNext.Services.UDP
         public UDPBroadcastImpl(int port) : base(port) { }
         public UDPBroadcastImpl(int port, string ipAddress) : base(ipAddress, port) { }
 
-        public override Task<int> SendAsync(byte[] bytes)
+        public override Task<long> SendAsync(byte[] bytes)
         {
-            return Task.Run(() => Client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), Port));
+            return Task.Run(() => (long)Client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), Port));
         }
 
         public async override Task<byte[]> ReceiveAsync()

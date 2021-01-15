@@ -58,12 +58,13 @@ namespace LANPaint_vNext.ViewModels
         public RelayCommand ReceiveChangedCommand { get; private set; }
 
         private IDialogWindowService _dialogService;
-        private BroadcastChainer _broadcastService = new BroadcastChainer();
+        private INetworkBroadcaster _broadcastService;
         private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
         private CancellationTokenSource _receiveTokenSource;
 
-        public PaintViewModel(IDialogWindowService dialogService)
+        public PaintViewModel(INetworkBroadcaster broadcastService, IDialogWindowService dialogService)
         {
+            _broadcastService = broadcastService;
             _dialogService = dialogService;
 
             Strokes = new StrokeCollection();
@@ -142,7 +143,7 @@ namespace LANPaint_vNext.ViewModels
         {
             return Task.Run(async () =>
             {
-                await _broadcastService.UDPBroadcaster.ClearBufferAsync();
+                await _broadcastService.ClearBufferAsync();
                 while (true)
                 {
                     var data = await _broadcastService.ReceiveAsync().WithCancellation(token);
