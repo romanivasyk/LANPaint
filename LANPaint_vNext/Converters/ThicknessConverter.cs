@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 
-namespace LANPaint_vNext
+namespace LANPaint_vNext.Converters
 {
     [ValueConversion(typeof(string), typeof(double))]
     class ThicknessConverter : IValueConverter

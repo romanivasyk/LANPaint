@@ -1,8 +1,7 @@
-﻿using System;
+﻿using LANPaint_vNext.Extensions;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
@@ -10,24 +9,19 @@ namespace LANPaint_vNext.Services.UDP
 {
     public class BroadcastChainer : IDisposable
     {
-        public int ChainLength { get; } = 8192;
-        private UDPBroadcastBase _udpBroadcaster;
-        private IFormatter _formatter;
+        public int PayloadSegmentLength { get; } = 8192;
 
+        private INetworkBroadcaster _udpBroadcaster;
+        private BinaryFormatter _formatter = new BinaryFormatter();
+#warning TODO: Add Dictionary cleanup by timeout(We don't have to waste memory for data sequences that never be assembled due to random packet loss)
         private Dictionary<Guid, SortedList<long, Segment>> _receivePacketBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
-        public BroadcastChainer()
-        {
-            _udpBroadcaster = new UDPBroadcastImpl();
-            _formatter = new BinaryFormatter();
-        }
 
-        public BroadcastChainer(UDPBroadcastBase udpBroadcaster) : this(new UDPBroadcastImpl(), new BinaryFormatter())
+        public BroadcastChainer() : this(new UDPBroadcastImpl())
         { }
 
-        public BroadcastChainer(UDPBroadcastBase udpBroadcaster, IFormatter formatter)
+        public BroadcastChainer(INetworkBroadcaster udpBroadcaster)
         {
             _udpBroadcaster = udpBroadcaster;
-            _formatter = formatter;
         }
 
         public Task<long> SendAsync(byte[] payload)
@@ -35,34 +29,22 @@ namespace LANPaint_vNext.Services.UDP
             return Task.Run(async () =>
             {
                 var sequenceGUID = Guid.NewGuid();
-                var sequenceLength = payload.LongLength % ChainLength > 0 ?
-                                     payload.LongLength / ChainLength + 1 :
-                                     payload.LongLength / ChainLength;
+                var sequenceLength = payload.LongLength % PayloadSegmentLength > 0 ?
+                                     payload.LongLength / PayloadSegmentLength + 1 :
+                                     payload.LongLength / PayloadSegmentLength;
 
                 for (int i = 0; i < sequenceLength; i++)
                 {
-                    var beginWith = i * ChainLength;
-                    int endBefore;
+                    var beginWith = i * PayloadSegmentLength;
 
-                    if (i + 1 == sequenceLength)
-                    {
-                        endBefore = payload.Length;
-                    }
-                    else
-                    {
-                        endBefore = beginWith + ChainLength;
-                    }
+                    int endBefore = i + 1 == sequenceLength ? 
+                                             payload.Length : 
+                                             beginWith + PayloadSegmentLength;
 
                     var segment = new Segment(i, payload[beginWith..endBefore]);
                     var packet = new Packet(sequenceGUID, sequenceLength, segment);
 
-                    byte[] bytes = null;
-                    using (var stream = new MemoryStream())
-                    {
-                        _formatter.Serialize(stream, packet);
-                        bytes = stream.ToArray();
-                    }
-
+                    byte[] bytes = _formatter.OneLineSerialize(packet);
                     await _udpBroadcaster.SendAsync(bytes);
                 }
 
@@ -76,16 +58,7 @@ namespace LANPaint_vNext.Services.UDP
             {
                 var bytes = await _udpBroadcaster.ReceiveAsync();
 
-                if (bytes == null)
-                {
-                    continue;
-                }
-
-                Packet packet;
-                using (var stream = new MemoryStream(bytes))
-                {
-                    packet = (Packet)_formatter.Deserialize(stream);
-                }
+                Packet packet = _formatter.OneLineDeserialize<Packet>(bytes);
 
                 if (_receivePacketBuffer.ContainsKey(packet.SequenceGUID))
                 {

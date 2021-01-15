@@ -3,13 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xceedwpftoolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
         xmlns:local="clr-namespace:LANPaint_vNext"
+        xmlns:converters="clr-namespace:LANPaint_vNext.Converters"
         Title="MainWindow" Height="500" Width="920">
 
     <Window.Resources>
-        <local:ThicknessConverter x:Key="ThicknessConverter"/>
-        <local:BrushColorConverter x:Key="BrushColorConverter"/>
-        <local:ColorBrushConverter x:Key="ColorBrushConverter"/>
-        <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:ThicknessConverter x:Key="ThicknessConverter"/>
+        <converters:BrushColorConverter x:Key="BrushColorConverter"/>
+        <converters:ColorBrushConverter x:Key="ColorBrushConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <Style x:Key="CheckBoxStyle" TargetType="{x:Type CheckBox}">
             <Setter Property="Foreground" Value="Black"/>
             <Style.Triggers>

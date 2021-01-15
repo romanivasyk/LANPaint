@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace LANPaint_vNext.Services.UDP
 {
-    public abstract class UDPBroadcastBase : IDisposable
+    public abstract class UDPBroadcastBase : INetworkBroadcaster
     {
         public UdpClient Client { get; }
         public int Port { get; }
@@ -34,7 +34,7 @@ namespace LANPaint_vNext.Services.UDP
 
         public abstract Task<int> SendAsync(byte[] bytes);
         public abstract Task<byte[]> ReceiveAsync();
-        
+
         protected virtual IPAddress GetLocalIP()
         {
             var ipHelper = new IPAddressHelper();

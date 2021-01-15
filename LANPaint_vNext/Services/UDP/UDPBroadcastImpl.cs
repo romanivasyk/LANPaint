@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace LANPaint_vNext.Services.UDP
@@ -16,11 +17,11 @@ namespace LANPaint_vNext.Services.UDP
 
         public async override Task<byte[]> ReceiveAsync()
         {
-            var result = await Client.ReceiveAsync().ConfigureAwait(false);
-            if (result.RemoteEndPoint.Address.Equals(LocalIp))
+            UdpReceiveResult result;
+            do
             {
-                return null;
-            }
+                result = await Client.ReceiveAsync().ConfigureAwait(false);
+            } while (result.RemoteEndPoint.Address.Equals(LocalIp));
 
             return result.Buffer;
         }

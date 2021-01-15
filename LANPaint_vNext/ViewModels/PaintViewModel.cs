@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -119,8 +120,8 @@ namespace LANPaint_vNext.ViewModels
             if (IsBroadcast)
             {
                 var info = new DrawingInfo(ARGBColor.Default, new SerializableStroke(), IsEraser, true);
-                var serializer = new BinarySerializerService();
-                var bytes = serializer.Serialize(info);
+                var serializer = new BinaryFormatter();
+                var bytes = serializer.OneLineSerialize(info);
                 await _broadcastService.SendAsync(bytes);
             }
         }
@@ -168,8 +169,8 @@ namespace LANPaint_vNext.ViewModels
                         continue;
                     }
 
-                    var binarySerializer = new BinarySerializerService();
-                    var info = binarySerializer.Deserialize<DrawingInfo>(data);
+                    var binarySerializer = new BinaryFormatter();
+                    var info = binarySerializer.OneLineDeserialize<DrawingInfo>(data);
 
                     if (info.ClearBoard)
                     {
@@ -226,8 +227,8 @@ namespace LANPaint_vNext.ViewModels
 
                             var serializableStroke = new SerializableStroke(attr, points);
                             var info = new DrawingInfo(Background, serializableStroke, IsEraser);
-                            var serializer = new BinarySerializerService();
-                            var bytes = serializer.Serialize(info);
+                            var serializer = new BinaryFormatter();
+                            var bytes = serializer.OneLineSerialize(info);
                             await _broadcastService.SendAsync(bytes);
                         }
                     }
