@@ -7,5 +7,6 @@ namespace LANPaint_vNext.Services.UDP
     {
         Task<byte[]> ReceiveAsync();
         Task<int> SendAsync(byte[] bytes);
+        ValueTask ClearBufferAsync();
     }
 }

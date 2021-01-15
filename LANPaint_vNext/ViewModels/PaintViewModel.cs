@@ -138,11 +138,12 @@ namespace LANPaint_vNext.ViewModels
 
         private Task Receive(CancellationToken token)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
+                await _broadcastService.UDPBroadcaster.ClearBufferAsync();
                 while (true)
                 {
-                    var data = _broadcastService.ReceiveAsync().WithCancellation(token).GetAwaiter().GetResult();
+                    var data = await _broadcastService.ReceiveAsync().WithCancellation(token);
 
                     if (data == null)
                     {

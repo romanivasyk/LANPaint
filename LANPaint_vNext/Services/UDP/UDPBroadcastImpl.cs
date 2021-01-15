@@ -19,7 +19,6 @@ namespace LANPaint_vNext.Services.UDP
 
         public async override Task<byte[]> ReceiveAsync()
         {
-            await ClearBuffer();
             UdpReceiveResult result;
             do
             {
@@ -27,14 +26,6 @@ namespace LANPaint_vNext.Services.UDP
             } while (result.RemoteEndPoint.Address.Equals(LocalIp));
 
             return result.Buffer;
-        }
-
-        private async Task ClearBuffer()
-        {
-            while (Client.Client.Available > 0)
-            {
-                await Client.ReceiveAsync();
-            }
         }
     }
 }
