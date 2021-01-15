@@ -6,7 +6,7 @@ using System.Windows.Ink;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace LANPaint_vNext
+namespace LANPaint
 {
     public class Board : InkCanvas
     {

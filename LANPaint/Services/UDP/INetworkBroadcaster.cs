@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace LANPaint_vNext.Services.UDP
+namespace LANPaint.Services.UDP
 {
     public interface INetworkBroadcaster : IDisposable
     {

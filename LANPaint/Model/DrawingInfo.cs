@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 
-namespace LANPaint_vNext.Model
+namespace LANPaint.Model
 {
     [Serializable]
     public readonly struct DrawingInfo

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
 
-namespace LANPaint_vNext.Services
+namespace LANPaint.Services
 {
     public class WPFDialogService : IDialogWindowService
     {

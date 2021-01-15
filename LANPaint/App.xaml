@@ -1,7 +1,7 @@
-﻿<Application x:Class="LANPaint_vNext.App"
+﻿<Application x:Class="LANPaint.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:LANPaint_vNext"
+             xmlns:local="clr-namespace:LANPaint"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          

@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.NetworkInformation;
 
-namespace LANPaint_vNext.Services.UDP
+namespace LANPaint.Services.UDP
 {
     internal class IPAddressHelper
     {

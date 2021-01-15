@@ -1,10 +1,10 @@
-﻿using LANPaint_vNext.Services;
-using LANPaint_vNext.ViewModels;
+﻿using LANPaint.Services;
+using LANPaint.ViewModels;
 using System.Windows.Media;
 using System.Windows;
-using LANPaint_vNext.Services.UDP;
+using LANPaint.Services.UDP;
 
-namespace LANPaint_vNext
+namespace LANPaint
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

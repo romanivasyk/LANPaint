@@ -1,11 +1,11 @@
-﻿using LANPaint_vNext.Extensions;
+﻿using LANPaint.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
-namespace LANPaint_vNext.Services.UDP
+namespace LANPaint.Services.UDP
 {
     public class BroadcastChainer : INetworkBroadcaster
     {

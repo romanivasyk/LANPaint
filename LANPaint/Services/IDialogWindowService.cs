@@ -1,4 +1,4 @@
-﻿namespace LANPaint_vNext.Services
+﻿namespace LANPaint.Services
 {
     public interface IDialogWindowService
     {

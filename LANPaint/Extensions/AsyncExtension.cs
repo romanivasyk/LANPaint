@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LANPaint_vNext.Extensions
+namespace LANPaint.Extensions
 {
     internal static class AsyncExtension
     {

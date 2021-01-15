@@ -1,7 +1,7 @@
-﻿using LANPaint_vNext.Extensions;
-using LANPaint_vNext.Model;
-using LANPaint_vNext.Services;
-using LANPaint_vNext.Services.UDP;
+﻿using LANPaint.Extensions;
+using LANPaint.Model;
+using LANPaint.Services;
+using LANPaint.Services.UDP;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 
-namespace LANPaint_vNext.ViewModels
+namespace LANPaint.ViewModels
 {
     public class PaintViewModel : BindableBase, IDisposable
     {

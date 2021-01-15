@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace LANPaint_vNext.Extensions
+namespace LANPaint.Extensions
 {
     public static class BinaryFormatterExtension
     {

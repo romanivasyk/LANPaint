@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace LANPaint_vNext
+namespace LANPaint
 {
     /// <summary>
     /// Interaction logic for App.xaml

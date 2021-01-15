@@ -3,10 +3,10 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace LANPaint_vNext.Converters
+namespace LANPaint.Converters
 {
-    [ValueConversion(typeof(Brush), typeof(Nullable<Color>))]
-    public class BrushColorConverter : IValueConverter
+    [ValueConversion(typeof(Color), typeof(Brush))]
+    public class ColorBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -15,7 +15,7 @@ namespace LANPaint_vNext.Converters
                 return null;
             }
 
-            return ((SolidColorBrush)value).Color;
+            return new SolidColorBrush((Color)value);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -25,7 +25,7 @@ namespace LANPaint_vNext.Converters
                 return null;
             }
 
-            return new SolidColorBrush((Color)value);
+            return ((SolidColorBrush)value).Color;
         }
     }
 }

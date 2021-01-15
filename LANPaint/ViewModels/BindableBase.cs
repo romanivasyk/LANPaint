@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace LANPaint_vNext.ViewModels
+namespace LANPaint.ViewModels
 {
     public class BindableBase : INotifyPropertyChanged
     {
