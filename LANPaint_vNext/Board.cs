@@ -34,19 +34,13 @@ namespace LANPaint_vNext
         public double StrokeThickness
         {
             get => DefaultDrawingAttributes.Width;
-            set
-            {
-                SetValue(StrokeThicknessProperty, value);
-            }
+            set => SetValue(StrokeThicknessProperty, value);
         }
 
         public Color StrokeColor
         {
             get => DefaultDrawingAttributes.Color;
-            set
-            {
-                SetValue(StrokeColorProperty, value);
-            }
+            set => SetValue(StrokeColorProperty, value);
         }
 
         public bool IsEraser
@@ -64,6 +58,9 @@ namespace LANPaint_vNext
         //Field used to store StrokeColor in case erasing mode enabled
         //and restore it after erasing mode disabled
         private Color _cachedStrokeColor;
+
+        //Store strokes used as eraser to change their color in case
+        //background color will be changed
         private List<Stroke> _eraserStrokes;
 
         static Board()

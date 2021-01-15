@@ -5,7 +5,6 @@ using LANPaint_vNext.Services.UDP;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
@@ -13,7 +12,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace LANPaint_vNext.ViewModels
 {
@@ -77,16 +75,14 @@ namespace LANPaint_vNext.ViewModels
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
             BroadcastChangedCommand = new RelayCommand(param => OnBroadcastChanged(param));
-            ReceiveChangedCommand = new RelayCommand(async (param) => 
+            ReceiveChangedCommand = new RelayCommand(async (param) =>
             {
                 try
                 {
                     await OnReceiveChanged(param);
                 }
                 catch (OperationCanceledException)
-                {
-                    _receiveTokenSource = new CancellationTokenSource();
-                }
+                { }
             });
         }
 
@@ -98,7 +94,7 @@ namespace LANPaint_vNext.ViewModels
             }
             else
             {
-                //TODO: Raise cancellation 
+                //TODO: Raise cancellation
             }
         }
 
@@ -106,6 +102,7 @@ namespace LANPaint_vNext.ViewModels
         {
             if (IsReceive)
             {
+                _receiveTokenSource = new CancellationTokenSource();
                 await Receive(_receiveTokenSource.Token);
             }
             else
@@ -141,25 +138,8 @@ namespace LANPaint_vNext.ViewModels
 
         private Task Receive(CancellationToken token)
         {
-            void ClearBuffer(CancellationToken ct)
-            {
-                Task.Run(() =>
-                {
-                    while (true)
-                    {
-                        _broadcastService.ReceiveAsync().WithCancellation(ct).GetAwaiter().GetResult();
-                    }
-                }, ct);
-            }
-
             return Task.Run(() =>
             {
-                //This trash clears Socket Buffer
-                var tokenSource = new CancellationTokenSource();
-                ClearBuffer(tokenSource.Token);
-                Task.Delay(500).Wait();
-                tokenSource.Cancel();
-
                 while (true)
                 {
                     var data = _broadcastService.ReceiveAsync().WithCancellation(token).GetAwaiter().GetResult();

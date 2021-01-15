@@ -37,8 +37,8 @@ namespace LANPaint_vNext.Services.UDP
                 {
                     var beginWith = i * PayloadSegmentLength;
 
-                    int endBefore = i + 1 == sequenceLength ? 
-                                             payload.Length : 
+                    int endBefore = i + 1 == sequenceLength ?
+                                             payload.Length :
                                              beginWith + PayloadSegmentLength;
 
                     var segment = new Segment(i, payload[beginWith..endBefore]);
