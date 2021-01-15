@@ -60,7 +60,7 @@ namespace LANPaint_vNext.ViewModels
         private IDialogWindowService _dialogService;
         private BroadcastChainer _broadcastService = new BroadcastChainer();
         private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
-        private CancellationTokenSource _receiveTokenSource = new CancellationTokenSource();
+        private CancellationTokenSource _receiveTokenSource;
 
         public PaintViewModel(IDialogWindowService dialogService)
         {
@@ -114,6 +114,8 @@ namespace LANPaint_vNext.ViewModels
         private async ValueTask ClearCommandHandler(object obj)
         {
             Strokes.Clear();
+            _receivedStrokes.Clear();
+
             if (IsBroadcast)
             {
                 var info = new DrawingInfo(ARGBColor.Default, new SerializableStroke(), IsEraser, true);
@@ -156,6 +158,7 @@ namespace LANPaint_vNext.ViewModels
                     if (info.ClearBoard)
                     {
                         Application.Current.Dispatcher.Invoke(() => Strokes.Clear());
+                        _receivedStrokes.Clear();
                         continue;
                     }
 
