@@ -15,7 +15,7 @@ namespace LANPaint
         public MainWindow()
         {
             InitializeComponent();
-            var context = new PaintViewModel(new BroadcastChainer(), new WPFDialogService());
+            var context = new PaintViewModel(() => new BroadcastChainer(), new WPFDialogService());
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);

@@ -13,8 +13,8 @@ namespace LANPaint.Services.UDP
 
         public INetworkBroadcaster UDPBroadcaster { get; }
         public BinaryFormatter Formatter { get; } = new BinaryFormatter();
-#warning TODO: Add Dictionary cleanup by timeout(We don't have to waste memory for data sequences that never be assembled due to random packet loss)
-        public Dictionary<Guid, SortedList<long, Segment>> SegmentBuffer { get; } = new Dictionary<Guid, SortedList<long, Segment>>();
+
+        private Dictionary<Guid, SortedList<long, Segment>> SegmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
 
         public BroadcastChainer() : this(new UDPBroadcastImpl())
         { }
@@ -91,7 +91,11 @@ namespace LANPaint.Services.UDP
             }
         }
 
-        public ValueTask ClearBufferAsync() => UDPBroadcaster.ClearBufferAsync();
+        public ValueTask ClearBufferAsync()
+        {
+            SegmentBuffer.Clear();
+            return UDPBroadcaster.ClearBufferAsync();
+        }
 
         public void Dispose() => UDPBroadcaster?.Dispose();
     }

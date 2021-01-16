@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
 using System.Windows.Ink;
@@ -42,7 +43,7 @@ namespace LANPaint.Model
     }
 
     [Serializable]
-    public readonly struct ARGBColor
+    public readonly struct ARGBColor : IEquatable<ARGBColor>
     {
         public static readonly ARGBColor Default = new ARGBColor(255, 0, 0, 0);
         public byte A { get; }
@@ -58,25 +59,27 @@ namespace LANPaint.Model
             B = b;
         }
 
-        public readonly Color AsColor()
-        {
-            return Color.FromArgb(A, R, G, B);
-        }
+        public readonly Color AsColor() => Color.FromArgb(A, R, G, B);
 
-        public static ARGBColor FromColor(Color color)
-        {
-            return new ARGBColor(color.A, color.R, color.G, color.B);
-        }
+        public static ARGBColor FromColor(Color color) => new ARGBColor(color.A, color.R, color.G, color.B);
 
-        public override string ToString()
-        {
-            return $"A:{A}, R:{R}, G:{G}, B:{B}";
-        }
+        public bool Equals([AllowNull] ARGBColor other) => A == other.A && R == other.R && G == other.G && B == other.B;
+
+        public override bool Equals(object obj) => obj is ARGBColor color && Equals(color);
+
+        public override int GetHashCode() => A.GetHashCode() ^ R.GetHashCode() ^ G.GetHashCode() ^ B.GetHashCode();
+
+        public static bool operator ==(ARGBColor color, ARGBColor other) => color.Equals(other);
+
+        public static bool operator !=(ARGBColor color, ARGBColor other) => !color.Equals(other);
+
+        public override string ToString() => $"A:{A}, R:{R}, G:{G}, B:{B}";
     }
 
     [Serializable]
-    public readonly struct SerializableStroke
+    public readonly struct SerializableStroke : IEquatable<SerializableStroke>
     {
+        public static readonly SerializableStroke Default = new SerializableStroke(new StrokeAttributes(), null);
         public IEnumerable<Point> Points { get; }
         public StrokeAttributes Attributes { get; }
 
@@ -86,10 +89,20 @@ namespace LANPaint.Model
             Points = points;
         }
 
-        public override bool Equals(object obj)
+        public bool Equals([AllowNull] SerializableStroke other)
         {
-            return obj is SerializableStroke stroke ? Attributes.Equals(stroke.Attributes) && Points.SequenceEqual(stroke.Points) : false;
+            if (Points != null && other.Points != null)
+            {
+                return Attributes.Equals(other.Attributes) && Points.SequenceEqual(other.Points);
+            }
+            if (Points == null && other.Points == null)
+            {
+                return Attributes.Equals(other.Attributes);
+            }
+            return false;
         }
+
+        public override bool Equals(object obj) => obj is SerializableStroke stroke && Equals(stroke);
 
         public override int GetHashCode()
         {

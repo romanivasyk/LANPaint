@@ -5,6 +5,7 @@ using LANPaint.Services.UDP;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
@@ -58,13 +59,13 @@ namespace LANPaint.ViewModels
         public RelayCommand ReceiveChangedCommand { get; private set; }
 
         private IDialogWindowService _dialogService;
-        private INetworkBroadcaster _broadcastService;
+        private Lazy<INetworkBroadcaster> _broadcastService;
         private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
         private CancellationTokenSource _receiveTokenSource;
 
-        public PaintViewModel(INetworkBroadcaster broadcastService, IDialogWindowService dialogService)
+        public PaintViewModel(Func<INetworkBroadcaster> broadcastFactory, IDialogWindowService dialogService)
         {
-            _broadcastService = broadcastService;
+            _broadcastService = new Lazy<INetworkBroadcaster>(broadcastFactory);
             _dialogService = dialogService;
 
             Strokes = new StrokeCollection();
@@ -85,6 +86,18 @@ namespace LANPaint.ViewModels
                 catch (OperationCanceledException)
                 { }
             });
+            PropertyChanged += PropertyChangedHandler;
+        }
+
+        private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        {
+            if( IsBroadcast && e.PropertyName == nameof(Background))
+            {
+                var info = new DrawingInfo(ARGBColor.FromColor(Background), SerializableStroke.Default, IsEraser);
+                var serializer = new BinaryFormatter();
+                var bytes = serializer.OneLineSerialize(info);
+                _broadcastService.Value.SendAsync(bytes).SafeFireAndForget();
+            }
         }
 
         private void OnBroadcastChanged(object param)
@@ -119,10 +132,10 @@ namespace LANPaint.ViewModels
 
             if (IsBroadcast)
             {
-                var info = new DrawingInfo(ARGBColor.Default, new SerializableStroke(), IsEraser, true);
+                var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
                 var serializer = new BinaryFormatter();
                 var bytes = serializer.OneLineSerialize(info);
-                await _broadcastService.SendAsync(bytes);
+                await _broadcastService.Value.SendAsync(bytes);
             }
         }
 
@@ -143,12 +156,12 @@ namespace LANPaint.ViewModels
         {
             return Task.Run(async () =>
             {
-                await _broadcastService.ClearBufferAsync();
+                await _broadcastService.Value.ClearBufferAsync();
                 while (true)
                 {
-                    var data = await _broadcastService.ReceiveAsync().WithCancellation(token);
+                    var data = await _broadcastService.Value.ReceiveAsync().WithCancellation(token);
 
-                    if (data == null)
+                    if (data == null || data.Length == 0)
                     {
                         continue;
                     }
@@ -163,26 +176,32 @@ namespace LANPaint.ViewModels
                         continue;
                     }
 
-                    var receivedStroke = info.Stroke;
-
-                    var stroke = new Stroke(new System.Windows.Input.StylusPointCollection(info.Stroke.Points),
+                    if(info.Background != ARGBColor.FromColor(Background))
+                    {
+                        Background = info.Background.AsColor();
+                    }
+                    
+                    if(!info.Stroke.Equals(SerializableStroke.Default))
+                    {
+                        var stroke = new Stroke(new System.Windows.Input.StylusPointCollection(info.Stroke.Points),
                         new DrawingAttributes
                         {
-                            Color = receivedStroke.Attributes.Color.AsColor(),
-                            Height = receivedStroke.Attributes.Height,
-                            Width = receivedStroke.Attributes.Width,
-                            IgnorePressure = receivedStroke.Attributes.IgnorePressure,
-                            IsHighlighter = receivedStroke.Attributes.IsHighlighter,
-                            StylusTip = receivedStroke.Attributes.StylusTip
+                            Color = info.Stroke.Attributes.Color.AsColor(),
+                            Height = info.Stroke.Attributes.Height,
+                            Width = info.Stroke.Attributes.Width,
+                            IgnorePressure = info.Stroke.Attributes.IgnorePressure,
+                            IsHighlighter = info.Stroke.Attributes.IsHighlighter,
+                            StylusTip = info.Stroke.Attributes.StylusTip
                         });
 
-                    if (info.IsEraser)
-                    {
-                        stroke.DrawingAttributes.Color = Background;
-                    }
+                        if (info.IsEraser)
+                        {
+                            stroke.DrawingAttributes.Color = Background;
+                        }
 
-                    _receivedStrokes.Add(stroke);
-                    Application.Current.Dispatcher.Invoke(() => Strokes.Add(stroke));
+                        _receivedStrokes.Add(stroke);
+                        Application.Current.Dispatcher.Invoke(() => Strokes.Add(stroke));
+                    }
                 }
             }, token);
         }
@@ -214,7 +233,7 @@ namespace LANPaint.ViewModels
                             var info = new DrawingInfo(Background, serializableStroke, IsEraser);
                             var serializer = new BinaryFormatter();
                             var bytes = serializer.OneLineSerialize(info);
-                            await _broadcastService.SendAsync(bytes);
+                            await _broadcastService.Value.SendAsync(bytes);
                         }
                     }
                 }
@@ -223,7 +242,7 @@ namespace LANPaint.ViewModels
 
         public void Dispose()
         {
-            _broadcastService?.Dispose();
+            _broadcastService.Value.Dispose();
         }
     }
 }
