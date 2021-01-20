@@ -89,6 +89,39 @@ namespace LANPaint.Model
             Points = points;
         }
 
+        public static SerializableStroke FromStroke(Stroke stroke)
+        {
+            var attr = new StrokeAttributes
+            {
+                Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
+                Height = stroke.DrawingAttributes.Height,
+                Width = stroke.DrawingAttributes.Width,
+                StylusTip = stroke.DrawingAttributes.StylusTip
+            };
+            var points = new List<Point>();
+            foreach (var point in stroke.StylusPoints)
+            {
+                points.Add(point.ToPoint());
+            }
+
+            return new SerializableStroke(attr, points);
+        }
+
+        public readonly Stroke ToStroke() => new Stroke(new System.Windows.Input.StylusPointCollection(Points),
+                            new DrawingAttributes
+                            {
+                                Color = Attributes.Color.AsColor(),
+                                Height = Attributes.Height,
+                                Width = Attributes.Width,
+                                IgnorePressure = Attributes.IgnorePressure,
+                                IsHighlighter = Attributes.IsHighlighter,
+                                StylusTip = Attributes.StylusTip
+                            });
+
+        public static bool operator ==(SerializableStroke stroke, SerializableStroke other) => stroke.Equals(other);
+
+        public static bool operator !=(SerializableStroke stroke, SerializableStroke other) => !stroke.Equals(other);
+
         public bool Equals([AllowNull] SerializableStroke other)
         {
             if (Points != null && other.Points != null)

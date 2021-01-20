@@ -11,12 +11,8 @@ namespace LANPaint.Services.UDP
         public int Port { get; }
         public IPAddress LocalIp { get; }
 
-        public UDPBroadcastBase()
-        {
-            LocalIp = GetLocalIP();
-            Port = 9876;
-            Client = new UdpClient(new IPEndPoint(LocalIp, Port));
-        }
+        public UDPBroadcastBase() : this(9876)
+        { }
 
         public UDPBroadcastBase(int port)
         {

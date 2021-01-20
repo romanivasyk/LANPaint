@@ -176,23 +176,14 @@ namespace LANPaint.ViewModels
                         continue;
                     }
 
-                    if(info.Background != ARGBColor.FromColor(Background))
+                    if(info.Background != ARGBColor.FromColor(Background) && info.Stroke == SerializableStroke.Default)
                     {
                         Background = info.Background.AsColor();
                     }
                     
                     if(!info.Stroke.Equals(SerializableStroke.Default))
                     {
-                        var stroke = new Stroke(new System.Windows.Input.StylusPointCollection(info.Stroke.Points),
-                        new DrawingAttributes
-                        {
-                            Color = info.Stroke.Attributes.Color.AsColor(),
-                            Height = info.Stroke.Attributes.Height,
-                            Width = info.Stroke.Attributes.Width,
-                            IgnorePressure = info.Stroke.Attributes.IgnorePressure,
-                            IsHighlighter = info.Stroke.Attributes.IsHighlighter,
-                            StylusTip = info.Stroke.Attributes.StylusTip
-                        });
+                        var stroke = info.Stroke.ToStroke();
 
                         if (info.IsEraser)
                         {
@@ -216,20 +207,7 @@ namespace LANPaint.ViewModels
                     {
                         if (!_receivedStrokes.Contains(stroke))
                         {
-                            var attr = new StrokeAttributes
-                            {
-                                Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
-                                Height = stroke.DrawingAttributes.Height,
-                                Width = stroke.DrawingAttributes.Width,
-                                StylusTip = stroke.DrawingAttributes.StylusTip
-                            };
-                            var points = new List<Point>();
-                            foreach (var point in stroke.StylusPoints)
-                            {
-                                points.Add(point.ToPoint());
-                            }
-
-                            var serializableStroke = new SerializableStroke(attr, points);
+                            var serializableStroke = SerializableStroke.FromStroke(stroke);
                             var info = new DrawingInfo(Background, serializableStroke, IsEraser);
                             var serializer = new BinaryFormatter();
                             var bytes = serializer.OneLineSerialize(info);
