@@ -48,7 +48,7 @@ namespace LANPaint.Services.UDP
             {
                 address = ipHelper.GetWirelessLocalIP();
 
-                if (LocalIp.Equals(IPAddress.None))
+                if (address.Equals(IPAddress.None))
                 {
                     throw new Exception("Local NIC with IPv4 address not found!");
                 }

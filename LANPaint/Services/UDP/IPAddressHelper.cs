@@ -7,12 +7,20 @@ namespace LANPaint.Services.UDP
     {
         public IPAddress GetEthernetLocalIP()
         {
+            if (NetworkInterface.GetIsNetworkAvailable() == false)
+            {
+                return IPAddress.None;
+            }
+
             foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
             {
-                var address = GetIPv4(nic, NetworkInterfaceType.Ethernet);
-                if (!address.Equals(IPAddress.None))
+                if (nic.OperationalStatus == OperationalStatus.Up && !nic.Name.Contains("Virtual"))
                 {
-                    return address;
+                    var address = GetIPv4(nic, NetworkInterfaceType.Ethernet);
+                    if (!address.Equals(IPAddress.None))
+                    {
+                        return address;
+                    }
                 }
             }
 
@@ -21,12 +29,20 @@ namespace LANPaint.Services.UDP
 
         public IPAddress GetWirelessLocalIP()
         {
+            if (NetworkInterface.GetIsNetworkAvailable() == false)
+            {
+                return IPAddress.None;
+            }
+
             foreach (NetworkInterface nic in NetworkInterface.GetAllNetworkInterfaces())
             {
-                var address = GetIPv4(nic, NetworkInterfaceType.Wireless80211);
-                if (!address.Equals(IPAddress.None))
+                if (nic.OperationalStatus == OperationalStatus.Up && !nic.Name.Contains("Virtual"))
                 {
-                    return address;
+                    var address = GetIPv4(nic, NetworkInterfaceType.Wireless80211);
+                    if (!address.Equals(IPAddress.None))
+                    {
+                        return address;
+                    }
                 }
             }
 
