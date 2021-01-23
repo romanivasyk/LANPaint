@@ -1,8 +1,8 @@
 ﻿using Microsoft.Win32;
 
-namespace LANPaint.Services
+namespace LANPaint.DialogServices
 {
-    public class WPFDialogService : IDialogWindowService
+    public class WPFDialogService : IOpenSaveDialogService
     {
         public string OpenFileDialog(string startPath = null)
         {

@@ -1,8 +1,8 @@
-﻿using LANPaint.Services;
-using LANPaint.ViewModels;
-using System.Windows.Media;
-using System.Windows;
+﻿using LANPaint.DialogServices;
 using LANPaint.Services.UDP;
+using LANPaint.ViewModels;
+using System.Windows;
+using System.Windows.Media;
 
 namespace LANPaint
 {
@@ -15,7 +15,7 @@ namespace LANPaint
         public MainWindow()
         {
             InitializeComponent();
-            var context = new PaintViewModel(() => new BroadcastChainer(), new WPFDialogService());
+            var context = new PaintViewModel(new BroadcastChainer(), new WPFDialogService());
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);
