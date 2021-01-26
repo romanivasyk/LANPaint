@@ -65,6 +65,12 @@ namespace LANPaint
             private set => base.DefaultDrawingAttributes = value;
         }
 
+        public new bool UseCustomCursor 
+        {
+            get => base.UseCustomCursor;
+            private set => base.UseCustomCursor = value; 
+        }
+
         //Field used to store StrokeColor in case erasing mode enabled
         //and restore it after erasing mode disabled
         private Color _cachedStrokeColor;
@@ -82,6 +88,7 @@ namespace LANPaint
         {
             _cachedStrokeColor = DefaultDrawingAttributes.Color;
             _eraserStrokes = new List<Stroke>();
+            UseCustomCursor = true;
             Cursor = Cursors.Pen;
         }
 
