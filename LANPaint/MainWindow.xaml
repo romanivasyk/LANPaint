@@ -84,7 +84,7 @@
             </ToolBar>
         </ToolBarTray>
         <Border Grid.Row="1">
-            <local:Board x:Name="DrawingBoard" UseCustomCursor="True" Cursor="Arrow" StrokeThickness="{Binding ElementName=ToolThickness, Path=Text, Mode=TwoWay, Converter={StaticResource ThicknessConverter}}"
+            <local:Board x:Name="DrawingBoard" UseCustomCursor="True" StrokeThickness="{Binding ElementName=ToolThickness, Path=Text, Mode=TwoWay, Converter={StaticResource ThicknessConverter}}"
                      StrokeColor="{Binding ElementName=PenColorPicker, Path=SelectedColor, Mode=TwoWay}" 
                      Background="{Binding Background, Mode=TwoWay, Converter={StaticResource ColorBrushConverter}}"
                      IsEraser="{Binding IsEraser}"

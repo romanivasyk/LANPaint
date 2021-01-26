@@ -10,20 +10,24 @@ namespace LANPaint
 {
     public class Board : InkCanvas
     {
-        public static readonly DependencyProperty MousePositionProperty = DependencyProperty.Register("MousePosition", typeof(Point), typeof(Board));
+        public static readonly DependencyProperty MousePositionProperty = DependencyProperty.Register(
+            nameof(MousePosition), typeof(Point), typeof(Board));
 
         public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
-            "StrokeThickness", typeof(double), typeof(Board),
+            nameof(StrokeThickness), typeof(double), typeof(Board),
             new FrameworkPropertyMetadata(default(double), FrameworkPropertyMetadataOptions.AffectsRender, OnThicknessChanged));
 
         public static readonly DependencyProperty StrokeColorProperty = DependencyProperty.Register(
-            "StrokeColor", typeof(Color), typeof(Board),
+            nameof(StrokeColor), typeof(Color), typeof(Board),
             new FrameworkPropertyMetadata(default(Color), FrameworkPropertyMetadataOptions.AffectsRender, OnColorChanged));
 
         public static readonly DependencyProperty IsEraserProperty = DependencyProperty.Register(
-            "IsEraser", typeof(bool), typeof(Board),
+            nameof(IsEraser), typeof(bool), typeof(Board),
             new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, OnIsEraserChanged));
 
+        public static readonly DependencyProperty EraserCursorProperty = DependencyProperty.Register(
+            nameof(EraserCursor), typeof(Cursor), typeof(Board),
+            new PropertyMetadata(GetDefaultEraserCursor()));
 
         public Point MousePosition
         {
@@ -49,6 +53,12 @@ namespace LANPaint
             set => SetValue(IsEraserProperty, value);
         }
 
+        public Cursor EraserCursor
+        {
+            get => (Cursor)GetValue(EraserCursorProperty);
+            set => SetValue(EraserCursorProperty, value);
+        }
+
         public new DrawingAttributes DefaultDrawingAttributes
         {
             get => base.DefaultDrawingAttributes;
@@ -72,6 +82,7 @@ namespace LANPaint
         {
             _cachedStrokeColor = DefaultDrawingAttributes.Color;
             _eraserStrokes = new List<Stroke>();
+            Cursor = Cursors.Pen;
         }
 
         protected override void OnInitialized(EventArgs e)
@@ -152,10 +163,25 @@ namespace LANPaint
             {
                 control._cachedStrokeColor = control.DefaultDrawingAttributes.Color;
                 control.DefaultDrawingAttributes.Color = ((SolidColorBrush)control.Background).Color;
+                control.Cursor = control.EraserCursor;
             }
             else
             {
                 control.DefaultDrawingAttributes.Color = control._cachedStrokeColor;
+                control.Cursor = Cursors.Pen;
+            }
+        }
+
+        private static object GetDefaultEraserCursor()
+        {
+            try
+            {
+                var eraserCursorResourceStream = Application.GetResourceStream(new Uri("Resources/eraser.cur", UriKind.Relative));
+                return eraserCursorResourceStream != null ? new Cursor(eraserCursorResourceStream.Stream) : Cursors.Arrow;
+            }
+            catch
+            {
+                return Cursors.Arrow;
             }
         }
     }
