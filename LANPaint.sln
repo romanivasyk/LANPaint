@@ -5,10 +5,6 @@ VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LANPaint", "LANPaint\LANPaint.csproj", "{2D13BE55-B104-4538-BEAE-91BB04B59F30}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LANPaint.UnitTests", "LANPaint.UnitTests\LANPaint.UnitTests.csproj", "{A59D66C1-68E5-456B-AB81-62FD2A8FEFDB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodePerformance", "CodePerformance\CodePerformance.csproj", "{AE7E241D-9879-42E1-82CB-4BED083E1387}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,14 +15,6 @@ Global
 		{2D13BE55-B104-4538-BEAE-91BB04B59F30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D13BE55-B104-4538-BEAE-91BB04B59F30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D13BE55-B104-4538-BEAE-91BB04B59F30}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A59D66C1-68E5-456B-AB81-62FD2A8FEFDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A59D66C1-68E5-456B-AB81-62FD2A8FEFDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A59D66C1-68E5-456B-AB81-62FD2A8FEFDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A59D66C1-68E5-456B-AB81-62FD2A8FEFDB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AE7E241D-9879-42E1-82CB-4BED083E1387}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AE7E241D-9879-42E1-82CB-4BED083E1387}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AE7E241D-9879-42E1-82CB-4BED083E1387}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AE7E241D-9879-42E1-82CB-4BED083E1387}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
