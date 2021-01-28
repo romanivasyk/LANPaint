@@ -1,16 +1,13 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
 {
     public class UDPBroadcastImpl : UDPBroadcastBase
     {
-        public UDPBroadcastImpl() { }
-        public UDPBroadcastImpl(int port) : base(port) { }
-        public UDPBroadcastImpl(int port, string ipAddress) : base(ipAddress, port) { }
+        public UDPBroadcastImpl(IPAddress iPAddress) : base(iPAddress) { }
+        public UDPBroadcastImpl(IPAddress iPAddress, int port) : base(iPAddress, port) { }
 
         public override Task<long> SendAsync(byte[] bytes)
         {

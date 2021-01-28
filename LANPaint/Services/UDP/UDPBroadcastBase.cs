@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -11,19 +10,11 @@ namespace LANPaint.Services.UDP
         public int Port { get; }
         public IPAddress LocalIp { get; }
 
-        public UDPBroadcastBase() : this(9876)
-        { }
+        public UDPBroadcastBase(IPAddress iPAddress) : this(iPAddress, 9876) { }
 
-        public UDPBroadcastBase(int port)
+        public UDPBroadcastBase(IPAddress iPAddress, int port)
         {
-            LocalIp = GetLocalIP();
-            Port = port;
-            Client = new UdpClient(new IPEndPoint(LocalIp, Port));
-        }
-
-        public UDPBroadcastBase(string ip, int port)
-        {
-            LocalIp = IPAddress.Parse(ip);
+            LocalIp = iPAddress;
             Port = port;
             Client = new UdpClient(new IPEndPoint(LocalIp, Port));
         }
@@ -37,24 +28,6 @@ namespace LANPaint.Services.UDP
             {
                 await Client.ReceiveAsync();
             }
-        }
-
-        protected virtual IPAddress GetLocalIP()
-        {
-            var ipHelper = new IPAddressHelper();
-            var address = ipHelper.GetEthernetLocalIP();
-
-            if (address.Equals(IPAddress.None))
-            {
-                address = ipHelper.GetWirelessLocalIP();
-
-                if (address.Equals(IPAddress.None))
-                {
-                    throw new Exception("Local NIC with IPv4 address not found!");
-                }
-            }
-
-            return address;
         }
 
         public void Dispose()

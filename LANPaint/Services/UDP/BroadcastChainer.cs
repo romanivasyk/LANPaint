@@ -9,19 +9,18 @@ namespace LANPaint.Services.UDP
 {
     public class BroadcastChainer : INetworkBroadcaster
     {
-        public int PayloadSegmentLength { get; } = 8192;
-
+        public int SegmentPayloadLength { get; }
         public INetworkBroadcaster UDPBroadcaster { get; }
-        public BinaryFormatter Formatter { get; } = new BinaryFormatter();
 
-        private Dictionary<Guid, SortedList<long, Segment>> SegmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
+        private BinaryFormatter _formatter;
+        private Dictionary<Guid, SortedList<long, Segment>> _segmentBuffer;
 
-        public BroadcastChainer() : this(new UDPBroadcastImpl())
-        { }
-
-        public BroadcastChainer(INetworkBroadcaster udpBroadcaster)
+        public BroadcastChainer(INetworkBroadcaster udpBroadcaster, int segmentPayloadLength = 8192)
         {
             UDPBroadcaster = udpBroadcaster;
+            SegmentPayloadLength = segmentPayloadLength;
+            _formatter = new BinaryFormatter();
+            _segmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
         }
 
         public Task<long> SendAsync(byte[] payload)
@@ -29,22 +28,22 @@ namespace LANPaint.Services.UDP
             return Task.Run(async () =>
             {
                 var sequenceGUID = Guid.NewGuid();
-                var sequenceLength = payload.LongLength % PayloadSegmentLength > 0 ?
-                                     payload.LongLength / PayloadSegmentLength + 1 :
-                                     payload.LongLength / PayloadSegmentLength;
+                var sequenceLength = payload.LongLength % SegmentPayloadLength > 0 ?
+                                     payload.LongLength / SegmentPayloadLength + 1 :
+                                     payload.LongLength / SegmentPayloadLength;
 
                 for (int i = 0; i < sequenceLength; i++)
                 {
-                    var beginWith = i * PayloadSegmentLength;
+                    var beginWith = i * SegmentPayloadLength;
 
                     int endBefore = i + 1 == sequenceLength ?
                                              payload.Length :
-                                             beginWith + PayloadSegmentLength;
+                                             beginWith + SegmentPayloadLength;
 
                     var segment = new Segment(i, payload[beginWith..endBefore]);
                     var packet = new Packet(sequenceGUID, sequenceLength, segment);
 
-                    byte[] bytes = Formatter.OneLineSerialize(packet);
+                    byte[] bytes = _formatter.OneLineSerialize(packet);
                     await UDPBroadcaster.SendAsync(bytes);
                 }
 
@@ -58,22 +57,22 @@ namespace LANPaint.Services.UDP
             {
                 var bytes = await UDPBroadcaster.ReceiveAsync();
 
-                Packet packet = Formatter.OneLineDeserialize<Packet>(bytes);
+                Packet packet = _formatter.OneLineDeserialize<Packet>(bytes);
 
-                if (SegmentBuffer.ContainsKey(packet.SequenceGUID))
+                if (_segmentBuffer.ContainsKey(packet.SequenceGUID))
                 {
-                    SegmentBuffer[packet.SequenceGUID].Add(packet.Segment.SequenceIndex, packet.Segment);
-                    if (SegmentBuffer[packet.SequenceGUID].Last().Key + 1 == packet.SequenceLength)
+                    _segmentBuffer[packet.SequenceGUID].Add(packet.Segment.SequenceIndex, packet.Segment);
+                    if (_segmentBuffer[packet.SequenceGUID].Last().Key + 1 == packet.SequenceLength)
                     {
-                        var messageLength = SegmentBuffer[packet.SequenceGUID].Values.Sum(segment => segment.Payload.LongLength);
+                        var messageLength = _segmentBuffer[packet.SequenceGUID].Values.Sum(segment => segment.Payload.LongLength);
                         var message = new byte[messageLength];
                         var messageOffset = 0;
-                        foreach (var segment in SegmentBuffer[packet.SequenceGUID].Values)
+                        foreach (var segment in _segmentBuffer[packet.SequenceGUID].Values)
                         {
                             Buffer.BlockCopy(segment.Payload, 0, message, messageOffset, segment.Payload.Length);
                             messageOffset += segment.Payload.Length;
                         }
-                        SegmentBuffer.Remove(packet.SequenceGUID);
+                        _segmentBuffer.Remove(packet.SequenceGUID);
                         return message;
                     }
                 }
@@ -86,14 +85,14 @@ namespace LANPaint.Services.UDP
 
                     var segments = new SortedList<long, Segment>();
                     segments.Add(packet.Segment.SequenceIndex, packet.Segment);
-                    SegmentBuffer.Add(packet.SequenceGUID, segments);
+                    _segmentBuffer.Add(packet.SequenceGUID, segments);
                 }
             }
         }
 
         public ValueTask ClearBufferAsync()
         {
-            SegmentBuffer.Clear();
+            _segmentBuffer.Clear();
             return UDPBroadcaster.ClearBufferAsync();
         }
 
