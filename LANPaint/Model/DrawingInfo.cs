@@ -45,6 +45,7 @@ namespace LANPaint.Model
     [Serializable]
     public readonly struct ARGBColor : IEquatable<ARGBColor>
     {
+        [NonSerialized]
         public static readonly ARGBColor Default = new ARGBColor(255, 0, 0, 0);
         public byte A { get; }
         public byte R { get; }
