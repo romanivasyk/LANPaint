@@ -5,7 +5,7 @@ using System.Windows.Data;
 namespace LANPaint.Converters
 {
     [ValueConversion(typeof(string), typeof(double))]
-    class ThicknessConverter : IValueConverter
+    public class ThicknessConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

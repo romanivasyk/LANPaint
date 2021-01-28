@@ -77,7 +77,7 @@ namespace LANPaint.UserControls
 
         //Store strokes used as eraser to change their color in case
         //background color will be changed
-        private List<Stroke> _eraserStrokes;
+        private readonly List<Stroke> _eraserStrokes;
 
         static Board()
         {
@@ -123,12 +123,11 @@ namespace LANPaint.UserControls
                     _eraserStrokes.AddRange(e.Added);
                 }
             }
-            if (e.Removed.Count > 0)
+
+            if (e.Removed.Count <= 0) return;
+            foreach (var item in e.Removed)
             {
-                foreach (var item in e.Removed)
-                {
-                    _eraserStrokes.Remove(item);
-                }
+                _eraserStrokes.Remove(item);
             }
         }
 

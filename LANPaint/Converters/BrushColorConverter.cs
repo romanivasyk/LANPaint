@@ -10,22 +10,12 @@ namespace LANPaint.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is null)
-            {
-                return null;
-            }
-
-            return ((SolidColorBrush)value).Color;
+            return ((SolidColorBrush) value)?.Color;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is null)
-            {
-                return null;
-            }
-
-            return new SolidColorBrush((Color)value);
+            return value is null ? null : new SolidColorBrush((Color)value);
         }
     }
 }

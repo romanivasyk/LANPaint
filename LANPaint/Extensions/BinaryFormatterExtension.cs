@@ -6,17 +6,15 @@ namespace LANPaint.Extensions
 {
     public static class BinaryFormatterExtension
     {
-        private static readonly RecyclableMemoryStreamManager _memoryStreamManager = new RecyclableMemoryStreamManager();
+        private static readonly RecyclableMemoryStreamManager MemoryStreamManager = new RecyclableMemoryStreamManager();
 
         public static byte[] OneLineSerialize(this BinaryFormatter formatter, object data)
         {
             byte[] bytes = null;
 
-            using (var stream = _memoryStreamManager.GetStream())
-            {
-                formatter.Serialize(stream, data);
-                bytes = stream.ToArray();
-            }
+            using var stream = MemoryStreamManager.GetStream();
+            formatter.Serialize(stream, data);
+            bytes = stream.ToArray();
 
             return bytes;
         }
@@ -25,12 +23,10 @@ namespace LANPaint.Extensions
         {
             var deserializedData = default(TData);
 
-            using (var stream = _memoryStreamManager.GetStream())
-            {
-                stream.Write(data, 0, data.Length);
-                stream.Seek(0, SeekOrigin.Begin);
-                deserializedData = (TData)formatter.Deserialize(stream);
-            }
+            using var stream = MemoryStreamManager.GetStream();
+            stream.Write(data, 0, data.Length);
+            stream.Seek(0, SeekOrigin.Begin);
+            deserializedData = (TData)formatter.Deserialize(stream);
 
             return deserializedData;
         }

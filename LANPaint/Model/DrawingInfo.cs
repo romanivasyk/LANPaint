@@ -99,12 +99,8 @@ namespace LANPaint.Model
                 Width = stroke.DrawingAttributes.Width,
                 StylusTip = stroke.DrawingAttributes.StylusTip
             };
-            var points = new List<Point>();
-            foreach (var point in stroke.StylusPoints)
-            {
-                points.Add(point.ToPoint());
-            }
 
+            var points = stroke.StylusPoints.Select(point => point.ToPoint()).ToList();
             return new SerializableStroke(attr, points);
         }
 
@@ -140,12 +136,7 @@ namespace LANPaint.Model
 
         public override int GetHashCode()
         {
-            int pointsHash = default;
-            foreach (var point in Points)
-            {
-                pointsHash += point.GetHashCode() ^ pointsHash;
-            }
-
+            var pointsHash = Points.Aggregate<Point, int>(default, (current, point) => current + (point.GetHashCode() ^ current));
             return Attributes.GetHashCode() ^ pointsHash;
         }
     }

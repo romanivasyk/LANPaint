@@ -16,16 +16,11 @@ namespace LANPaint.ViewModels
 
         public RelayCommand(Action<object> action, Predicate<object> canExecutePredicate = null)
         {
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action), $"Command action cannot be null!");
-            }
-
-            Action = action;
+            Action = action ?? throw new ArgumentNullException(nameof(action), $"Command action cannot be null!");
             CanExecutePredicate = canExecutePredicate;
         }
 
-        public bool CanExecute(object parameter) => CanExecutePredicate == null ? true : CanExecutePredicate(parameter);
+        public bool CanExecute(object parameter) => CanExecutePredicate?.Invoke(parameter) ?? true;
 
         public void Execute(object parameter) => Action(parameter);
     }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace LANPaint.ViewModels
@@ -9,14 +10,11 @@ namespace LANPaint.ViewModels
 
         protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
         {
-            if (storage != null && !storage.Equals(value) || value != null)
-            {
-                storage = value;
-                NotifyPropertyChanged(propertyName);
-                return true;
-            }
+            if (EqualityComparer<T>.Default.Equals(storage, value)) return false;
 
-            return false;
+            storage = value;
+            NotifyPropertyChanged(propertyName);
+            return true;
         }
 
         protected void NotifyPropertyChanged([CallerMemberName] string propertyName = "")

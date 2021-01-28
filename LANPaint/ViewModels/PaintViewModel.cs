@@ -57,30 +57,31 @@ namespace LANPaint.ViewModels
         public RelayCommand BroadcastChangedCommand { get; private set; }
         public RelayCommand ReceiveChangedCommand { get; private set; }
 
-        private IOpenSaveDialogService _dialogService;
-        private INetworkBroadcaster _broadcastService;
-        private ConcurrentBag<Stroke> _receivedStrokes = new ConcurrentBag<Stroke>();
+        private readonly IOpenSaveDialogService _dialogService;
+        private readonly INetworkBroadcaster _broadcastService;
+        private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private CancellationTokenSource _receiveTokenSource;
 
         public PaintViewModel(INetworkBroadcaster broadcastService, IOpenSaveDialogService dialogService)
         {
             _broadcastService = broadcastService;
             _dialogService = dialogService;
+            _receivedStrokes = new ConcurrentBag<Stroke>();
 
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
 
-            ClearCommand = new RelayCommand(async (param) => await ClearCommandHandler(param), param => Strokes.Count > 0);
+            ClearCommand = new RelayCommand(async (param) => await ClearCommandHandler(), param => Strokes.Count > 0);
             ChoosePenCommand = new RelayCommand(param => IsEraser = false, param => IsEraser);
             ChooseEraserCommand = new RelayCommand(param => IsEraser = true, param => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
-            BroadcastChangedCommand = new RelayCommand(param => OnBroadcastChanged(param));
+            BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged);
             ReceiveChangedCommand = new RelayCommand(async (param) =>
             {
                 try
                 {
-                    await OnReceiveChanged(param);
+                    await OnReceiveChanged();
                 }
                 catch (OperationCanceledException)
                 { }
@@ -111,7 +112,7 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private async ValueTask OnReceiveChanged(object param)
+        private async ValueTask OnReceiveChanged()
         {
             if (IsReceive)
             {
@@ -124,7 +125,7 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private async ValueTask ClearCommandHandler(object obj)
+        private async ValueTask ClearCommandHandler()
         {
             Strokes.Clear();
             _receivedStrokes.Clear();
@@ -180,40 +181,31 @@ namespace LANPaint.ViewModels
                         Background = info.Background.AsColor();
                     }
 
-                    if (!info.Stroke.Equals(SerializableStroke.Default))
+                    if (info.Stroke.Equals(SerializableStroke.Default)) continue;
+                    var stroke = info.Stroke.ToStroke();
+
+                    if (info.IsEraser)
                     {
-                        var stroke = info.Stroke.ToStroke();
-
-                        if (info.IsEraser)
-                        {
-                            stroke.DrawingAttributes.Color = Background;
-                        }
-
-                        _receivedStrokes.Add(stroke);
-                        Application.Current.Dispatcher.Invoke(() => Strokes.Add(stroke));
+                        stroke.DrawingAttributes.Color = Background;
                     }
+
+                    _receivedStrokes.Add(stroke);
+                    Application.Current.Dispatcher.Invoke(() => Strokes.Add(stroke));
                 }
             }, token);
         }
 
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
-            if (e.Added.Count > 0)
+            if (e.Added.Count <= 0 || !IsBroadcast) return;
+            foreach (var stroke in e.Added)
             {
-                if (IsBroadcast)
-                {
-                    foreach (var stroke in e.Added)
-                    {
-                        if (!_receivedStrokes.Contains(stroke))
-                        {
-                            var serializableStroke = SerializableStroke.FromStroke(stroke);
-                            var info = new DrawingInfo(Background, serializableStroke, IsEraser);
-                            var serializer = new BinaryFormatter();
-                            var bytes = serializer.OneLineSerialize(info);
-                            await _broadcastService.SendAsync(bytes);
-                        }
-                    }
-                }
+                if (_receivedStrokes.Contains(stroke)) continue;
+                var serializableStroke = SerializableStroke.FromStroke(stroke);
+                var info = new DrawingInfo(Background, serializableStroke, IsEraser);
+                var serializer = new BinaryFormatter();
+                var bytes = serializer.OneLineSerialize(info);
+                await _broadcastService.SendAsync(bytes);
             }
         }
 
