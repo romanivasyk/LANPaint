@@ -10,9 +10,9 @@ namespace LANPaint.Services.UDP
         public int Port { get; }
         public IPAddress LocalIp { get; }
 
-        public UDPBroadcastBase(IPAddress iPAddress) : this(iPAddress, 9876) { }
+        protected UDPBroadcastBase(IPAddress iPAddress) : this(iPAddress, 9876) { }
 
-        public UDPBroadcastBase(IPAddress iPAddress, int port)
+        protected UDPBroadcastBase(IPAddress iPAddress, int port)
         {
             LocalIp = iPAddress;
             Port = port;

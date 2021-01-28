@@ -14,7 +14,7 @@ namespace LANPaint.Services.UDP
             return Task.Run(() => (long)Client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), Port));
         }
 
-        public async override Task<byte[]> ReceiveAsync()
+        public override async Task<byte[]> ReceiveAsync()
         {
             UdpReceiveResult result;
             do

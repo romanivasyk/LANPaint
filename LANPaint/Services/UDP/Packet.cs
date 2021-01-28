@@ -5,13 +5,13 @@ namespace LANPaint.Services.UDP
     [Serializable]
     public readonly struct Packet
     {
-        public Guid SequenceGUID { get; }
+        public Guid SequenceGuid { get; }
         public long SequenceLength { get; }
         public Segment Segment { get; }
 
         public Packet(Guid sequenceGuid, long sequenceLength, Segment segment)
         {
-            SequenceGUID = sequenceGuid;
+            SequenceGuid = sequenceGuid;
             SequenceLength = sequenceLength;
             Segment = segment;
         }
