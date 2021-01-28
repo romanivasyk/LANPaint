@@ -4,7 +4,7 @@ using LANPaint.ViewModels;
 using System.Windows;
 using System.Windows.Media;
 
-namespace LANPaint
+namespace LANPaint.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
