@@ -9,9 +9,9 @@ namespace LANPaint.Services.UDP
         public UDPBroadcastImpl(IPAddress iPAddress) : base(iPAddress) { }
         public UDPBroadcastImpl(IPAddress iPAddress, int port) : base(iPAddress, port) { }
 
-        public override Task<long> SendAsync(byte[] bytes)
+        public override Task<int> SendAsync(byte[] bytes)
         {
-            return Task.Run(() => (long)Client.Send(bytes, bytes.Length, IPAddress.Broadcast.ToString(), Port));
+            return Client.SendAsync(bytes, bytes.Length, new IPEndPoint(IPAddress.Broadcast, Port));
         }
 
         public override async Task<byte[]> ReceiveAsync()

@@ -23,7 +23,7 @@ namespace LANPaint.Services.UDP
             _segmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
         }
 
-        public Task<long> SendAsync(byte[] payload)
+        public Task<int> SendAsync(byte[] payload)
         {
             return Task.Run(async () =>
             {
@@ -47,7 +47,7 @@ namespace LANPaint.Services.UDP
                     await UdpBroadcaster.SendAsync(bytes);
                 }
 
-                return payload.LongLength;
+                return payload.Length;
             });
         }
 

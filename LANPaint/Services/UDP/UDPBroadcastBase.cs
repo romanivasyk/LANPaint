@@ -19,7 +19,7 @@ namespace LANPaint.Services.UDP
             Client = new UdpClient(new IPEndPoint(LocalIp, Port));
         }
 
-        public abstract Task<long> SendAsync(byte[] bytes);
+        public abstract Task<int> SendAsync(byte[] bytes);
         public abstract Task<byte[]> ReceiveAsync();
 
         public virtual async ValueTask ClearBufferAsync()
