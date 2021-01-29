@@ -1,6 +1,6 @@
-﻿using LANPaint.Extensions;
+﻿using LANPaint.DialogServices;
+using LANPaint.Extensions;
 using LANPaint.Model;
-using LANPaint.DialogServices;
 using LANPaint.Services.UDP;
 using System;
 using System.Collections.Concurrent;
@@ -9,7 +9,6 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 
@@ -71,33 +70,23 @@ namespace LANPaint.ViewModels
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
 
-            ClearCommand = new RelayCommand(async (param) => await ClearCommandHandler(), param => Strokes.Count > 0);
+            ClearCommand = new RelayCommand(ClearCommandHandler, param => Strokes.Count > 0);
             ChoosePenCommand = new RelayCommand(param => IsEraser = false, param => IsEraser);
             ChooseEraserCommand = new RelayCommand(param => IsEraser = true, param => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
             BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged);
-            ReceiveChangedCommand = new RelayCommand(async (param) =>
-            {
-                try
-                {
-                    await OnReceiveChanged();
-                }
-                catch (OperationCanceledException)
-                { }
-            });
+            ReceiveChangedCommand = new RelayCommand(OnReceiveChanged);
             PropertyChanged += PropertyChangedHandler;
         }
 
-        private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
         {
-            if (IsBroadcast && e.PropertyName == nameof(Background))
-            {
-                var info = new DrawingInfo(ARGBColor.FromColor(Background), SerializableStroke.Default, IsEraser);
-                var serializer = new BinaryFormatter();
-                var bytes = serializer.OneLineSerialize(info);
-                _broadcastService.SendAsync(bytes).SafeFireAndForget();
-            }
+            if (!IsBroadcast || e.PropertyName != nameof(Background)) return;
+            var info = new DrawingInfo(ARGBColor.FromColor(Background), SerializableStroke.Default, IsEraser);
+            var serializer = new BinaryFormatter();
+            var bytes = serializer.OneLineSerialize(info);
+            await _broadcastService.SendAsync(bytes);
         }
 
         private void OnBroadcastChanged(object param)
@@ -112,12 +101,21 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private async ValueTask OnReceiveChanged()
+        private async void OnReceiveChanged(object param)
         {
             if (IsReceive)
             {
                 _receiveTokenSource = new CancellationTokenSource();
-                await Receive(_receiveTokenSource.Token);
+                try
+                {
+                    await Receive(_receiveTokenSource.Token);
+                }
+                catch (OperationCanceledException)
+                { }
+                finally
+                {
+                    _receiveTokenSource?.Dispose();
+                }
             }
             else
             {
@@ -125,18 +123,16 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private async ValueTask ClearCommandHandler()
+        private async void ClearCommandHandler(object param)
         {
             Strokes.Clear();
             _receivedStrokes.Clear();
 
-            if (IsBroadcast)
-            {
-                var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
-                var serializer = new BinaryFormatter();
-                var bytes = serializer.OneLineSerialize(info);
-                await _broadcastService.SendAsync(bytes);
-            }
+            if (!IsBroadcast) return;
+            var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
+            var serializer = new BinaryFormatter();
+            var bytes = serializer.OneLineSerialize(info);
+            await _broadcastService.SendAsync(bytes);
         }
 
         private void OnSaveExecuted(object param)
@@ -152,61 +148,65 @@ namespace LANPaint.ViewModels
             //TODO: Read file, deserialize to object and apply to current border
         }
 
-        private Task Receive(CancellationToken token)
+        private async Task Receive(CancellationToken token)
         {
-            return Task.Run(async () =>
+            await _broadcastService.ClearBufferAsync();
+            while (true)
             {
-                await _broadcastService.ClearBufferAsync();
-                while (true)
+                var data = await _broadcastService.ReceiveAsync(token);
+
+                if (data == null || data.Length == 0)
                 {
-                    var data = await _broadcastService.ReceiveAsync().WithCancellation(token);
-
-                    if (data == null || data.Length == 0)
-                    {
-                        continue;
-                    }
-
-                    var binarySerializer = new BinaryFormatter();
-                    var info = binarySerializer.OneLineDeserialize<DrawingInfo>(data);
-
-                    if (info.ClearBoard)
-                    {
-                        Application.Current.Dispatcher.Invoke(() => Strokes.Clear());
-                        _receivedStrokes.Clear();
-                        continue;
-                    }
-
-                    if (info.Background != ARGBColor.FromColor(Background) && info.Stroke == SerializableStroke.Default)
-                    {
-                        Background = info.Background.AsColor();
-                    }
-
-                    if (info.Stroke.Equals(SerializableStroke.Default)) continue;
-                    var stroke = info.Stroke.ToStroke();
-
-                    if (info.IsEraser)
-                    {
-                        stroke.DrawingAttributes.Color = Background;
-                    }
-
-                    _receivedStrokes.Add(stroke);
-                    Application.Current.Dispatcher.Invoke(() => Strokes.Add(stroke));
+                    continue;
                 }
-            }, token);
+
+                var info = await Task.Run(() =>
+                {
+                    var binarySerializer = new BinaryFormatter();
+                    return binarySerializer.OneLineDeserialize<DrawingInfo>(data);
+                });
+
+
+                if (info.ClearBoard)
+                {
+                    Strokes.Clear();
+                    _receivedStrokes.Clear();
+                    continue;
+                }
+
+                if (info.Background != ARGBColor.FromColor(Background) && info.Stroke == SerializableStroke.Default)
+                {
+                    Background = info.Background.AsColor();
+                }
+
+                if (info.Stroke.Equals(SerializableStroke.Default)) continue;
+                var stroke = info.Stroke.ToStroke();
+
+                if (info.IsEraser)
+                {
+                    stroke.DrawingAttributes.Color = Background;
+                }
+
+                _receivedStrokes.Add(stroke);
+                Strokes.Add(stroke);
+            }
         }
 
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
             if (e.Added.Count <= 0 || !IsBroadcast) return;
-            foreach (var stroke in e.Added)
+            await Task.Run(async () =>
             {
-                if (_receivedStrokes.Contains(stroke)) continue;
-                var serializableStroke = SerializableStroke.FromStroke(stroke);
-                var info = new DrawingInfo(Background, serializableStroke, IsEraser);
-                var serializer = new BinaryFormatter();
-                var bytes = serializer.OneLineSerialize(info);
-                await _broadcastService.SendAsync(bytes);
-            }
+                foreach (var stroke in e.Added)
+                {
+                    if (_receivedStrokes.Contains(stroke)) continue;
+                    var serializableStroke = SerializableStroke.FromStroke(stroke);
+                    var info = new DrawingInfo(Background, serializableStroke, IsEraser);
+                    var serializer = new BinaryFormatter();
+                    var bytes = serializer.OneLineSerialize(info);
+                    await _broadcastService.SendAsync(bytes);
+                }
+            });
         }
 
         public void Dispose()

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
@@ -7,20 +8,20 @@ namespace LANPaint.Services.UDP
     public abstract class UDPBroadcastBase : INetworkBroadcaster
     {
         public UdpClient Client { get; }
-        public int Port { get; }
-        public IPAddress LocalIp { get; }
+        public IPEndPoint LocalEndPoint { get; }
+        public IPEndPoint BroadcastEndPoint { get; }
 
         protected UDPBroadcastBase(IPAddress iPAddress) : this(iPAddress, 9876) { }
 
         protected UDPBroadcastBase(IPAddress iPAddress, int port)
         {
-            LocalIp = iPAddress;
-            Port = port;
-            Client = new UdpClient(new IPEndPoint(LocalIp, Port));
+            LocalEndPoint = new IPEndPoint(iPAddress, port);
+            Client = new UdpClient(LocalEndPoint);
+            BroadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, port);
         }
 
+        public abstract Task<byte[]> ReceiveAsync(CancellationToken token = default);
         public abstract Task<int> SendAsync(byte[] bytes);
-        public abstract Task<byte[]> ReceiveAsync();
 
         public virtual async ValueTask ClearBufferAsync()
         {

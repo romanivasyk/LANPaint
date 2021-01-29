@@ -12,11 +12,10 @@ namespace LANPaint.Views
     /// </summary>
     public partial class MainWindow : Window
     {
-
-        public MainWindow()
+        public MainWindow(string iPAddress)
         {
             InitializeComponent();
-            var context = new PaintViewModel(new BroadcastChainer(new UDPBroadcastImpl(IPAddress.Parse("192.168.0.100"))), new WPFDialogService());
+            var context = new PaintViewModel(new BroadcastChainer(new UDPBroadcastImpl(IPAddress.Parse(iPAddress))), new WPFDialogService());
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);
