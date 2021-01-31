@@ -45,8 +45,4 @@
     </Resource>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\UDP\Factory\" />
-  </ItemGroup>
-
 </Project>

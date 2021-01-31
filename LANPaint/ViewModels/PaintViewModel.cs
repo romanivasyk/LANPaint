@@ -2,13 +2,16 @@
 using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.Services.UDP;
+using LANPaint.Services.UDP.Factory;
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 
@@ -48,22 +51,22 @@ namespace LANPaint.ViewModels
             set => SetProperty(ref _isBroadcast, value);
         }
 
-        public RelayCommand ClearCommand { get; private set; }
-        public RelayCommand ChoosePenCommand { get; private set; }
-        public RelayCommand ChooseEraserCommand { get; private set; }
-        public RelayCommand SaveCommand { get; private set; }
-        public RelayCommand OpenCommand { get; private set; }
-        public RelayCommand BroadcastChangedCommand { get; private set; }
-        public RelayCommand ReceiveChangedCommand { get; private set; }
+        public RelayCommand ClearCommand { get; }
+        public RelayCommand ChoosePenCommand { get; }
+        public RelayCommand ChooseEraserCommand { get; }
+        public RelayCommand SaveCommand { get; }
+        public RelayCommand OpenCommand { get; }
+        public RelayCommand BroadcastChangedCommand { get; }
+        public RelayCommand ReceiveChangedCommand { get; }
 
         private readonly IOpenSaveDialogService _dialogService;
         private readonly IUDPBroadcast _broadcastService;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private CancellationTokenSource _receiveTokenSource;
 
-        public PaintViewModel(IUDPBroadcast broadcastService, IOpenSaveDialogService dialogService)
+        public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IOpenSaveDialogService dialogService)
         {
-            _broadcastService = broadcastService;
+            _broadcastService = udpBroadcastFactory.Create(IPAddress.Parse(((App)Application.Current).Args[0]));
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
 

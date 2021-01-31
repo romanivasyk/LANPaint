@@ -14,11 +14,11 @@ namespace LANPaint
     /// </summary>
     public partial class App : Application
     {
-        private Window _mainWindow;
+        public string[] Args { get; private set; }
+
         private void App_OnStartup(object sender, StartupEventArgs e)
         {
-            _mainWindow = new MainWindow(e.Args[0]);
-            _mainWindow.Show();
+            Args = e.Args;
         }
     }
 }
