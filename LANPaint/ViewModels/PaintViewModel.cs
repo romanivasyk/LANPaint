@@ -1,4 +1,4 @@
-﻿using LANPaint.DialogServices;
+﻿using LANPaint.Dialog;
 using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.Services.UDP;
@@ -57,11 +57,11 @@ namespace LANPaint.ViewModels
         public RelayCommand ReceiveChangedCommand { get; private set; }
 
         private readonly IOpenSaveDialogService _dialogService;
-        private readonly INetworkBroadcaster _broadcastService;
+        private readonly IUDPBroadcast _broadcastService;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private CancellationTokenSource _receiveTokenSource;
 
-        public PaintViewModel(INetworkBroadcaster broadcastService, IOpenSaveDialogService dialogService)
+        public PaintViewModel(IUDPBroadcast broadcastService, IOpenSaveDialogService dialogService)
         {
             _broadcastService = broadcastService;
             _dialogService = dialogService;

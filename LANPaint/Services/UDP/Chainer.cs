@@ -8,23 +8,21 @@ using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
 {
-    public class BroadcastChainer : INetworkBroadcaster
+    public class Chainer : UDPBroadcastDecorator
     {
         public int SegmentPayloadLength { get; }
-        public INetworkBroadcaster UdpBroadcaster { get; }
 
         private readonly BinaryFormatter _formatter;
         private readonly Dictionary<Guid, SortedList<long, Segment>> _segmentBuffer;
 
-        public BroadcastChainer(INetworkBroadcaster udpBroadcaster, int segmentPayloadLength = 8192)
+        public Chainer(IUDPBroadcast udpBroadcaster, int segmentPayloadLength = 8192) : base(udpBroadcaster)
         {
-            UdpBroadcaster = udpBroadcaster;
             SegmentPayloadLength = segmentPayloadLength;
             _formatter = new BinaryFormatter();
             _segmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
         }
 
-        public async Task<int> SendAsync(byte[] payload)
+        public override async Task<int> SendAsync(byte[] payload)
         {
             var sequenceGuid = Guid.NewGuid();
             var sequenceLength = payload.Length % SegmentPayloadLength > 0 ?
@@ -43,20 +41,20 @@ namespace LANPaint.Services.UDP
                 var packet = new Packet(sequenceGuid, sequenceLength, segment);
 
                 var bytes = _formatter.OneLineSerialize(packet);
-                await UdpBroadcaster.SendAsync(bytes);
+                await UdpBroadcast.SendAsync(bytes);
             }
 
             return payload.Length;
         }
 
-        public async Task<byte[]> ReceiveAsync(CancellationToken token = default)
+        public override async Task<byte[]> ReceiveAsync(CancellationToken token = default)
         {
             while (true)
             {
                 byte[] bytes;
                 try
                 {
-                    bytes = await UdpBroadcaster.ReceiveAsync(token);
+                    bytes = await UdpBroadcast.ReceiveAsync(token);
                 }
                 catch
                 {
@@ -102,8 +100,8 @@ namespace LANPaint.Services.UDP
             }
         }
 
-        public ValueTask ClearBufferAsync() => UdpBroadcaster.ClearBufferAsync();
+        public override ValueTask ClearBufferAsync() => UdpBroadcast.ClearBufferAsync();
 
-        public void Dispose() => UdpBroadcaster?.Dispose();
+        public override void Dispose() => UdpBroadcast?.Dispose();
     }
 }
