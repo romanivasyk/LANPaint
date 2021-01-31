@@ -9,6 +9,5 @@ namespace LANPaint.Services.UDP.Factory
     {
         IUDPBroadcast Create(IPAddress ipAddress);
         IUDPBroadcast Create(IPAddress ipAddress, int port);
-        IUDPBroadcast Create(IPAddress ipAddress, int port, params object[] additionalParams);
     }
 }

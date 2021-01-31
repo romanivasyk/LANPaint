@@ -3,14 +3,25 @@ using System.Net;
 
 namespace LANPaint.Services.UDP.Factory
 {
-    public class ChainerFactory : IUDPBroadcastFactory,IDisposable
+    public class ChainerFactory : IUDPBroadcastFactory, IDisposable
     {
         private IUDPBroadcast _cachedInstance;
+        public int SegmentLength { get; }
+
+        public ChainerFactory(int segmentLength = default)
+        {
+            if (segmentLength > 0 && segmentLength < 1024)
+                throw new ArgumentException("Provided segment length should be more than 1023.", nameof(segmentLength));
+            SegmentLength = segmentLength;
+        }
+
         public IUDPBroadcast Create(IPAddress ipAddress)
         {
             _cachedInstance?.Dispose();
 
-            _cachedInstance = new Chainer(new UDPBroadcastImpl(ipAddress));
+            _cachedInstance = SegmentLength < 1024
+                ? new Chainer(new UDPBroadcastImpl(ipAddress))
+                : new Chainer(new UDPBroadcastImpl(ipAddress), SegmentLength);
             return _cachedInstance;
         }
 
@@ -18,22 +29,9 @@ namespace LANPaint.Services.UDP.Factory
         {
             _cachedInstance?.Dispose();
 
-            _cachedInstance = new Chainer(new UDPBroadcastImpl(ipAddress, port));
-            return _cachedInstance;
-        }
-
-        public IUDPBroadcast Create(IPAddress ipAddress, int port, params object[] additionalParams)
-        {
-            var segmentLength = (int)additionalParams[0];
-
-            if (segmentLength < 1024)
-            {
-                throw new ArgumentException("Segment length should be more than 1024 bytes.",
-                    nameof(additionalParams));
-            }
-            _cachedInstance?.Dispose();
-
-            _cachedInstance = new Chainer(new UDPBroadcastImpl(ipAddress, port), segmentLength);
+            _cachedInstance = SegmentLength < 1024
+                ? new Chainer(new UDPBroadcastImpl(ipAddress, port))
+                : new Chainer(new UDPBroadcastImpl(ipAddress, port), SegmentLength);
             return _cachedInstance;
         }
 
