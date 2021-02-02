@@ -1,4 +1,5 @@
-﻿using LANPaint.Extensions;
+﻿using LANPaint.Dialogs.Service;
+using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.Services.UDP;
 using LANPaint.Services.UDP.Factory;
@@ -13,8 +14,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
-using LANPaint.Dialogs;
-using LANPaint.Dialogs.Service;
 
 namespace LANPaint.ViewModels
 {
@@ -78,8 +77,8 @@ namespace LANPaint.ViewModels
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
 
-            ClearCommand = new RelayCommand(ClearCommandHandler,  ()=> Strokes.Count > 0);
-            ChoosePenCommand = new RelayCommand( ()=> IsEraser = false,  ()=> IsEraser);
+            ClearCommand = new RelayCommand(ClearCommandHandler, () => Strokes.Count > 0);
+            ChoosePenCommand = new RelayCommand(() => IsEraser = false, () => IsEraser);
             ChooseEraserCommand = new RelayCommand(() => IsEraser = true, () => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
@@ -103,10 +102,11 @@ namespace LANPaint.ViewModels
 
             var cachedReceive = IsReceive;
             var cachedBroadcast = IsBroadcast;
-
             IsReceive = IsBroadcast = false;
+
             _broadcastService.Dispose();
             _broadcastService = _broadcastFactory.Create(ipAddress, settingsVm.Port);
+
             IsReceive = cachedReceive;
             IsBroadcast = cachedBroadcast;
         }

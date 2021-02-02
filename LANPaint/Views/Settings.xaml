@@ -8,36 +8,53 @@
         mc:Ignorable="d"
         WindowStartupLocation="CenterOwner"
         Icon="../Resources/settings.png"
-        Title="{Binding Title}" Height="200" Width="350">
+        Title="{Binding Title}" MinHeight="180" MaxHeight="300" MinWidth="300" MaxWidth="450">
     <Window.Resources>
         <converters:StringToIntConverter x:Key="StringToIntConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="20"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <ListView
-            SelectionMode="Single"
-            SelectedItem="{Binding SelectedNic}"
-            ItemsSource="{Binding Interfaces}">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Network Interface"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding IpAddress}" Header="IP Address"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding IsReadyToUse}" Header="Is Ready"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <TextBlock Margin="0,0,5,0">Port:</TextBlock>
-            <TextBox Text="{Binding Port, Converter={StaticResource StringToIntConverter}}"></TextBox>
-        </StackPanel>
-        <StackPanel HorizontalAlignment="Center" Grid.Row="3" Orientation="Horizontal">
-            <Button Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="OK" Margin="0,0,25,0"></Button>
-            <Button Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="Cancel"></Button>
-        </StackPanel>
-    </Grid>
+        <Grid.ColumnDefinitions>
+        <ColumnDefinition/>
+        <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <ListView 
+                  Grid.ColumnSpan="2"
+                  SelectionMode="Single"
+                  VerticalContentAlignment="Top"  
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  ScrollViewer.CanContentScroll="False"
+                  Padding="0,0,0,20"
+                  MaxHeight="180"
+                  SelectedItem="{Binding SelectedNic}"
+                  ItemsSource="{Binding Interfaces}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Network Interface"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding IpAddress}" Header="IP Address"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding IsReadyToUse}" Header="Is Ready"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Text="Port:" Margin="0,0,30,0"/>
+                <TextBox Width="45" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1"  Text="{Binding Port, Converter={StaticResource StringToIntConverter}}"></TextBox>
+            </StackPanel>
+            <Rectangle Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Width="Auto"/>
+            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+                <StackPanel.Resources>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Margin" Value="30,0"/>
+                    </Style>
+                </StackPanel.Resources>
+                <Button Grid.Row="3" Grid.Column="0" Height="30" Width="70" Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="OK"></Button>
+                <Button Grid.Row="3" Grid.Column="1" Height="30" Width="70" Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="Cancel"></Button>
+            </StackPanel>
+        </Grid>
 </Window>

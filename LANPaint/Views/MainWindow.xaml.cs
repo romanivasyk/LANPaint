@@ -1,9 +1,8 @@
-﻿using LANPaint.Dialogs;
+﻿using LANPaint.Dialogs.Service;
 using LANPaint.Services.UDP.Factory;
 using LANPaint.ViewModels;
 using System.Windows;
 using System.Windows.Media;
-using LANPaint.Dialogs.Service;
 
 namespace LANPaint.Views
 {

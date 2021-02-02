@@ -37,6 +37,7 @@ namespace LANPaint.ViewModels
             NetworkChange.NetworkAddressChanged += NetworkAddressChangedHandler;
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand);
             CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
+            DialogResult = IPAddress.None;
         }
 
         public SettingsViewModel(UDPSettings currentSettings) : this()
