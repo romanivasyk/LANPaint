@@ -1,5 +1,4 @@
-﻿using LANPaint.Dialog;
-using LANPaint.Extensions;
+﻿using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.Services.UDP;
 using LANPaint.Services.UDP.Factory;
@@ -14,6 +13,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
+using LANPaint.Dialogs;
+using LANPaint.Dialogs.Service;
 
 namespace LANPaint.ViewModels
 {
@@ -58,29 +59,53 @@ namespace LANPaint.ViewModels
         public RelayCommand OpenCommand { get; }
         public RelayCommand BroadcastChangedCommand { get; }
         public RelayCommand ReceiveChangedCommand { get; }
+        public RelayCommand OpenSettingsCommand { get; }
 
-        private readonly IOpenSaveDialogService _dialogService;
-        private readonly IUDPBroadcast _broadcastService;
+        private readonly IDialogService _dialogService;
+        private readonly IUDPBroadcastFactory _broadcastFactory;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
+
+        private IUDPBroadcast _broadcastService;
         private CancellationTokenSource _receiveTokenSource;
 
-        public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IOpenSaveDialogService dialogService)
+        public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
         {
-            _broadcastService = udpBroadcastFactory.Create(IPAddress.Parse(((App)Application.Current).Args[0]));
+            _broadcastFactory = udpBroadcastFactory;
+            _broadcastService = _broadcastFactory.Create(IPAddress.Parse(((App)Application.Current).Args[0]));
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
 
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
 
-            ClearCommand = new RelayCommand(ClearCommandHandler, param => Strokes.Count > 0);
-            ChoosePenCommand = new RelayCommand(param => IsEraser = false, param => IsEraser);
-            ChooseEraserCommand = new RelayCommand(param => IsEraser = true, param => !IsEraser);
+            ClearCommand = new RelayCommand(ClearCommandHandler,  ()=> Strokes.Count > 0);
+            ChoosePenCommand = new RelayCommand( ()=> IsEraser = false,  ()=> IsEraser);
+            ChooseEraserCommand = new RelayCommand(() => IsEraser = true, () => !IsEraser);
             SaveCommand = new RelayCommand(OnSaveExecuted);
             OpenCommand = new RelayCommand(OnOpenExecuted);
             BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged);
             ReceiveChangedCommand = new RelayCommand(OnReceiveChanged);
+            OpenSettingsCommand = new RelayCommand(OnOpenSettings);
             PropertyChanged += PropertyChangedHandler;
+        }
+
+        private void OnOpenSettings()
+        {
+            using var settingsVm = new SettingsViewModel();
+            var settings = _dialogService.OpenDialog(settingsVm);
+
+            if ((_broadcastService.LocalEndPoint.Port == settings.Port || settings.Port == default) &&
+                (_broadcastService.LocalEndPoint.Address.Equals(settings.IpAddress) || settings.IpAddress.Equals(IPAddress.None)))
+                return;
+
+            var cachedReceive = IsReceive;
+            var cachedBroadcast = IsBroadcast;
+
+            IsReceive = IsBroadcast = false;
+            _broadcastService.Dispose();
+            _broadcastService = _broadcastFactory.Create(settings.IpAddress, settings.Port);
+            IsReceive = cachedReceive;
+            IsBroadcast = cachedBroadcast;
         }
 
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
@@ -92,7 +117,7 @@ namespace LANPaint.ViewModels
             await _broadcastService.SendAsync(bytes);
         }
 
-        private void OnBroadcastChanged(object param)
+        private void OnBroadcastChanged()
         {
             if (IsBroadcast)
             {
@@ -104,7 +129,7 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private async void OnReceiveChanged(object param)
+        private async void OnReceiveChanged()
         {
             if (IsReceive)
             {
@@ -126,7 +151,7 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private async void ClearCommandHandler(object param)
+        private async void ClearCommandHandler()
         {
             Strokes.Clear();
             _receivedStrokes.Clear();
@@ -138,15 +163,15 @@ namespace LANPaint.ViewModels
             await _broadcastService.SendAsync(bytes);
         }
 
-        private void OnSaveExecuted(object param)
+        private void OnSaveExecuted()
         {
-            var savePath = _dialogService.SaveFileDialog();
+            throw new NotImplementedException();
             //TODO: Save all drawing data into object, serialize it and save to file
         }
 
-        private void OnOpenExecuted(object param)
+        private void OnOpenExecuted()
         {
-            var openPath = _dialogService.OpenFileDialog();
+            throw new NotImplementedException();
             //TODO: Add suggestion to save current work in case board not empty???
             //TODO: Read file, deserialize to object and apply to current border
         }
@@ -212,9 +237,6 @@ namespace LANPaint.ViewModels
             });
         }
 
-        public void Dispose()
-        {
-            _broadcastService.Dispose();
-        }
+        public void Dispose() => _broadcastService.Dispose();
     }
 }

@@ -1,0 +1,43 @@
+﻿<Window x:Class="LANPaint.Views.Settings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vms="clr-namespace:LANPaint.ViewModels"
+        xmlns:converters="clr-namespace:LANPaint.Converters"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterOwner"
+        Icon="../Resources/settings.png"
+        Title="{Binding Title}" Height="200" Width="350">
+    <Window.DataContext>
+        <vms:SettingsViewModel/>
+    </Window.DataContext>
+    <Window.Resources>
+        <converters:StringToIntConverter x:Key="StringToIntConverter"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ListView ItemsSource="{Binding Interfaces}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Network Interface"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding IpAddress}" Header="IP Address"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding IsReadyToUse}" Header="Is Ready"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <TextBlock Margin="0,0,5,0">Port:</TextBlock>
+            <TextBox Text="{Binding Port, Mode=OneWayToSource, Converter={StaticResource StringToIntConverter}}"></TextBox>
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Center" Grid.Row="3" Orientation="Horizontal">
+            <Button Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="OK" Margin="0,0,25,0"></Button>
+            <Button Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="Cancel"></Button>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -11,17 +11,54 @@ namespace LANPaint.ViewModels
             remove => CommandManager.RequerySuggested -= value;
         }
 
-        public Action<object> Action { get; }
-        public Predicate<object> CanExecutePredicate { get; }
+        private Action Action { get; }
+        private Func<bool> CanExecuteDelegate { get; }
 
-        public RelayCommand(Action<object> action, Predicate<object> canExecutePredicate = null)
+        public RelayCommand(Action action, Func<bool> canExecute = null)
         {
             Action = action ?? throw new ArgumentNullException(nameof(action), $"Command action cannot be null!");
-            CanExecutePredicate = canExecutePredicate;
+            CanExecuteDelegate = canExecute;
         }
 
-        public bool CanExecute(object parameter) => CanExecutePredicate?.Invoke(parameter) ?? true;
+        public bool CanExecute() => CanExecuteDelegate?.Invoke() ?? true;
+        public void Execute() => Action();
 
-        public void Execute(object parameter) => Action(parameter);
+        bool ICommand.CanExecute(object parameter) => parameter == null
+            ? CanExecute()
+            : throw new ArgumentException("This implementation of RelayCommand doesn't support parameters.",
+                nameof(parameter));
+
+        void ICommand.Execute(object parameter)
+        {
+            if (parameter == null)
+                Execute();
+            else
+                throw new ArgumentException("This implementation of RelayCommand doesn't support parameters.",
+                    nameof(parameter));
+        }
+    }
+
+    public class RelayCommand<T> : ICommand
+    {
+        public event EventHandler CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
+
+        private Action<T> Action { get; }
+        private Func<bool> CanExecuteDelegate { get; }
+
+        public RelayCommand(Action<T> action, Func<bool> canExecuteDelegate = null)
+        {
+            Action = action ?? throw new ArgumentNullException(nameof(action), $"Command action cannot be null!");
+            CanExecuteDelegate = canExecuteDelegate;
+        }
+
+        public bool CanExecute(T parameter) => CanExecuteDelegate?.Invoke() ?? true;
+        public void Execute(T parameter) => Action(parameter);
+
+        bool ICommand.CanExecute(object parameter) => CanExecute((T)parameter);
+        void ICommand.Execute(object parameter) => Execute((T)parameter);
     }
 }

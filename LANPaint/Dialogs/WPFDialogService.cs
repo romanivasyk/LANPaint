@@ -1,6 +1,7 @@
-﻿using Microsoft.Win32;
+﻿using LANPaint.Dialogs;
+using Microsoft.Win32;
 
-namespace LANPaint.Dialog
+namespace LANPaint.Dialogs
 {
     public class WPFDialogService : IOpenSaveDialogService
     {

@@ -45,4 +45,8 @@
     </Resource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Dialogs\Alerts\" />
+  </ItemGroup>
+
 </Project>

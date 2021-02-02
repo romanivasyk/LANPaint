@@ -77,10 +77,10 @@
                 <Separator Margin="5,0"/>
                 <Label Content="Receive:"/>
                 <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsReceive, Mode=OneWayToSource}" Command="{Binding ReceiveChangedCommand}"/>
-                <!--<Separator Margin="5,0"/>
-                <Button>
-                    <Image Height="24" Source="Resources/settings.png"/>
-                </Button>-->
+                <Separator Margin="5,0"/>
+                <Button Command="{Binding OpenSettingsCommand}">
+                    <Image Height="24" Source="../Resources/settings.png"/>
+                </Button>
             </ToolBar>
         </ToolBarTray>
         <Border Grid.Row="1">

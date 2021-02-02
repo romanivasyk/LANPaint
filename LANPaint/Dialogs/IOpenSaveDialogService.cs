@@ -1,4 +1,4 @@
-﻿namespace LANPaint.Dialog
+﻿namespace LANPaint.Dialogs
 {
     public interface IOpenSaveDialogService
     {

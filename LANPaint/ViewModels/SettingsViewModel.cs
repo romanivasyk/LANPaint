@@ -3,12 +3,14 @@ using LANPaint.Services.Network;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using LANPaint.Dialogs.Service;
 
 namespace LANPaint.ViewModels
 {
-    public class NetConfigViewModel : BindableBase, IDisposable
+    public class SettingsViewModel : DialogViewModelBase<UDPSettings>, IDisposable
     {
         private NICInfo _selectedNic;
 
@@ -19,18 +21,40 @@ namespace LANPaint.ViewModels
             set
             {
                 if (!Interfaces.Contains(value)) return;
-                SetProperty(ref _selectedNic, value);
+                _selectedNic = value;
             }
         }
+        public int Port { get; set; }
 
-        public NetConfigViewModel()
+        public RelayCommand<IDialogWindow> OkCommand { get; }
+        public RelayCommand<IDialogWindow> CancelCommand { get; }
+
+        public SettingsViewModel() : base("Settings")
         {
             Interfaces = new ObservableCollection<NICInfo>();
             UpdateInterfaceCollection();
+
+#warning Remove this
+            SelectedNic = Interfaces.First();
+
             NetworkChange.NetworkAvailabilityChanged += NetworkAvailabilityChangedHandler;
             NetworkChange.NetworkAddressChanged += NetworkAddressChangedHandler;
+            OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand);
+            CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
         }
 
+        private void OnOkCommand(IDialogWindow window)
+        {
+            DialogResult = new UDPSettings(SelectedNic.IpAddress, Port);
+            CloseDialogWithResult(window, DialogResult);
+        }
+
+        private void OnCancelCommand(IDialogWindow window)
+        {
+            DialogResult = new UDPSettings(IPAddress.None);
+            CloseDialogWithResult(window, DialogResult);
+        }
+        
         private void UpdateInterfaceCollection()
         {
             var interfaces = NICHelper.GetInterfaces().Select(nic => new NICInfo()
