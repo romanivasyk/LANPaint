@@ -91,11 +91,14 @@ namespace LANPaint.ViewModels
 
         private void OnOpenSettings()
         {
-            using var settingsVm = new SettingsViewModel();
-            var settings = _dialogService.OpenDialog(settingsVm);
+            var currentSettings = new UDPSettings(_broadcastService.LocalEndPoint.Address,
+                                                  _broadcastService.LocalEndPoint.Port);
 
-            if ((_broadcastService.LocalEndPoint.Port == settings.Port || settings.Port == default) &&
-                (_broadcastService.LocalEndPoint.Address.Equals(settings.IpAddress) || settings.IpAddress.Equals(IPAddress.None)))
+            using var settingsVm = new SettingsViewModel(currentSettings);
+            var ipAddress = _dialogService.OpenDialog(settingsVm);
+
+            if ((_broadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default) &&
+                (_broadcastService.LocalEndPoint.Address.Equals(ipAddress) || ipAddress.Equals(IPAddress.None)))
                 return;
 
             var cachedReceive = IsReceive;
@@ -103,7 +106,7 @@ namespace LANPaint.ViewModels
 
             IsReceive = IsBroadcast = false;
             _broadcastService.Dispose();
-            _broadcastService = _broadcastFactory.Create(settings.IpAddress, settings.Port);
+            _broadcastService = _broadcastFactory.Create(ipAddress, settingsVm.Port);
             IsReceive = cachedReceive;
             IsBroadcast = cachedBroadcast;
         }

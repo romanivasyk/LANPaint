@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
@@ -13,5 +14,11 @@ namespace LANPaint.Services.Network
             ni.GetIPProperties().UnicastAddresses.Any(addressInformation => addressInformation.Address.AddressFamily == AddressFamily.InterNetwork));
 
         public static bool IsReadyToUse(NetworkInterface netInterface) => netInterface.OperationalStatus == OperationalStatus.Up;
+
+        public static NetworkInterface GetInterfaceByIpAddress(IPAddress ipAddress)
+        {
+            return GetInterfaces().FirstOrDefault(ni =>
+                ni.GetIPProperties().UnicastAddresses.Any(ipAddressInformation => ipAddressInformation.Address.Equals(ipAddress)));
+        }
     }
 }

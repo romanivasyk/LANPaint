@@ -9,9 +9,6 @@
         WindowStartupLocation="CenterOwner"
         Icon="../Resources/settings.png"
         Title="{Binding Title}" Height="200" Width="350">
-    <Window.DataContext>
-        <vms:SettingsViewModel/>
-    </Window.DataContext>
     <Window.Resources>
         <converters:StringToIntConverter x:Key="StringToIntConverter"/>
     </Window.Resources>
@@ -22,7 +19,10 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <ListView ItemsSource="{Binding Interfaces}">
+        <ListView
+            SelectionMode="Single"
+            SelectedItem="{Binding SelectedNic}"
+            ItemsSource="{Binding Interfaces}">
             <ListView.View>
                 <GridView>
                     <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Network Interface"/>
@@ -33,7 +33,7 @@
         </ListView>
         <StackPanel Grid.Row="1" Orientation="Horizontal">
             <TextBlock Margin="0,0,5,0">Port:</TextBlock>
-            <TextBox Text="{Binding Port, Mode=OneWayToSource, Converter={StaticResource StringToIntConverter}}"></TextBox>
+            <TextBox Text="{Binding Port, Converter={StaticResource StringToIntConverter}}"></TextBox>
         </StackPanel>
         <StackPanel HorizontalAlignment="Center" Grid.Row="3" Orientation="Horizontal">
             <Button Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="OK" Margin="0,0,25,0"></Button>

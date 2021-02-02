@@ -10,11 +10,9 @@ using LANPaint.Dialogs.Service;
 
 namespace LANPaint.ViewModels
 {
-    public class SettingsViewModel : DialogViewModelBase<UDPSettings>, IDisposable
+    public class SettingsViewModel : DialogViewModelBase<IPAddress>, IDisposable
     {
         private NICInfo _selectedNic;
-
-        public ObservableCollection<NICInfo> Interfaces { get; }
         public NICInfo SelectedNic
         {
             get => _selectedNic;
@@ -26,6 +24,7 @@ namespace LANPaint.ViewModels
         }
         public int Port { get; set; }
 
+        public ObservableCollection<NICInfo> Interfaces { get; }
         public RelayCommand<IDialogWindow> OkCommand { get; }
         public RelayCommand<IDialogWindow> CancelCommand { get; }
 
@@ -34,27 +33,29 @@ namespace LANPaint.ViewModels
             Interfaces = new ObservableCollection<NICInfo>();
             UpdateInterfaceCollection();
 
-#warning Remove this
-            SelectedNic = Interfaces.First();
-
             NetworkChange.NetworkAvailabilityChanged += NetworkAvailabilityChangedHandler;
             NetworkChange.NetworkAddressChanged += NetworkAddressChangedHandler;
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand);
             CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
         }
 
+        public SettingsViewModel(UDPSettings currentSettings) : this()
+        {
+            SelectedNic = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(currentSettings.IpAddress));
+            Port = currentSettings.Port;
+        }
+
         private void OnOkCommand(IDialogWindow window)
         {
-            DialogResult = new UDPSettings(SelectedNic.IpAddress, Port);
-            CloseDialogWithResult(window, DialogResult);
+            var result = SelectedNic?.IpAddress ?? IPAddress.None;
+            CloseDialogWithResult(window, result);
         }
 
         private void OnCancelCommand(IDialogWindow window)
         {
-            DialogResult = new UDPSettings(IPAddress.None);
-            CloseDialogWithResult(window, DialogResult);
+            CloseDialogWithResult(window, IPAddress.None);
         }
-        
+
         private void UpdateInterfaceCollection()
         {
             var interfaces = NICHelper.GetInterfaces().Select(nic => new NICInfo()
@@ -72,15 +73,8 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private void NetworkAddressChangedHandler(object sender, EventArgs e)
-        {
-            UpdateInterfaceCollection();
-        }
-
-        private void NetworkAvailabilityChangedHandler(object sender, NetworkAvailabilityEventArgs e)
-        {
-            UpdateInterfaceCollection();
-        }
+        private void NetworkAddressChangedHandler(object sender, EventArgs e) => UpdateInterfaceCollection();
+        private void NetworkAvailabilityChangedHandler(object sender, NetworkAvailabilityEventArgs e) => UpdateInterfaceCollection();
 
         public void Dispose()
         {
