@@ -6,7 +6,7 @@
         xmlns:vms="clr-namespace:LANPaint.ViewModels"
         xmlns:converters="clr-namespace:LANPaint.Converters"
         mc:Ignorable="d"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterScreen"
         Icon="../Resources/settings.png"
         Title="{Binding Title}" MinHeight="180" MaxHeight="300" MinWidth="300" MaxWidth="450">
     <Window.Resources>

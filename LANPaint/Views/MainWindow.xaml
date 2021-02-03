@@ -4,6 +4,7 @@
         xmlns:xceedwpftoolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
         xmlns:controls="clr-namespace:LANPaint.UserControls"
         xmlns:converters="clr-namespace:LANPaint.Converters"
+        WindowStartupLocation="CenterScreen"
         Title="LAN Paint" Height="500" Width="920" Icon="../Resources/pen.png" Closing="Window_Closing">
 
     <Window.Resources>

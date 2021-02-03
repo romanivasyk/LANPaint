@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
+using LANPaint.Services.Network;
 
 namespace LANPaint.ViewModels
 {
@@ -70,7 +71,10 @@ namespace LANPaint.ViewModels
         public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
         {
             _broadcastFactory = udpBroadcastFactory;
-            _broadcastService = _broadcastFactory.Create(IPAddress.Parse(((App)Application.Current).Args[0]));
+            var netHelper = new NetworkInterfaceHelper();
+            var randomIpToConnect =
+                netHelper.GetIpAddress(netHelper.GetIPv4Interfaces().First(ni => netHelper.IsReadyToUse(ni)));
+            _broadcastService = _broadcastFactory.Create(randomIpToConnect);
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
 
@@ -90,14 +94,13 @@ namespace LANPaint.ViewModels
 
         private void OnOpenSettings()
         {
-            var currentSettings = new UDPSettings(_broadcastService.LocalEndPoint.Address,
-                                                  _broadcastService.LocalEndPoint.Port);
+            using var settingsVm = new SettingsViewModel(_broadcastService.LocalEndPoint.Address,
+                _broadcastService.LocalEndPoint.Port);
 
-            using var settingsVm = new SettingsViewModel(currentSettings);
             var ipAddress = _dialogService.OpenDialog(settingsVm);
 
-            if ((_broadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default) &&
-                (_broadcastService.LocalEndPoint.Address.Equals(ipAddress) || ipAddress.Equals(IPAddress.None)))
+            if ((_broadcastService.LocalEndPoint.Address.Equals(ipAddress) || ipAddress.Equals(IPAddress.None)) &&
+                (_broadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default))
                 return;
 
             var cachedReceive = IsReceive;
@@ -240,6 +243,10 @@ namespace LANPaint.ViewModels
             });
         }
 
-        public void Dispose() => _broadcastService.Dispose();
+        public void Dispose()
+        {
+            _broadcastService?.Dispose();
+            _receiveTokenSource?.Dispose();
+        }
     }
 }

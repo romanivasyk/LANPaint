@@ -1,4 +1,4 @@
-﻿using LANPaint.Model;
+﻿using LANPaint.Dialogs.Service;
 using LANPaint.Services.Network;
 using System;
 using System.Collections.ObjectModel;
@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using LANPaint.Dialogs.Service;
 
 namespace LANPaint.ViewModels
 {
@@ -40,10 +39,10 @@ namespace LANPaint.ViewModels
             DialogResult = IPAddress.None;
         }
 
-        public SettingsViewModel(UDPSettings currentSettings) : this()
+        public SettingsViewModel(IPAddress ipAddress, int port) : this()
         {
-            SelectedNic = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(currentSettings.IpAddress));
-            Port = currentSettings.Port;
+            SelectedNic = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(ipAddress));
+            Port = port;
         }
 
         private void OnOkCommand(IDialogWindow window)
@@ -59,12 +58,13 @@ namespace LANPaint.ViewModels
 
         private void UpdateInterfaceCollection()
         {
-            var interfaces = NICHelper.GetInterfaces().Select(nic => new NICInfo()
+            var helper = new NetworkInterfaceHelper();
+
+            var interfaces = helper.GetIPv4Interfaces().Select(nic => new NICInfo()
             {
                 Name = nic.Name,
-                IpAddress = nic.GetIPProperties().UnicastAddresses.First(information =>
-                    information.Address.AddressFamily == AddressFamily.InterNetwork).Address,
-                IsReadyToUse = nic.OperationalStatus == OperationalStatus.Up
+                IpAddress = helper.GetIpAddress(nic),
+                IsReadyToUse = helper.IsReadyToUse(nic)
             });
 
             Interfaces.Clear();
@@ -82,5 +82,12 @@ namespace LANPaint.ViewModels
             NetworkChange.NetworkAvailabilityChanged -= NetworkAvailabilityChangedHandler;
             NetworkChange.NetworkAddressChanged -= NetworkAddressChangedHandler;
         }
+    }
+
+    public class NICInfo
+    {
+        public string Name { get; set; }
+        public IPAddress IpAddress { get; set; }
+        public bool IsReadyToUse { get; set; }
     }
 }

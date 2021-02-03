@@ -14,11 +14,5 @@ namespace LANPaint
     /// </summary>
     public partial class App : Application
     {
-        public string[] Args { get; private set; }
-
-        private void App_OnStartup(object sender, StartupEventArgs e)
-        {
-            Args = e.Args;
-        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using LANPaint.Dialogs.Service;
+﻿using System;
+using LANPaint.Dialogs.Service;
 using LANPaint.Services.UDP.Factory;
 using LANPaint.ViewModels;
 using System.Windows;
@@ -26,6 +27,7 @@ namespace LANPaint.Views
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             _factory?.Dispose();
+            if(DataContext is IDisposable disposableContext) disposableContext.Dispose();
         }
     }
 }
