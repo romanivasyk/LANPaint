@@ -68,10 +68,8 @@ namespace LANPaint.Services.UDP
                 {
                     _segmentBuffer[packet.SequenceGuid].Add(packet.Segment.SequenceIndex, packet.Segment);
 
-                    if (_segmentBuffer[packet.SequenceGuid].Last().Key + 1 != packet.SequenceLength)
-                    {
-                        continue;
-                    }
+                    if (_segmentBuffer[packet.SequenceGuid].Count != packet.SequenceLength ||
+                        _segmentBuffer[packet.SequenceGuid].Last().Key + 1 != packet.SequenceLength) continue;
 
                     var messageLength = _segmentBuffer[packet.SequenceGuid].Values.Sum(segment => segment.Payload.LongLength);
                     var message = new byte[messageLength];

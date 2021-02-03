@@ -5,13 +5,15 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
+using System.Windows.Threading;
 
 namespace LANPaint.ViewModels
 {
     public class SettingsViewModel : DialogViewModelBase<IPAddress>, IDisposable
     {
+        private readonly Dispatcher _dispatcher;
         private NICInfo _selectedNic;
+
         public NICInfo SelectedNic
         {
             get => _selectedNic;
@@ -22,7 +24,6 @@ namespace LANPaint.ViewModels
             }
         }
         public int Port { get; set; }
-
         public ObservableCollection<NICInfo> Interfaces { get; }
         public RelayCommand<IDialogWindow> OkCommand { get; }
         public RelayCommand<IDialogWindow> CancelCommand { get; }
@@ -30,6 +31,7 @@ namespace LANPaint.ViewModels
         public SettingsViewModel() : base("Settings")
         {
             Interfaces = new ObservableCollection<NICInfo>();
+            _dispatcher = Dispatcher.CurrentDispatcher;
             UpdateInterfaceCollection();
 
             NetworkChange.NetworkAvailabilityChanged += NetworkAvailabilityChangedHandler;
@@ -65,12 +67,20 @@ namespace LANPaint.ViewModels
                 Name = nic.Name,
                 IpAddress = helper.GetIpAddress(nic),
                 IsReadyToUse = helper.IsReadyToUse(nic)
-            });
+            }).ToList();
 
-            Interfaces.Clear();
-            foreach (var nicInfo in interfaces)
+            if (Dispatcher.CurrentDispatcher == _dispatcher)
             {
-                Interfaces.Add(nicInfo);
+                Interfaces.Clear();
+                interfaces.ForEach(nicInfo => Interfaces.Add(nicInfo));
+            }
+            else
+            {
+                _dispatcher.Invoke(() =>
+                {
+                    Interfaces.Clear();
+                    interfaces.ForEach(nicInfo => Interfaces.Add(nicInfo));
+                });
             }
         }
 
