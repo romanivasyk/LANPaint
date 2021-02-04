@@ -1,6 +1,7 @@
 ﻿using LANPaint.Dialogs.Service;
 using LANPaint.Extensions;
 using LANPaint.Model;
+using LANPaint.Services.Network;
 using LANPaint.Services.UDP;
 using LANPaint.Services.UDP.Factory;
 using System;
@@ -8,13 +9,12 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
-using LANPaint.Services.Network;
 
 namespace LANPaint.ViewModels
 {
@@ -103,15 +103,8 @@ namespace LANPaint.ViewModels
                 (_broadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default))
                 return;
 
-            var cachedReceive = IsReceive;
-            var cachedBroadcast = IsBroadcast;
-            IsReceive = IsBroadcast = false;
-
-            _broadcastService.Dispose();
             _broadcastService = _broadcastFactory.Create(ipAddress, settingsVm.Port);
-
-            IsReceive = cachedReceive;
-            IsBroadcast = cachedBroadcast;
+            IsBroadcast = IsReceive = false;
         }
 
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
@@ -145,6 +138,11 @@ namespace LANPaint.ViewModels
                     await Receive(_receiveTokenSource.Token);
                 }
                 catch (OperationCanceledException)
+                { }
+                catch (AggregateException exception) when (
+                    exception?.InnerException is ObjectDisposedException disposedException &&
+                    (disposedException.ObjectName == typeof(Socket).FullName ||
+                     disposedException.ObjectName == typeof(UdpClient).FullName))
                 { }
                 finally
                 {
@@ -243,10 +241,6 @@ namespace LANPaint.ViewModels
             });
         }
 
-        public void Dispose()
-        {
-            _broadcastService?.Dispose();
-            _receiveTokenSource?.Dispose();
-        }
+        public void Dispose() => _broadcastService?.Dispose();
     }
 }

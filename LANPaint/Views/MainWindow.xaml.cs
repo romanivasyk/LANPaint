@@ -26,7 +26,6 @@ namespace LANPaint.Views
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            _factory?.Dispose();
             if(DataContext is IDisposable disposableContext) disposableContext.Dispose();
         }
     }
