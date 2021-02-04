@@ -32,7 +32,7 @@
                   ScrollViewer.CanContentScroll="False"
                   Padding="0,0,0,20"
                   MaxHeight="180"
-                  SelectedItem="{Binding SelectedNic}"
+                  SelectedItem="{Binding SelectedNetworkInterfaceUiInfo}"
                   ItemsSource="{Binding Interfaces}">
                 <ListView.View>
                     <GridView>

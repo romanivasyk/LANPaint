@@ -20,17 +20,5 @@ namespace LANPaint.Extensions
 
             return task.Result;
         }
-
-        public static async void SafeFireAndForget(this Task task, bool continueOnCapturedContext = true, Action<Exception> OnError = null)
-        {
-            try
-            {
-                await task.ConfigureAwait(continueOnCapturedContext);
-            }
-            catch (Exception ex) when (OnError != null)
-            {
-                OnError(ex);
-            }
-        }
     }
 }

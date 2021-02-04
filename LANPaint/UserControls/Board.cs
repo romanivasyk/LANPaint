@@ -100,8 +100,8 @@ namespace LANPaint.UserControls
             StrokeColor = Color.FromRgb(0, 0, 0);
             DefaultDrawingAttributes.IgnorePressure = true;
 
-            var overridedMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
-            BackgroundProperty.OverrideMetadata(typeof(Board), overridedMetadata);
+            var overriddenMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
+            BackgroundProperty.OverrideMetadata(typeof(Board), overriddenMetadata);
         }
 
         protected override void OnStrokesReplaced(InkCanvasStrokesReplacedEventArgs e)

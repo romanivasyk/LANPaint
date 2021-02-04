@@ -12,25 +12,25 @@ namespace LANPaint.ViewModels
     public class SettingsViewModel : DialogViewModelBase<IPAddress>, IDisposable
     {
         private readonly Dispatcher _dispatcher;
-        private NICInfo _selectedNic;
+        private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
 
-        public NICInfo SelectedNic
+        public NetworkInterfaceUiInfo SelectedNetworkInterfaceUiInfo
         {
-            get => _selectedNic;
+            get => _selectedNetworkInterfaceUiInfo;
             set
             {
                 if (!Interfaces.Contains(value)) return;
-                _selectedNic = value;
+                _selectedNetworkInterfaceUiInfo = value;
             }
         }
         public int Port { get; set; }
-        public ObservableCollection<NICInfo> Interfaces { get; }
+        public ObservableCollection<NetworkInterfaceUiInfo> Interfaces { get; }
         public RelayCommand<IDialogWindow> OkCommand { get; }
         public RelayCommand<IDialogWindow> CancelCommand { get; }
 
         public SettingsViewModel() : base("Settings")
         {
-            Interfaces = new ObservableCollection<NICInfo>();
+            Interfaces = new ObservableCollection<NetworkInterfaceUiInfo>();
             _dispatcher = Dispatcher.CurrentDispatcher;
             UpdateInterfaceCollection();
 
@@ -43,13 +43,13 @@ namespace LANPaint.ViewModels
 
         public SettingsViewModel(IPAddress ipAddress, int port) : this()
         {
-            SelectedNic = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(ipAddress));
+            SelectedNetworkInterfaceUiInfo = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(ipAddress));
             Port = port;
         }
 
         private void OnOkCommand(IDialogWindow window)
         {
-            var result = SelectedNic?.IpAddress ?? IPAddress.None;
+            var result = SelectedNetworkInterfaceUiInfo?.IpAddress ?? IPAddress.None;
             CloseDialogWithResult(window, result);
         }
 
@@ -62,7 +62,7 @@ namespace LANPaint.ViewModels
         {
             var helper = new NetworkInterfaceHelper();
 
-            var interfaces = helper.GetIPv4Interfaces().Select(nic => new NICInfo()
+            var interfaces = helper.GetIPv4Interfaces().Select(nic => new NetworkInterfaceUiInfo()
             {
                 Name = nic.Name,
                 IpAddress = helper.GetIpAddress(nic),
@@ -94,7 +94,7 @@ namespace LANPaint.ViewModels
         }
     }
 
-    public class NICInfo
+    public class NetworkInterfaceUiInfo
     {
         public string Name { get; set; }
         public IPAddress IpAddress { get; set; }

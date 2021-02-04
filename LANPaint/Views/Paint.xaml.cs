@@ -7,9 +7,6 @@ using System.Windows.Media;
 
 namespace LANPaint.Views
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private readonly ChainerFactory _factory;

@@ -21,20 +21,15 @@ namespace LANPaint.ViewModels
     public class PaintViewModel : BindableBase, IDisposable
     {
         private bool _isEraser;
-        private StrokeCollection _strokes;
         private Color _backgroundColor;
         private bool _isReceive;
         private bool _isBroadcast;
+        private StrokeCollection _strokes;
 
         public bool IsEraser
         {
             get => _isEraser;
             set => SetProperty(ref _isEraser, value);
-        }
-        public StrokeCollection Strokes
-        {
-            get => _strokes;
-            set => SetProperty(ref _strokes, value);
         }
         public Color Background
         {
@@ -51,69 +46,74 @@ namespace LANPaint.ViewModels
             get => _isBroadcast;
             set => SetProperty(ref _isBroadcast, value);
         }
+        public StrokeCollection Strokes
+        {
+            get => _strokes;
+            set => SetProperty(ref _strokes, value);
+        }
 
         public RelayCommand ClearCommand { get; }
         public RelayCommand ChoosePenCommand { get; }
         public RelayCommand ChooseEraserCommand { get; }
-        public RelayCommand SaveCommand { get; }
-        public RelayCommand OpenCommand { get; }
+        public RelayCommand SaveDrawingCommand { get; }
+        public RelayCommand OpenDrawingCommand { get; }
         public RelayCommand BroadcastChangedCommand { get; }
         public RelayCommand ReceiveChangedCommand { get; }
         public RelayCommand OpenSettingsCommand { get; }
 
         private readonly IDialogService _dialogService;
-        private readonly IUDPBroadcastFactory _broadcastFactory;
+        private readonly IUDPBroadcastFactory _udpBroadcastFactory;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
 
-        private IUDPBroadcast _broadcastService;
-        private CancellationTokenSource _receiveTokenSource;
+        private IUDPBroadcast _udpBroadcastService;
+        private CancellationTokenSource _cancelReceiveTokenSource;
 
         public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
         {
-            _broadcastFactory = udpBroadcastFactory;
+            _udpBroadcastFactory = udpBroadcastFactory;
             var netHelper = new NetworkInterfaceHelper();
-            var randomIpToConnect =
+            var localInterfaceAddressToConnect =
                 netHelper.GetIpAddress(netHelper.GetIPv4Interfaces().First(ni => netHelper.IsReadyToUse(ni)));
-            _broadcastService = _broadcastFactory.Create(randomIpToConnect);
+            _udpBroadcastService = _udpBroadcastFactory.Create(localInterfaceAddressToConnect);
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
-
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
 
             ClearCommand = new RelayCommand(ClearCommandHandler, () => Strokes.Count > 0);
             ChoosePenCommand = new RelayCommand(() => IsEraser = false, () => IsEraser);
             ChooseEraserCommand = new RelayCommand(() => IsEraser = true, () => !IsEraser);
-            SaveCommand = new RelayCommand(OnSaveExecuted);
-            OpenCommand = new RelayCommand(OnOpenExecuted);
+            SaveDrawingCommand = new RelayCommand(OnSaveDrawing);
+            OpenDrawingCommand = new RelayCommand(OnOpenDrawing);
             BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged);
             ReceiveChangedCommand = new RelayCommand(OnReceiveChanged);
             OpenSettingsCommand = new RelayCommand(OnOpenSettings);
             PropertyChanged += PropertyChangedHandler;
         }
 
-        private void OnOpenSettings()
+        private async void ClearCommandHandler()
         {
-            using var settingsVm = new SettingsViewModel(_broadcastService.LocalEndPoint.Address,
-                _broadcastService.LocalEndPoint.Port);
+            Strokes.Clear();
+            _receivedStrokes.Clear();
 
-            var ipAddress = _dialogService.OpenDialog(settingsVm);
-
-            if ((_broadcastService.LocalEndPoint.Address.Equals(ipAddress) || ipAddress.Equals(IPAddress.None)) &&
-                (_broadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default))
-                return;
-
-            _broadcastService = _broadcastFactory.Create(ipAddress, settingsVm.Port);
-            IsBroadcast = IsReceive = false;
-        }
-
-        private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
-        {
-            if (!IsBroadcast || e.PropertyName != nameof(Background)) return;
-            var info = new DrawingInfo(ARGBColor.FromColor(Background), SerializableStroke.Default, IsEraser);
+            if (!IsBroadcast) return;
+            var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
             var serializer = new BinaryFormatter();
             var bytes = serializer.OneLineSerialize(info);
-            await _broadcastService.SendAsync(bytes);
+            await _udpBroadcastService.SendAsync(bytes);
+        }
+
+        private void OnSaveDrawing()
+        {
+            throw new NotImplementedException();
+            //TODO: Save all drawing data into object, serialize it and save to file
+        }
+
+        private void OnOpenDrawing()
+        {
+            throw new NotImplementedException();
+            //TODO: Add suggestion to save current work in case board not empty???
+            //TODO: Read file, deserialize to object and apply to current border
         }
 
         private void OnBroadcastChanged()
@@ -132,10 +132,10 @@ namespace LANPaint.ViewModels
         {
             if (IsReceive)
             {
-                _receiveTokenSource = new CancellationTokenSource();
+                _cancelReceiveTokenSource = new CancellationTokenSource();
                 try
                 {
-                    await Receive(_receiveTokenSource.Token);
+                    await Receive(_cancelReceiveTokenSource.Token);
                 }
                 catch (OperationCanceledException)
                 { }
@@ -146,51 +146,48 @@ namespace LANPaint.ViewModels
                 { }
                 finally
                 {
-                    _receiveTokenSource?.Dispose();
+                    _cancelReceiveTokenSource?.Dispose();
                 }
             }
             else
             {
-                _receiveTokenSource.Cancel();
+                _cancelReceiveTokenSource.Cancel();
             }
         }
 
-        private async void ClearCommandHandler()
+        private void OnOpenSettings()
         {
-            Strokes.Clear();
-            _receivedStrokes.Clear();
+            using var settingsVm = new SettingsViewModel(_udpBroadcastService.LocalEndPoint.Address,
+                _udpBroadcastService.LocalEndPoint.Port);
 
-            if (!IsBroadcast) return;
-            var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
+            var ipAddress = _dialogService.OpenDialog(settingsVm);
+
+            if ((_udpBroadcastService.LocalEndPoint.Address.Equals(ipAddress) || ipAddress.Equals(IPAddress.None)) &&
+                (_udpBroadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default))
+                return;
+
+            _udpBroadcastService = _udpBroadcastFactory.Create(ipAddress, settingsVm.Port);
+            IsBroadcast = IsReceive = false;
+        }
+
+        private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+        {
+            if (!IsBroadcast || e.PropertyName != nameof(Background)) return;
+            var info = new DrawingInfo(ARGBColor.FromColor(Background), SerializableStroke.Default, IsEraser);
             var serializer = new BinaryFormatter();
             var bytes = serializer.OneLineSerialize(info);
-            await _broadcastService.SendAsync(bytes);
-        }
-
-        private void OnSaveExecuted()
-        {
-            throw new NotImplementedException();
-            //TODO: Save all drawing data into object, serialize it and save to file
-        }
-
-        private void OnOpenExecuted()
-        {
-            throw new NotImplementedException();
-            //TODO: Add suggestion to save current work in case board not empty???
-            //TODO: Read file, deserialize to object and apply to current border
+            await _udpBroadcastService.SendAsync(bytes);
         }
 
         private async Task Receive(CancellationToken token)
         {
-            await _broadcastService.ClearBufferAsync();
+            await _udpBroadcastService.ClearBufferAsync();
             while (true)
             {
-                var data = await _broadcastService.ReceiveAsync(token);
+                var data = await _udpBroadcastService.ReceiveAsync(token);
 
                 if (data == null || data.Length == 0)
-                {
                     continue;
-                }
 
                 var info = await Task.Run(() =>
                 {
@@ -211,7 +208,7 @@ namespace LANPaint.ViewModels
                     Background = info.Background.AsColor();
                 }
 
-                if (info.Stroke.Equals(SerializableStroke.Default)) continue;
+                if (info.Stroke == SerializableStroke.Default) continue;
                 var stroke = info.Stroke.ToStroke();
 
                 if (info.IsEraser)
@@ -227,20 +224,22 @@ namespace LANPaint.ViewModels
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
             if (e.Added.Count <= 0 || !IsBroadcast) return;
+            var strokesToSend = e.Added.Where(addedStroke => !_receivedStrokes.Contains(addedStroke)).ToArray();
+            if (strokesToSend.Length < 1) return;
+
             await Task.Run(async () =>
             {
-                foreach (var stroke in e.Added)
+                foreach (var stroke in strokesToSend)
                 {
-                    if (_receivedStrokes.Contains(stroke)) continue;
                     var serializableStroke = SerializableStroke.FromStroke(stroke);
                     var info = new DrawingInfo(Background, serializableStroke, IsEraser);
                     var serializer = new BinaryFormatter();
                     var bytes = serializer.OneLineSerialize(info);
-                    await _broadcastService.SendAsync(bytes);
+                    await _udpBroadcastService.SendAsync(bytes);
                 }
             });
         }
 
-        public void Dispose() => _broadcastService?.Dispose();
+        public void Dispose() => _udpBroadcastService?.Dispose();
     }
 }

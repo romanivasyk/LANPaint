@@ -5,7 +5,7 @@
         xmlns:controls="clr-namespace:LANPaint.UserControls"
         xmlns:converters="clr-namespace:LANPaint.Converters"
         WindowStartupLocation="CenterScreen"
-        Title="LAN Paint" Height="500" Width="920" Icon="../Resources/pen.png" Closing="Window_Closing">
+        Title="LAN Paint" Height="600" Width="925" Icon="../Resources/pen.png" Closing="Window_Closing">
 
     <Window.Resources>
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
@@ -32,10 +32,10 @@
         </Grid.RowDefinitions>
         <ToolBarTray>
             <ToolBar>
-                <Button Command="{Binding OpenCommand}">
+                <Button Command="{Binding OpenDrawingCommand}">
                     <Image Source="../Resources/open.png" Height="24"/>
                 </Button>
-                <Button Command="{Binding SaveCommand}">
+                <Button Command="{Binding SaveDrawingCommand}">
                     <Image Source="../Resources/save.png" Height="24"/>
                 </Button>
                 <Separator Margin="5,0"/>
