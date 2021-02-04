@@ -30,8 +30,8 @@
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <ToolBarTray>
-            <ToolBar>
+        <ToolBarTray Background="Transparent" HorizontalAlignment="Center">
+            <ToolBar Background="{Binding Path=Background, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ToolBarTray, AncestorLevel=1}}" UseLayoutRounding="True">
                 <Button Command="{Binding OpenDrawingCommand}">
                     <Image Source="../Resources/open.png" Height="24"/>
                 </Button>
@@ -84,7 +84,7 @@
                 </Button>
             </ToolBar>
         </ToolBarTray>
-        <Border Grid.Row="1">
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black">
             <controls:Board x:Name="DrawingBoard" StrokeThickness="{Binding ElementName=ToolThickness, Path=Text, Mode=TwoWay, Converter={StaticResource ThicknessConverter}}"
                      StrokeColor="{Binding ElementName=PenColorPicker, Path=SelectedColor, Mode=TwoWay}" 
                      Background="{Binding Background, Mode=TwoWay, Converter={StaticResource ColorBrushConverter}}"
