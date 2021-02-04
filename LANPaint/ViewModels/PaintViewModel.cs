@@ -60,6 +60,7 @@ namespace LANPaint.ViewModels
         public RelayCommand BroadcastChangedCommand { get; }
         public RelayCommand ReceiveChangedCommand { get; }
         public RelayCommand OpenSettingsCommand { get; }
+        public RelayCommand UndoCommand { get; }
 
         private readonly IDialogService _dialogService;
         private readonly IUDPBroadcastFactory _udpBroadcastFactory;
@@ -88,6 +89,7 @@ namespace LANPaint.ViewModels
             BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged);
             ReceiveChangedCommand = new RelayCommand(OnReceiveChanged);
             OpenSettingsCommand = new RelayCommand(OnOpenSettings);
+            UndoCommand = new RelayCommand(OnUndo);
             PropertyChanged += PropertyChangedHandler;
         }
 
@@ -168,6 +170,12 @@ namespace LANPaint.ViewModels
 
             _udpBroadcastService = _udpBroadcastFactory.Create(ipAddress, settingsVm.Port);
             IsBroadcast = IsReceive = false;
+        }
+
+        private void OnUndo()
+        {
+            if(Strokes.Count<1) return;
+            Strokes.Remove(Strokes[^1]);
         }
 
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)

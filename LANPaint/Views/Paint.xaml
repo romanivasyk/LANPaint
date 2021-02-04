@@ -24,6 +24,9 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Control"/>
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
