@@ -163,7 +163,7 @@ namespace LANPaint.ViewModels
                 _udpBroadcastService.LocalEndPoint.Port);
 
             var resultEndpoint = _dialogService.OpenDialog(settingsVm);
-            if (resultEndpoint == null) return;
+            if (resultEndpoint == null || Equals(resultEndpoint, _udpBroadcastService.LocalEndPoint)) return;
 
             _udpBroadcastService = _udpBroadcastFactory.Create(resultEndpoint.Address, resultEndpoint.Port);
             IsBroadcast = IsReceive = false;
