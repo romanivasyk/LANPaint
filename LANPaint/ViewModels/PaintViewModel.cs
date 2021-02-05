@@ -142,7 +142,7 @@ namespace LANPaint.ViewModels
                 catch (OperationCanceledException)
                 { }
                 catch (AggregateException exception) when (
-                    exception?.InnerException is ObjectDisposedException disposedException &&
+                    exception.InnerException is ObjectDisposedException disposedException &&
                     (disposedException.ObjectName == typeof(Socket).FullName ||
                      disposedException.ObjectName == typeof(UdpClient).FullName))
                 { }
@@ -162,19 +162,16 @@ namespace LANPaint.ViewModels
             using var settingsVm = new SettingsViewModel(_udpBroadcastService.LocalEndPoint.Address,
                 _udpBroadcastService.LocalEndPoint.Port);
 
-            var ipAddress = _dialogService.OpenDialog(settingsVm);
+            var resultEndpoint = _dialogService.OpenDialog(settingsVm);
+            if (resultEndpoint == null) return;
 
-            if ((_udpBroadcastService.LocalEndPoint.Address.Equals(ipAddress) || ipAddress.Equals(IPAddress.None)) &&
-                (_udpBroadcastService.LocalEndPoint.Port == settingsVm.Port || settingsVm.Port == default))
-                return;
-
-            _udpBroadcastService = _udpBroadcastFactory.Create(ipAddress, settingsVm.Port);
+            _udpBroadcastService = _udpBroadcastFactory.Create(resultEndpoint.Address, resultEndpoint.Port);
             IsBroadcast = IsReceive = false;
         }
 
         private void OnUndo()
         {
-            if(Strokes.Count<1) return;
+            if (Strokes.Count < 1) return;
             Strokes.Remove(Strokes[^1]);
         }
 

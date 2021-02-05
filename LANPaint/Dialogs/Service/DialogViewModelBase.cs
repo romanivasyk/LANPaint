@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using LANPaint.ViewModels;
 
 namespace LANPaint.Dialogs.Service
 {
-    public abstract class DialogViewModelBase<TResult>
+    public abstract class DialogViewModelBase<TResult> : BindableBase
     {
         public string Title { get; set; }
         public string Message { get; set; }
@@ -20,7 +18,7 @@ namespace LANPaint.Dialogs.Service
             Message = message;
         }
 
-        public void CloseDialogWithResult(IDialogWindow dialog, TResult result)
+        public void CloseDialogWithResult(IDialogWindow dialog, TResult result = default)
         {
             DialogResult = result;
             if (dialog != null) dialog.DialogResult = true;

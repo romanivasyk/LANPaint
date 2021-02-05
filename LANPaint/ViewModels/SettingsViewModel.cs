@@ -9,10 +9,14 @@ using System.Windows.Threading;
 
 namespace LANPaint.ViewModels
 {
-    public class SettingsViewModel : DialogViewModelBase<IPAddress>, IDisposable
+    public class SettingsViewModel : DialogViewModelBase<IPEndPoint>, IDisposable
     {
+        private const int PortMinValue = 1024;
+        private const int PortMaxValue = 65535;
         private readonly Dispatcher _dispatcher;
         private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
+        private int _port;
+        private bool _isPortValid;
 
         public NetworkInterfaceUiInfo SelectedNetworkInterfaceUiInfo
         {
@@ -23,7 +27,23 @@ namespace LANPaint.ViewModels
                 _selectedNetworkInterfaceUiInfo = value;
             }
         }
-        public int Port { get; set; }
+
+        public int Port
+        {
+            get => _port;
+            set
+            {
+                if (SetProperty(ref _port, value))
+                    IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
+            }
+        }
+
+        public bool IsPortValid
+        {
+            get => _isPortValid;
+            set => SetProperty(ref _isPortValid, value);
+        }
+
         public ObservableCollection<NetworkInterfaceUiInfo> Interfaces { get; }
         public RelayCommand<IDialogWindow> OkCommand { get; }
         public RelayCommand<IDialogWindow> CancelCommand { get; }
@@ -36,9 +56,9 @@ namespace LANPaint.ViewModels
 
             NetworkChange.NetworkAvailabilityChanged += NetworkAvailabilityChangedHandler;
             NetworkChange.NetworkAddressChanged += NetworkAddressChangedHandler;
-            OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand);
+            OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
+                () => IsPortValid && SelectedNetworkInterfaceUiInfo != null && SelectedNetworkInterfaceUiInfo.IsReadyToUse);
             CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
-            DialogResult = IPAddress.None;
         }
 
         public SettingsViewModel(IPAddress ipAddress, int port) : this()
@@ -49,13 +69,13 @@ namespace LANPaint.ViewModels
 
         private void OnOkCommand(IDialogWindow window)
         {
-            var result = SelectedNetworkInterfaceUiInfo?.IpAddress ?? IPAddress.None;
+            var result = new IPEndPoint(SelectedNetworkInterfaceUiInfo.IpAddress, Port);
             CloseDialogWithResult(window, result);
         }
 
         private void OnCancelCommand(IDialogWindow window)
         {
-            CloseDialogWithResult(window, IPAddress.None);
+            CloseDialogWithResult(window);
         }
 
         private void UpdateInterfaceCollection()
