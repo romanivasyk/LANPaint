@@ -29,6 +29,12 @@ namespace LANPaint.Services.UDP
             }
         }
 
-        public void Dispose() => Client?.Dispose();
+        public void Dispose()
+        {
+            Client?.Dispose();
+
+            LocalEndPoint.Address = IPAddress.None;
+            LocalEndPoint.Port = 0;
+        }
     }
 }
