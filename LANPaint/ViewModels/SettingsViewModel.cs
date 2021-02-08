@@ -25,26 +25,26 @@ namespace LANPaint.ViewModels
             {
                 if (!Interfaces.Contains(value)) return;
                 _selectedNetworkInterfaceUiInfo = value;
+                OkCommand.RaiseCanExecuteChanged();
             }
         }
-
         public int Port
         {
             get => _port;
             set
             {
-                if (SetProperty(ref _port, value))
-                    IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
+                if (!SetProperty(ref _port, value)) return;
+                IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
+                OkCommand.RaiseCanExecuteChanged();
             }
         }
-
         public bool IsPortValid
         {
             get => _isPortValid;
-            set => SetProperty(ref _isPortValid, value);
+            private set => SetProperty(ref _isPortValid, value);
         }
-
         public ObservableCollection<NetworkInterfaceUiInfo> Interfaces { get; }
+
         public RelayCommand<IDialogWindow> OkCommand { get; }
         public RelayCommand<IDialogWindow> CancelCommand { get; }
 
@@ -57,14 +57,18 @@ namespace LANPaint.ViewModels
             NetworkChange.NetworkAvailabilityChanged += NetworkAvailabilityChangedHandler;
             NetworkChange.NetworkAddressChanged += NetworkAddressChangedHandler;
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
-                () => IsPortValid && SelectedNetworkInterfaceUiInfo != null && SelectedNetworkInterfaceUiInfo.IsReadyToUse);
+                () => Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(Port) &&
+                      SelectedNetworkInterfaceUiInfo != null &&
+                      SelectedNetworkInterfaceUiInfo.IsReadyToUse);
             CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
+            OkCommand.RaiseCanExecuteChanged();
         }
 
         public SettingsViewModel(IPAddress ipAddress, int port) : this()
         {
             SelectedNetworkInterfaceUiInfo = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(ipAddress));
             Port = port;
+            OkCommand.RaiseCanExecuteChanged();
         }
 
         private void OnOkCommand(IDialogWindow window)
