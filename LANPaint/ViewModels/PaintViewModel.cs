@@ -9,8 +9,6 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
@@ -32,7 +30,12 @@ namespace LANPaint.ViewModels
         public bool IsEraser
         {
             get => _isEraser;
-            set => SetProperty(ref _isEraser, value);
+            set
+            {
+                if (!SetProperty(ref _isEraser, value)) return;
+                ChooseEraserCommand?.RaiseCanExecuteChanged();
+                ChoosePenCommand?.RaiseCanExecuteChanged();
+            }
         }
         public Color Background
         {
@@ -49,17 +52,20 @@ namespace LANPaint.ViewModels
             get => _isBroadcast;
             set => SetProperty(ref _isBroadcast, value);
         }
-
         public StrokeCollection Strokes
         {
             get => _strokes;
             set => SetProperty(ref _strokes, value);
         }
-
         public IUDPBroadcast UdpBroadcastService
         {
             get => _udpBroadcastService;
-            private set => SetProperty(ref _udpBroadcastService, value);
+            private set
+            {
+                SetProperty(ref _udpBroadcastService, value);
+                BroadcastChangedCommand?.RaiseCanExecuteChanged();
+                ReceiveChangedCommand?.RaiseCanExecuteChanged();
+            }
         }
 
         public RelayCommand ClearCommand { get; }
@@ -77,16 +83,12 @@ namespace LANPaint.ViewModels
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private CancellationTokenSource _cancelReceiveTokenSource;
 
-
         public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
         {
             _udpBroadcastFactory = udpBroadcastFactory;
-            var netHelper = new NetworkInterfaceHelper();
-            var localInterfaceAddressToConnect =
-                netHelper.GetIpAddress(netHelper.GetIPv4Interfaces().FirstOrDefault(ni => ni != null && netHelper.IsReadyToUse(ni)));
-
-            if (localInterfaceAddressToConnect != null)
-                UdpBroadcastService = _udpBroadcastFactory.Create(localInterfaceAddressToConnect);
+            var netHelper = NetworkInterfaceHelper.GetInstance();
+            if (netHelper.IsAnyNetworkAvailable)
+                UdpBroadcastService = _udpBroadcastFactory.Create(netHelper.GetAnyReadyToUseIPv4Address());
 
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
@@ -160,12 +162,7 @@ namespace LANPaint.ViewModels
                 }
                 catch (SocketException exception)
                 {
-                    Debug.WriteLine(exception.Message);
-                    Debug.WriteLine($"SocketErrorCode: {exception.SocketErrorCode}");
-                    //Show Alert
-                    UdpBroadcastService.Dispose();
-                    UdpBroadcastService = null;
-                    IsBroadcast = IsReceive = false;
+                    HandleBroadcasterSocketException(exception);
                 }
                 finally
                 {
@@ -180,23 +177,18 @@ namespace LANPaint.ViewModels
 
         private void OnOpenSettings()
         {
-            IPEndPoint resultEndPoint = default;
+            SettingsViewModel settingsVm;
 
             if (UdpBroadcastService != null)
-            {
-                using var settingsVm = new SettingsViewModel(UdpBroadcastService.LocalEndPoint.Address,
-                   UdpBroadcastService.LocalEndPoint.Port);
-                resultEndPoint = _dialogService.OpenDialog(settingsVm);
-                if (Equals(resultEndPoint, UdpBroadcastService.LocalEndPoint)) return;
-            }
+                settingsVm = new SettingsViewModel(UdpBroadcastService.LocalEndPoint.Address,
+                    UdpBroadcastService.LocalEndPoint.Port);
             else
-            {
-                using var settingsVm = new SettingsViewModel();
-                resultEndPoint = _dialogService.OpenDialog(settingsVm);
-            }
+                settingsVm = new SettingsViewModel();
 
+            var resultEndPoint = _dialogService.OpenDialog(settingsVm);
 
-            if (resultEndPoint == null) return;
+            if ((UdpBroadcastService != null && Equals(resultEndPoint, UdpBroadcastService.LocalEndPoint)) ||
+                resultEndPoint == null) return;
 
             UdpBroadcastService = _udpBroadcastFactory.Create(resultEndPoint.Address, resultEndPoint.Port);
             IsBroadcast = IsReceive = false;
@@ -259,6 +251,7 @@ namespace LANPaint.ViewModels
 
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
+            ClearCommand?.RaiseCanExecuteChanged();
             if (e.Added.Count <= 0 || !IsBroadcast) return;
             var strokesToSend = e.Added.Where(addedStroke => !_receivedStrokes.Contains(addedStroke)).ToArray();
             if (strokesToSend.Length < 1) return;
@@ -282,15 +275,20 @@ namespace LANPaint.ViewModels
             }
             catch (SocketException exception)
             {
-                Debug.WriteLine(exception.Message);
-                Debug.WriteLine($"SocketErrorCode: {exception.SocketErrorCode}");
-                //Show Alert
-                UdpBroadcastService.Dispose();
-                UdpBroadcastService = null;
-                IsBroadcast = IsReceive = false;
+                HandleBroadcasterSocketException(exception);
             }
 
             return sendedBytesAmount;
+        }
+
+        private void HandleBroadcasterSocketException(SocketException exception)
+        {
+            Debug.WriteLine(exception.Message);
+            Debug.WriteLine($"SocketErrorCode: {exception.SocketErrorCode}");
+            //Show Alert
+            UdpBroadcastService.Dispose();
+            UdpBroadcastService = null;
+            IsBroadcast = IsReceive = false;
         }
 
         public void Dispose() => UdpBroadcastService?.Dispose();

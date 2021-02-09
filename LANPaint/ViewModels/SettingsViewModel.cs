@@ -1,15 +1,14 @@
 ﻿using LANPaint.Dialogs.Service;
 using LANPaint.Services.Network;
-using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Windows.Threading;
 
 namespace LANPaint.ViewModels
 {
-    public class SettingsViewModel : DialogViewModelBase<IPEndPoint>, IDisposable
+    public class SettingsViewModel : DialogViewModelBase<IPEndPoint>
     {
         private const int PortMinValue = 1024;
         private const int PortMaxValue = 65535;
@@ -17,6 +16,7 @@ namespace LANPaint.ViewModels
         private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
         private int _port;
         private bool _isPortValid;
+        private readonly NetworkInterfaceHelper _helper;
 
         public NetworkInterfaceUiInfo SelectedNetworkInterfaceUiInfo
         {
@@ -51,11 +51,11 @@ namespace LANPaint.ViewModels
         public SettingsViewModel() : base("Settings")
         {
             Interfaces = new ObservableCollection<NetworkInterfaceUiInfo>();
+            _helper = NetworkInterfaceHelper.GetInstance();
             _dispatcher = Dispatcher.CurrentDispatcher;
             UpdateInterfaceCollection();
+            _helper.Interfaces.CollectionChanged += CollectionChangedHandler;
 
-            NetworkChange.NetworkAvailabilityChanged += NetworkAvailabilityChangedHandler;
-            NetworkChange.NetworkAddressChanged += NetworkAddressChangedHandler;
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
                 () => Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(Port) &&
                       SelectedNetworkInterfaceUiInfo != null &&
@@ -77,20 +77,15 @@ namespace LANPaint.ViewModels
             CloseDialogWithResult(window, result);
         }
 
-        private void OnCancelCommand(IDialogWindow window)
-        {
-            CloseDialogWithResult(window);
-        }
+        private void OnCancelCommand(IDialogWindow window) => CloseDialogWithResult(window);
 
         private void UpdateInterfaceCollection()
         {
-            var helper = new NetworkInterfaceHelper();
-
-            var interfaces = helper.GetIPv4Interfaces().Select(nic => new NetworkInterfaceUiInfo()
+            var interfaces = _helper.Interfaces.Select(nic => new NetworkInterfaceUiInfo()
             {
                 Name = nic.Name,
-                IpAddress = helper.GetIpAddress(nic),
-                IsReadyToUse = helper.IsReadyToUse(nic)
+                IpAddress = _helper.GetIpAddress(nic),
+                IsReadyToUse = _helper.IsReadyToUse(nic)
             }).ToList();
 
             if (Dispatcher.CurrentDispatcher == _dispatcher)
@@ -108,14 +103,7 @@ namespace LANPaint.ViewModels
             }
         }
 
-        private void NetworkAddressChangedHandler(object sender, EventArgs e) => UpdateInterfaceCollection();
-        private void NetworkAvailabilityChangedHandler(object sender, NetworkAvailabilityEventArgs e) => UpdateInterfaceCollection();
-
-        public void Dispose()
-        {
-            NetworkChange.NetworkAvailabilityChanged -= NetworkAvailabilityChangedHandler;
-            NetworkChange.NetworkAddressChanged -= NetworkAddressChangedHandler;
-        }
+        private void CollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e) => UpdateInterfaceCollection();
     }
 
     public class NetworkInterfaceUiInfo
