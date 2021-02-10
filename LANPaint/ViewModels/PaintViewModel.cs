@@ -6,6 +6,7 @@ using LANPaint.Services.UDP;
 using LANPaint.Services.UDP.Factory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net;
@@ -13,6 +14,7 @@ using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using System.Windows.Ink;
 using System.Windows.Media;
 
@@ -61,10 +63,12 @@ namespace LANPaint.ViewModels
         public RelayCommand ReceiveChangedCommand { get; }
         public RelayCommand OpenSettingsCommand { get; }
         public RelayCommand UndoCommand { get; }
+        public RelayCommand RedoCommand { get; }
 
         private readonly IDialogService _dialogService;
         private readonly IUDPBroadcastFactory _udpBroadcastFactory;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
+        private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
 
         private IUDPBroadcast _udpBroadcastService;
         private CancellationTokenSource _cancelReceiveTokenSource;
@@ -78,6 +82,7 @@ namespace LANPaint.ViewModels
             _udpBroadcastService = _udpBroadcastFactory.Create(localInterfaceAddressToConnect);
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
+            _undoneStrokesStack = new Stack<(Stroke previous, Stroke undone)>();
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
 
@@ -90,6 +95,7 @@ namespace LANPaint.ViewModels
             ReceiveChangedCommand = new RelayCommand(OnReceiveChanged);
             OpenSettingsCommand = new RelayCommand(OnOpenSettings);
             UndoCommand = new RelayCommand(OnUndo);
+            RedoCommand = new RelayCommand(OnRedo);
             PropertyChanged += PropertyChangedHandler;
         }
 
@@ -172,7 +178,21 @@ namespace LANPaint.ViewModels
         private void OnUndo()
         {
             if (Strokes.Count < 1) return;
+            var undoTuple = (Strokes.ElementAtOrDefault(Strokes.Count - 2), Strokes[^1]);
+            _undoneStrokesStack.Push(undoTuple);
             Strokes.Remove(Strokes[^1]);
+        }
+
+        private void OnRedo()
+        {
+            if(_undoneStrokesStack.Count < 1) return;
+            if (_undoneStrokesStack.Peek().previous != Strokes.ElementAtOrDefault(Strokes.Count - 1))
+            {
+                _undoneStrokesStack.Clear();
+                return;
+            }
+
+            Strokes.Add(_undoneStrokesStack.Pop().undone);
         }
 
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)

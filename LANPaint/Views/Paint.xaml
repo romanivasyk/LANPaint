@@ -26,6 +26,7 @@
     </Window.Resources>
     <Window.InputBindings>
         <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Control"/>
+        <KeyBinding Command="{Binding RedoCommand}" Key="Y" Modifiers="Control"/>
     </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
