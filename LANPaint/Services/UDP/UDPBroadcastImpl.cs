@@ -28,7 +28,7 @@ namespace LANPaint.Services.UDP
                     if (WindowsNative.CancelIoEx(Client.Client.Handle, IntPtr.Zero)) throw;
                     throw new ApplicationException("Unsuccessful attempt to cancel Socket I/O operation", ex);
                 }
-            } while (result.RemoteEndPoint.Equals(LocalEndPoint));
+            } while (Equals(result.RemoteEndPoint, LocalEndPoint));
 
             return result.Buffer;
         }

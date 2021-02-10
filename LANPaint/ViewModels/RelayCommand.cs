@@ -5,12 +5,6 @@ namespace LANPaint.ViewModels
 {
     public class RelayCommand : ICommand
     {
-        public event EventHandler CanExecuteChanged
-        {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
-        }
-
         private Action Action { get; }
         private Func<bool> CanExecuteDelegate { get; }
 
@@ -20,14 +14,17 @@ namespace LANPaint.ViewModels
             CanExecuteDelegate = canExecute;
         }
 
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, new EventArgs());
         public bool CanExecute() => CanExecuteDelegate?.Invoke() ?? true;
         public void Execute() => Action();
 
+
+        #region ICommand Members
+        public event EventHandler CanExecuteChanged;
         bool ICommand.CanExecute(object parameter) => parameter == null
             ? CanExecute()
             : throw new ArgumentException("This implementation of RelayCommand doesn't support parameters.",
                 nameof(parameter));
-
         void ICommand.Execute(object parameter)
         {
             if (parameter == null)
@@ -36,16 +33,11 @@ namespace LANPaint.ViewModels
                 throw new ArgumentException("This implementation of RelayCommand doesn't support parameters.",
                     nameof(parameter));
         }
+        #endregion
     }
 
     public class RelayCommand<T> : ICommand
     {
-        public event EventHandler CanExecuteChanged
-        {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
-        }
-
         private Action<T> Action { get; }
         private Func<bool> CanExecuteDelegate { get; }
 
@@ -55,10 +47,16 @@ namespace LANPaint.ViewModels
             CanExecuteDelegate = canExecuteDelegate;
         }
 
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, new EventArgs());
         public bool CanExecute(T parameter) => CanExecuteDelegate?.Invoke() ?? true;
         public void Execute(T parameter) => Action(parameter);
 
+
+        #region ICommand Members
+        public event EventHandler CanExecuteChanged;
         bool ICommand.CanExecute(object parameter) => CanExecute((T)parameter);
         void ICommand.Execute(object parameter) => Execute((T)parameter);
+        #endregion
+
     }
 }
