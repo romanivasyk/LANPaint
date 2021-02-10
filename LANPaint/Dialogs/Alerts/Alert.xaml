@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="LANPaint.Dialogs.Alerts.Alert"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:LANPaint.Dialogs.Alerts"
+             mc:Ignorable="d" 
+             Height="100" Width="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock d:Text="Here's a message you have to see." Text="{Binding Message}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+        <Button Grid.Row="1" Content="OK" Width="100"
+                Command="{Binding OkCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"/>
+    </Grid>
+</UserControl>

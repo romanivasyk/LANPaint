@@ -11,14 +11,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace LANPaint.Views
+namespace LANPaint.Dialogs.Alerts
 {
     /// <summary>
-    /// Interaction logic for Settings.xaml
+    /// Interaction logic for Alert.xaml
     /// </summary>
-    public partial class Settings : UserControl
+    public partial class Alert : UserControl
     {
-        public Settings()
+        public Alert()
         {
             InitializeComponent();
         }

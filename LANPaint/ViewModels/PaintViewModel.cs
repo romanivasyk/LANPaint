@@ -15,6 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Ink;
 using System.Windows.Media;
+using System.Windows.Threading;
+using LANPaint.Dialogs.Alerts;
 
 namespace LANPaint.ViewModels
 {
@@ -82,9 +84,11 @@ namespace LANPaint.ViewModels
         private readonly IUDPBroadcastFactory _udpBroadcastFactory;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private CancellationTokenSource _cancelReceiveTokenSource;
+        private Dispatcher _dispatcher;
 
         public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             _udpBroadcastFactory = udpBroadcastFactory;
             var netHelper = NetworkInterfaceHelper.GetInstance();
             if (netHelper.IsAnyNetworkAvailable)
@@ -285,10 +289,15 @@ namespace LANPaint.ViewModels
         {
             Debug.WriteLine(exception.Message);
             Debug.WriteLine($"SocketErrorCode: {exception.SocketErrorCode}");
-            //Show Alert
             UdpBroadcastService.Dispose();
             UdpBroadcastService = null;
             IsBroadcast = IsReceive = false;
+
+            var alertDialogService = new DialogService();
+            var alertVm = new AlertDialogViewModel("Connection Lost", "The PC was unexpectedly disconnected from " +
+                                                                      "the network. Please, go to Settings to setup new connection.");
+            alertDialogService.OpenDialog(alertVm);
+
         }
 
         public void Dispose() => UdpBroadcastService?.Dispose();
