@@ -1,6 +1,4 @@
-﻿using LANPaint.Dialogs.Service;
-
-namespace LANPaint.Dialogs.Service
+﻿namespace LANPaint.Dialogs.Service
 {
     public class DialogService : IDialogService
     {

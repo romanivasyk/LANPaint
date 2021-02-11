@@ -49,8 +49,11 @@ namespace LANPaint.Services.Network
 
         private void UpdateInterfaceCollection()
         {
-            Interfaces.Clear();
-            GetIPv4Interfaces().ToList().ForEach(ni => Interfaces.Add(ni));
+            lock (Locker)
+            {
+                Interfaces.Clear();
+                GetIPv4Interfaces().ToList().ForEach(ni => Interfaces.Add(ni));
+            }
         }
 
         private IEnumerable<NetworkInterface> GetIPv4Interfaces()
@@ -69,6 +72,9 @@ namespace LANPaint.Services.Network
             .First(information => information.Address.AddressFamily == AddressFamily.InterNetwork).Address;
 
         public bool IsReadyToUse(NetworkInterface ni) => ni.OperationalStatus == OperationalStatus.Up;
+
+        public bool IsReadyToUse(IPAddress ipAddress) => Interfaces.Any(networkInterface =>
+            Equals(GetIpAddress(networkInterface), ipAddress) && IsReadyToUse(networkInterface));
 
         public void Dispose()
         {

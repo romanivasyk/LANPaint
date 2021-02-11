@@ -7,6 +7,7 @@ using LANPaint.Services.UDP.Factory;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -86,16 +87,18 @@ namespace LANPaint.ViewModels
         private readonly IUDPBroadcastFactory _udpBroadcastFactory;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
+        private readonly NetworkInterfaceHelper _netHelper;
+        private readonly Dispatcher _dispatcher;
         private CancellationTokenSource _cancelReceiveTokenSource;
-        private Dispatcher _dispatcher;
 
         public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _udpBroadcastFactory = udpBroadcastFactory;
-            var netHelper = NetworkInterfaceHelper.GetInstance();
-            if (netHelper.IsAnyNetworkAvailable)
-                UdpBroadcastService = _udpBroadcastFactory.Create(netHelper.GetAnyReadyToUseIPv4Address());
+            _netHelper = NetworkInterfaceHelper.GetInstance();
+            _netHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChangedHandler;
+            if (_netHelper.IsAnyNetworkAvailable)
+                UdpBroadcastService = _udpBroadcastFactory.Create(_netHelper.GetAnyReadyToUseIPv4Address());
 
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
@@ -114,6 +117,23 @@ namespace LANPaint.ViewModels
             UndoCommand = new RelayCommand(OnUndo);
             RedoCommand = new RelayCommand(OnRedo);
             PropertyChanged += PropertyChangedHandler;
+        }
+
+        private void NetworkInterfacesCollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (UdpBroadcastService == null ||_netHelper.IsReadyToUse(UdpBroadcastService.LocalEndPoint.Address)) return;
+            _dispatcher.Invoke(() =>
+            {
+                UdpBroadcastService.Dispose();
+                UdpBroadcastService = null;
+
+                if (IsBroadcast || IsReceive)
+                {
+                    ShowAlert("Connection Lost", "The PC was unexpectedly disconnected from " +
+                                                 "the network. Please, go to Settings to setup new connection.");
+                }
+                IsBroadcast = IsReceive = false;
+            });
         }
 
         private async void OnClear()
@@ -211,7 +231,7 @@ namespace LANPaint.ViewModels
 
         private void OnRedo()
         {
-            if(_undoneStrokesStack.Count < 1) return;
+            if (_undoneStrokesStack.Count < 1) return;
             if (_undoneStrokesStack.Peek().previous != Strokes.ElementAtOrDefault(Strokes.Count - 1))
             {
                 _undoneStrokesStack.Clear();
@@ -310,11 +330,15 @@ namespace LANPaint.ViewModels
             UdpBroadcastService = null;
             IsBroadcast = IsReceive = false;
 
-            var alertDialogService = new DialogService();
-            var alertVm = new AlertDialogViewModel("Connection Lost", "The PC was unexpectedly disconnected from " +
-                                                                      "the network. Please, go to Settings to setup new connection.");
-            alertDialogService.OpenDialog(alertVm);
+            ShowAlert("Connection Lost", "The PC was unexpectedly disconnected from " +
+                                         "the network. Please, go to Settings to setup new connection.");
+        }
 
+        private void ShowAlert(string title, string message)
+        {
+            var alertDialogService = new DialogService();
+            var alertVm = new AlertDialogViewModel(title, message);
+            alertDialogService.OpenDialog(alertVm);
         }
 
         public void Dispose() => UdpBroadcastService?.Dispose();
