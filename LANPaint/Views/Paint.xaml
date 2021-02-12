@@ -83,6 +83,10 @@
                 <Label Content="Receive:"/>
                 <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsReceive, Mode=TwoWay}" Command="{Binding ReceiveChangedCommand}"/>
                 <Separator Margin="5,0"/>
+                <Button Command="{Binding SynchronizeCommand}">
+                    <Image Height="24" Source="../Resources/sync.png"/>
+                </Button>
+                <Separator Margin="5,0"/>
                 <Button Command="{Binding OpenSettingsCommand}">
                     <Image Height="24" Source="../Resources/settings.png"/>
                 </Button>

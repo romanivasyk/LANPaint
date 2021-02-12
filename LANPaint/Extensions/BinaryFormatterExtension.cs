@@ -17,14 +17,12 @@ namespace LANPaint.Extensions
             return bytes;
         }
 
-        public static TData OneLineDeserialize<TData>(this BinaryFormatter formatter, byte[] bytes)
+        public static object OneLineDeserialize(this BinaryFormatter formatter, byte[] bytes)
         {
             using var stream = MemoryStreamManager.GetStream();
             stream.Write(bytes, 0, bytes.Length);
             stream.Seek(0, SeekOrigin.Begin);
-            var data = (TData)formatter.Deserialize(stream);
-
-            return data;
+            return formatter.Deserialize(stream);
         }
     }
 }

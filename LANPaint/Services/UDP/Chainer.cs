@@ -62,7 +62,7 @@ namespace LANPaint.Services.UDP
                     throw;
                 }
 
-                var packet = _formatter.OneLineDeserialize<Packet>(bytes);
+                var packet = (Packet)_formatter.OneLineDeserialize(bytes);
 
                 if (_segmentBuffer.ContainsKey(packet.SequenceGuid))
                 {
