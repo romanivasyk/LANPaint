@@ -7,6 +7,8 @@
         mc:Ignorable="d"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Icon="../../Resources/settings.png"
         Title="{Binding Title}" d:Height="450" d:Width="800">
     <ContentControl x:Name="ContentPresenter" Content="{Binding}"/>
 </Window>

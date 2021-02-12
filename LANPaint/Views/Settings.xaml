@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:LANPaint.Views"
              xmlns:converters="clr-namespace:LANPaint.Converters"
              mc:Ignorable="d"
-             MinHeight="180" MaxHeight="300" MinWidth="300" MaxWidth="450">
+             MinHeight="120" MaxHeight="300" MinWidth="300" MaxWidth="450">
     <UserControl.Resources>
         <converters:StringToIntConverter x:Key="StringToIntConverter"/>
     </UserControl.Resources>
@@ -14,7 +14,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="20"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -57,8 +56,7 @@
                 </TextBox.Style>
             </TextBox>
         </StackPanel>
-        <Rectangle Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Width="Auto"/>
-        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="5,20,5,5">
             <StackPanel.Resources>
                 <Style TargetType="{x:Type Button}">
                     <Setter Property="Margin" Value="30,0"/>
