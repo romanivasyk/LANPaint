@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,5 +23,8 @@ namespace LANPaint.Views
         {
             InitializeComponent();
         }
+
+        private void Port_OnPreviewInput(object sender, TextCompositionEventArgs e) => 
+            e.Handled = !ushort.TryParse(e.Text, out var parsed);
     }
 }

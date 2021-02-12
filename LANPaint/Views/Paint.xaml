@@ -5,7 +5,7 @@
         xmlns:controls="clr-namespace:LANPaint.UserControls"
         xmlns:converters="clr-namespace:LANPaint.Converters"
         WindowStartupLocation="CenterScreen"
-        Title="LAN Paint" Height="600" Width="925" Icon="../Resources/pen.png" Closing="Window_Closing">
+        Title="LAN Paint" Height="600" Width="935" Icon="../Resources/pen.png" Closing="Window_Closing">
 
     <Window.Resources>
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
