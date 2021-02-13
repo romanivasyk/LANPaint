@@ -10,15 +10,18 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LANPaint.Dialogs.Alerts;
+using Microsoft.Win32;
 
 namespace LANPaint.ViewModels
 {
@@ -127,7 +130,7 @@ namespace LANPaint.ViewModels
             if (UdpBroadcastService == null || _netHelper.IsReadyToUse(UdpBroadcastService.LocalEndPoint.Address)) return;
             _dispatcher.Invoke(() =>
             {
-                UdpBroadcastService.Dispose();
+                UdpBroadcastService?.Dispose();
                 UdpBroadcastService = null;
 
                 if (IsBroadcast || IsReceive)
@@ -149,17 +152,39 @@ namespace LANPaint.ViewModels
             await SendDataAsync(info);
         }
 
-        private void OnSaveDrawing()
+#warning REFACTOR THIS!
+        private async void OnSaveDrawing()
         {
-            throw new NotImplementedException();
-            //TODO: Save all drawing data into object, serialize it and save to file
+            var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
+            var snapshot = new BoardSnapshot(ARGBColor.FromColor(Background), strokes);
+            var formatter = new BinaryFormatter();
+
+            var bytes = formatter.OneLineSerialize(snapshot);
+            var dialog = new SaveFileDialog();
+            var path = dialog.ShowDialog() == true ? dialog.FileName : string.Empty;
+            if (string.IsNullOrEmpty(path)) return;
+            await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+            await stream.WriteAsync(bytes);
         }
 
-        private void OnOpenDrawing()
+#warning REFACTOR THIS!
+        private async void OnOpenDrawing()
         {
-            throw new NotImplementedException();
-            //TODO: Add suggestion to save current work in case board not empty???
-            //TODO: Read file, deserialize to object and apply to current border
+            var dialog = new OpenFileDialog();
+            var path = dialog.ShowDialog() == true ? dialog.FileName : string.Empty;
+            if (string.IsNullOrEmpty(path)) return;
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var buffer = new byte[stream.Length];
+            await stream.ReadAsync(buffer);
+
+            var formatter = new BinaryFormatter();
+            var snapshot = (BoardSnapshot)formatter.OneLineDeserialize(buffer);
+
+            Strokes.Clear();
+            _receivedStrokes.Clear();
+
+            Background = snapshot.Background.AsColor();
+            snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
         }
 
         private void OnBroadcastChanged()
@@ -222,12 +247,12 @@ namespace LANPaint.ViewModels
             else
                 settingsVm = new SettingsViewModel();
 
-            var resultEndPoint = _dialogService.OpenDialog(settingsVm);
+            if (!_dialogService.ShowCustomDialog(settingsVm)) return;
 
-            if ((UdpBroadcastService != null && Equals(resultEndPoint, UdpBroadcastService.LocalEndPoint)) ||
-                resultEndPoint == null) return;
+            if ((UdpBroadcastService != null && Equals(settingsVm.Result, UdpBroadcastService.LocalEndPoint)) ||
+                settingsVm.Result == null) return;
 
-            UdpBroadcastService = _udpBroadcastFactory.Create(resultEndPoint.Address, resultEndPoint.Port);
+            UdpBroadcastService = _udpBroadcastFactory.Create(settingsVm.Result.Address, settingsVm.Result.Port);
             IsBroadcast = IsReceive = false;
         }
 
@@ -274,6 +299,7 @@ namespace LANPaint.ViewModels
                     return binarySerializer.OneLineDeserialize(data);
                 });
 
+#warning REFACTOR this huge if/else type checking statement. (HOW?)
                 if (deserializedInfo is DrawingInfo info)
                 {
 
@@ -303,7 +329,7 @@ namespace LANPaint.ViewModels
                 else
                 {
                     var snapshot = (BoardSnapshot)deserializedInfo;
-                    
+
                     Strokes.Clear();
                     _receivedStrokes.Clear();
 
@@ -350,7 +376,7 @@ namespace LANPaint.ViewModels
         {
             Debug.WriteLine(exception.Message);
             Debug.WriteLine($"SocketErrorCode: {exception.SocketErrorCode}");
-            UdpBroadcastService.Dispose();
+            UdpBroadcastService?.Dispose();
             UdpBroadcastService = null;
             IsBroadcast = IsReceive = false;
 
@@ -360,9 +386,8 @@ namespace LANPaint.ViewModels
 
         private void ShowAlert(string title, string message)
         {
-            var alertDialogService = new DialogService();
-            var alertVm = new AlertDialogViewModel(title, message);
-            alertDialogService.OpenDialog(alertVm);
+            _dialogService.ShowMessageBox(this, message, title, MessageBoxButton.OK, MessageBoxImage.Error,
+                MessageBoxResult.OK);
         }
 
         public void Dispose() => UdpBroadcastService?.Dispose();

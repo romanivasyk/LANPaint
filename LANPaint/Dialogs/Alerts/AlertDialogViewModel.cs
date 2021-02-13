@@ -1,4 +1,5 @@
 ﻿using LANPaint.Dialogs.Service;
+using LANPaint.Dialogs.Views;
 using LANPaint.ViewModels;
 
 namespace LANPaint.Dialogs.Alerts

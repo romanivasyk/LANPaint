@@ -62,6 +62,7 @@ namespace LANPaint.Services.UDP
                     throw;
                 }
 
+#warning Probaly here we should to check is received data is of Packet type...
                 var packet = (Packet)_formatter.OneLineDeserialize(bytes);
 
                 if (_segmentBuffer.ContainsKey(packet.SequenceGuid))

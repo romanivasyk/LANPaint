@@ -4,6 +4,7 @@ using LANPaint.Services.UDP.Factory;
 using LANPaint.ViewModels;
 using System.Windows;
 using System.Windows.Media;
+using LANPaint.Dialogs.FrameworkDialogs;
 
 namespace LANPaint.Views
 {
@@ -15,7 +16,7 @@ namespace LANPaint.Views
         {
             InitializeComponent();
             _factory = new ChainerFactory();
-            var context = new PaintViewModel(_factory, new DialogService());
+            var context = new PaintViewModel(_factory, new DefaultDialogService(new DefaultFrameworkDialogFactory()));
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);

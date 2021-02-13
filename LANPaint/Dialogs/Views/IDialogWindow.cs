@@ -1,4 +1,4 @@
-﻿namespace LANPaint.Dialogs.Service
+﻿namespace LANPaint.Dialogs.Views
 {
     public interface IDialogWindow
     {

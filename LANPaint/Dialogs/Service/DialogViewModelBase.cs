@@ -1,4 +1,5 @@
-﻿using LANPaint.ViewModels;
+﻿using LANPaint.Dialogs.Views;
+using LANPaint.ViewModels;
 
 namespace LANPaint.Dialogs.Service
 {
@@ -6,7 +7,7 @@ namespace LANPaint.Dialogs.Service
     {
         public string Title { get; set; }
         public string Message { get; set; }
-        public TResult DialogResult { get; set; }
+        public TResult Result { get; set; }
 
         protected DialogViewModelBase() : this(string.Empty, string.Empty)
         { }
@@ -20,7 +21,7 @@ namespace LANPaint.Dialogs.Service
 
         public void CloseDialogWithResult(IDialogWindow dialog, TResult result = default)
         {
-            DialogResult = result;
+            Result = result;
             if (dialog != null) dialog.DialogResult = true;
         }
     }

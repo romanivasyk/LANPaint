@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Windows.Threading;
+using LANPaint.Dialogs.Views;
 
 namespace LANPaint.ViewModels
 {
