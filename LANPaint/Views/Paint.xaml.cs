@@ -1,6 +1,6 @@
 ﻿using LANPaint.Dialogs.FrameworkDialogs;
 using LANPaint.Dialogs.Service;
-using LANPaint.Services.UDP.Factory;
+using LANPaint.Services.Broadcast.UDP.Factories;
 using LANPaint.ViewModels;
 using System;
 using System.Windows;

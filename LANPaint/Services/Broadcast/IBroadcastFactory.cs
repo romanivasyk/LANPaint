@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace LANPaint.Services.UDP.Factory
+namespace LANPaint.Services.Broadcast
 {
     public interface IBroadcastFactory
     {

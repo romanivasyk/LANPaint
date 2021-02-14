@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LANPaint.Services.UDP
+namespace LANPaint.Services.Broadcast.UDP
 {
     public abstract class UdpBroadcastBase : IBroadcast
     {

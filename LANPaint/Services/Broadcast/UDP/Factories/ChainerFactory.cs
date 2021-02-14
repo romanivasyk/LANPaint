@@ -1,7 +1,8 @@
-﻿using System;
+﻿using LANPaint.Services.Broadcast.UDP.Decorators;
+using System;
 using System.Net;
 
-namespace LANPaint.Services.UDP.Factory
+namespace LANPaint.Services.Broadcast.UDP.Factories
 {
     public class ChainerFactory : IBroadcastFactory, IDisposable
     {

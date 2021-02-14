@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace LANPaint.Services.UDP
+namespace LANPaint.Services.Broadcast.UDP
 {
     internal static class WindowsNative
     {

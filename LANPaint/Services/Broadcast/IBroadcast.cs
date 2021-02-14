@@ -3,7 +3,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LANPaint.Services.UDP
+namespace LANPaint.Services.Broadcast
 {
     public interface IBroadcast : IDisposable
     {
