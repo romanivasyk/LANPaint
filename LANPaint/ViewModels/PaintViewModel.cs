@@ -98,7 +98,6 @@ namespace LANPaint.ViewModels
         private readonly NetworkInterfaceHelper _networkInterfaceHelper;
         private readonly Dispatcher _dispatcher;
         private CancellationTokenSource _cancelReceiveTokenSource;
-        private readonly object _syncRoot = new object();
 
         public PaintViewModel(IBroadcastFactory broadcastFactory, IDialogService dialogService)
         {
@@ -132,18 +131,7 @@ namespace LANPaint.ViewModels
         private void NetworkInterfacesCollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (BroadcastService == null || _networkInterfaceHelper.IsReadyToUse(BroadcastService.LocalEndPoint.Address)) return;
-            _dispatcher.Invoke(() =>
-            {
-                BroadcastService?.Dispose();
-                BroadcastService = null;
-
-                if (IsBroadcast || IsReceive)
-                {
-                    ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
-                                                 "the network. Please, go to Settings to setup new connection.");
-                }
-                IsBroadcast = IsReceive = false;
-            });
+            _dispatcher.Invoke(HandleUnexpectedDisconnect);
         }
 
         private async void OnClear()
@@ -242,9 +230,9 @@ namespace LANPaint.ViewModels
                     (disposedException.ObjectName == typeof(Socket).FullName ||
                      disposedException.ObjectName == typeof(UdpClient).FullName))
                 { }
-                catch (SocketException exception)
+                catch (SocketException)
                 {
-                    HandleBroadcasterSocketException(exception);
+                    HandleUnexpectedDisconnect();
                 }
                 finally
                 {
@@ -395,28 +383,27 @@ namespace LANPaint.ViewModels
             //In case Broadcaster is null - we already dispose and clear it in another thread.
             catch (NullReferenceException exception) when (BroadcastService == null)
             { }
-            catch (SocketException exception)
+            catch (SocketException)
             {
-                HandleBroadcasterSocketException(exception);
+                HandleUnexpectedDisconnect();
             }
 
             return sendedBytesAmount;
         }
 
-        private void HandleBroadcasterSocketException(SocketException exception)
+        private void HandleUnexpectedDisconnect()
         {
-            //This lock prevents from clearing and showing Alert twice by different threads.
             if (BroadcastService == null) return;
-            lock (_syncRoot)
-            {
-                if (BroadcastService == null) return;
-                BroadcastService?.Dispose();
-                BroadcastService = null;
-                IsBroadcast = IsReceive = false;
+            BroadcastService?.Dispose();
+            BroadcastService = null;
 
+            if (IsBroadcast || IsReceive)
+            {
                 ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
                                                         "the network. Please, go to Settings to setup new connection.");
             }
+
+            IsBroadcast = IsReceive = false;
         }
 
         private void ShowAlert(string title, string message)
