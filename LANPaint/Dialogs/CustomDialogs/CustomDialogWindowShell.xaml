@@ -3,12 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LANPaint.Dialogs.Service"
         mc:Ignorable="d"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Icon="../../Resources/settings.png"
-        Title="{Binding Title}" d:Height="450" d:Width="800">
+        Title="{Binding Caption}" d:Height="450" d:Width="800">
     <ContentControl x:Name="ContentPresenter" Content="{Binding}"/>
 </Window>

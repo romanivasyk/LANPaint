@@ -21,7 +21,7 @@ namespace LANPaint.Dialogs.FrameworkDialogs.MessageBox
         {
             if (owner == null) throw new ArgumentNullException(nameof(owner));
 
-            return _messageBoxShow.Show(owner, _settings.Message, _settings.Title, _settings.Button, _settings.Icon,
+            return _messageBoxShow.Show(owner, _settings.Message, _settings.Caption, _settings.Button, _settings.Icon,
                 _settings.DefaultResult, _settings.Options);
         }
     }

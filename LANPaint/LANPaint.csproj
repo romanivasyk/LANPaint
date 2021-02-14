@@ -14,7 +14,7 @@
     <None Remove="Resources\pen.png" />
     <None Remove="Resources\save.png" />
     <None Remove="Resources\settings.png" />
-    <None Remove="Resources\sync.png" />
+    <None Remove="Resources\synchronize.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,7 +44,7 @@
     <Resource Include="Resources\settings.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Resources\sync.png">
+    <Resource Include="Resources\synchronize.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

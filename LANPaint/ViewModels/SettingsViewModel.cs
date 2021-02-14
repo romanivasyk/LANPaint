@@ -11,13 +11,14 @@ namespace LANPaint.ViewModels
 {
     public class SettingsViewModel : CustomDialogViewModelBase<IPEndPoint>
     {
+#warning Change this two constants to Range?
         private const int PortMinValue = 1024;
         private const int PortMaxValue = 65535;
         private readonly Dispatcher _dispatcher;
         private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
         private int _port;
         private bool _isPortValid;
-        private readonly NetworkInterfaceHelper _helper;
+        private readonly NetworkInterfaceHelper _networkInterfaceHelper;
 
         public NetworkInterfaceUiInfo SelectedNetworkInterfaceUiInfo
         {
@@ -34,6 +35,7 @@ namespace LANPaint.ViewModels
             get => _port;
             set
             {
+#warning Do we really need to notify listeners about change of this property?
                 if (!SetProperty(ref _port, value)) return;
                 IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
                 OkCommand.RaiseCanExecuteChanged();
@@ -52,10 +54,10 @@ namespace LANPaint.ViewModels
         public SettingsViewModel() : base("Settings")
         {
             Interfaces = new ObservableCollection<NetworkInterfaceUiInfo>();
-            _helper = NetworkInterfaceHelper.GetInstance();
+            _networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
             _dispatcher = Dispatcher.CurrentDispatcher;
             UpdateInterfaceCollection();
-            _helper.Interfaces.CollectionChanged += CollectionChangedHandler;
+            _networkInterfaceHelper.Interfaces.CollectionChanged += CollectionChangedHandler;
 
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
                 () => Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(Port) &&
@@ -82,11 +84,11 @@ namespace LANPaint.ViewModels
 
         private void UpdateInterfaceCollection()
         {
-            var interfaces = _helper.Interfaces.Select(nic => new NetworkInterfaceUiInfo()
+            var interfaces = _networkInterfaceHelper.Interfaces.Select(nic => new NetworkInterfaceUiInfo()
             {
                 Name = nic.Name,
-                IpAddress = _helper.GetIpAddress(nic),
-                IsReadyToUse = _helper.IsReadyToUse(nic)
+                IpAddress = _networkInterfaceHelper.GetIpAddress(nic),
+                IsReadyToUse = _networkInterfaceHelper.IsReadyToUse(nic)
             }).ToList();
 
             if (Dispatcher.CurrentDispatcher == _dispatcher)

@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
 {
-    public class Chainer : UDPBroadcastDecorator
+    public class Chainer : BroadcastDecorator
     {
         public int SegmentPayloadLength { get; }
 
         private readonly BinaryFormatter _formatter;
         private readonly Dictionary<Guid, SortedList<long, Segment>> _segmentBuffer;
 
-        public Chainer(IUDPBroadcast udpBroadcaster, int segmentPayloadLength = 8192) : base(udpBroadcaster)
+        public Chainer(IBroadcast broadcaster, int segmentPayloadLength = 8192) : base(broadcaster)
         {
             SegmentPayloadLength = segmentPayloadLength;
             _formatter = new BinaryFormatter();
@@ -41,7 +41,7 @@ namespace LANPaint.Services.UDP
                 var packet = new Packet(sequenceGuid, sequenceLength, segment);
 
                 var bytes = _formatter.OneLineSerialize(packet);
-                await UdpBroadcast.SendAsync(bytes);
+                await Broadcast.SendAsync(bytes);
             }
 
             return payload.Length;
@@ -54,7 +54,7 @@ namespace LANPaint.Services.UDP
                 byte[] bytes;
                 try
                 {
-                    bytes = await UdpBroadcast.ReceiveAsync(token);
+                    bytes = await Broadcast.ReceiveAsync(token);
                 }
                 catch
                 {
@@ -99,8 +99,8 @@ namespace LANPaint.Services.UDP
             }
         }
 
-        public override ValueTask ClearBufferAsync() => UdpBroadcast.ClearBufferAsync();
+        public override ValueTask ClearBufferAsync() => Broadcast.ClearBufferAsync();
 
-        public override void Dispose() => UdpBroadcast?.Dispose();
+        public override void Dispose() => Broadcast?.Dispose();
     }
 }

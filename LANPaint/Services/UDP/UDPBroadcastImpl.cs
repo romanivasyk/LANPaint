@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
 {
-    public class UDPBroadcastImpl : UDPBroadcastBase
+    public class UdpBroadcastImpl : UdpBroadcastBase
     {
-        public UDPBroadcastImpl(IPAddress iPAddress) : base(iPAddress) { }
-        public UDPBroadcastImpl(IPAddress iPAddress, int port) : base(iPAddress, port) { }
+        public UdpBroadcastImpl(IPAddress iPAddress) : base(iPAddress) { }
+        public UdpBroadcastImpl(IPAddress iPAddress, int port) : base(iPAddress, port) { }
 
         public override Task<int> SendAsync(byte[] bytes) => Client.SendAsync(bytes, bytes.Length, BroadcastEndPoint);
 

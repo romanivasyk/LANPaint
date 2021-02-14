@@ -34,8 +34,10 @@ namespace LANPaint.ViewModels
         private bool _isReceive;
         private bool _isBroadcast;
         private StrokeCollection _strokes;
-        private IUDPBroadcast _udpBroadcastService;
+        private IBroadcast _broadcastService;
 
+#warning Change IsBroadcast and IsEraser property to Tool enum?
+#warning Or even by some ITool interface, each impl of which will have own behavior strategy?
         public bool IsEraser
         {
             get => _isEraser;
@@ -66,12 +68,13 @@ namespace LANPaint.ViewModels
             get => _strokes;
             set => SetProperty(ref _strokes, value);
         }
-        public IUDPBroadcast UdpBroadcastService
+        public IBroadcast BroadcastService
         {
-            get => _udpBroadcastService;
+            get => _broadcastService;
             private set
             {
-                SetProperty(ref _udpBroadcastService, value);
+#warning Do we really need to notify listeners about change of this property?
+                SetProperty(ref _broadcastService, value);
                 BroadcastChangedCommand?.RaiseCanExecuteChanged();
                 ReceiveChangedCommand?.RaiseCanExecuteChanged();
                 SynchronizeCommand?.RaiseCanExecuteChanged();
@@ -91,21 +94,21 @@ namespace LANPaint.ViewModels
         public RelayCommand RedoCommand { get; }
 
         private readonly IDialogService _dialogService;
-        private readonly IUDPBroadcastFactory _udpBroadcastFactory;
+        private readonly IBroadcastFactory _broadcastFactory;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
-        private readonly NetworkInterfaceHelper _netHelper;
+        private readonly NetworkInterfaceHelper _networkInterfaceHelper;
         private readonly Dispatcher _dispatcher;
         private CancellationTokenSource _cancelReceiveTokenSource;
 
-        public PaintViewModel(IUDPBroadcastFactory udpBroadcastFactory, IDialogService dialogService)
+        public PaintViewModel(IBroadcastFactory broadcastFactory, IDialogService dialogService)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
-            _udpBroadcastFactory = udpBroadcastFactory;
-            _netHelper = NetworkInterfaceHelper.GetInstance();
-            _netHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChangedHandler;
-            if (_netHelper.IsAnyNetworkAvailable)
-                UdpBroadcastService = _udpBroadcastFactory.Create(_netHelper.GetAnyReadyToUseIPv4Address());
+            _broadcastFactory = broadcastFactory;
+            _networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
+            _networkInterfaceHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChangedHandler;
+            if (_networkInterfaceHelper.IsAnyNetworkAvailable)
+                BroadcastService = _broadcastFactory.Create(_networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
 
             _dialogService = dialogService;
             _receivedStrokes = new ConcurrentBag<Stroke>();
@@ -118,9 +121,9 @@ namespace LANPaint.ViewModels
             ChooseEraserCommand = new RelayCommand(() => IsEraser = true, () => !IsEraser);
             SaveDrawingCommand = new RelayCommand(OnSaveDrawing, () => Strokes.Count > 0);
             OpenDrawingCommand = new RelayCommand(OnOpenDrawing);
-            BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged, () => UdpBroadcastService != null);
-            ReceiveChangedCommand = new RelayCommand(OnReceiveChanged, () => UdpBroadcastService != null);
-            SynchronizeCommand = new RelayCommand(OnSynchronize, () => UdpBroadcastService != null && Strokes.Count > 0);
+            BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged, () => BroadcastService != null);
+            ReceiveChangedCommand = new RelayCommand(OnReceiveChanged, () => BroadcastService != null);
+            SynchronizeCommand = new RelayCommand(OnSynchronize, () => BroadcastService != null && Strokes.Count > 0);
             OpenSettingsCommand = new RelayCommand(OnOpenSettings);
             UndoCommand = new RelayCommand(OnUndo);
             RedoCommand = new RelayCommand(OnRedo);
@@ -129,11 +132,11 @@ namespace LANPaint.ViewModels
 
         private void NetworkInterfacesCollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (UdpBroadcastService == null || _netHelper.IsReadyToUse(UdpBroadcastService.LocalEndPoint.Address)) return;
+            if (BroadcastService == null || _networkInterfaceHelper.IsReadyToUse(BroadcastService.LocalEndPoint.Address)) return;
             _dispatcher.Invoke(() =>
             {
-                UdpBroadcastService?.Dispose();
-                UdpBroadcastService = null;
+                BroadcastService?.Dispose();
+                BroadcastService = null;
 
                 if (IsBroadcast || IsReceive)
                 {
@@ -266,18 +269,18 @@ namespace LANPaint.ViewModels
         {
             SettingsViewModel settingsVm;
 
-            if (UdpBroadcastService != null)
-                settingsVm = new SettingsViewModel(UdpBroadcastService.LocalEndPoint.Address,
-                    UdpBroadcastService.LocalEndPoint.Port);
+            if (BroadcastService != null)
+                settingsVm = new SettingsViewModel(BroadcastService.LocalEndPoint.Address,
+                    BroadcastService.LocalEndPoint.Port);
             else
                 settingsVm = new SettingsViewModel();
 
             if (_dialogService.ShowCustomDialog(settingsVm) == false) return;
 
-            if ((UdpBroadcastService != null && Equals(settingsVm.Result, UdpBroadcastService.LocalEndPoint)) ||
+            if ((BroadcastService != null && Equals(settingsVm.Result, BroadcastService.LocalEndPoint)) ||
                 settingsVm.Result == null) return;
 
-            UdpBroadcastService = _udpBroadcastFactory.Create(settingsVm.Result.Address, settingsVm.Result.Port);
+            BroadcastService = _broadcastFactory.Create(settingsVm.Result.Address, settingsVm.Result.Port);
             IsBroadcast = IsReceive = false;
         }
 
@@ -310,10 +313,10 @@ namespace LANPaint.ViewModels
 
         private async Task Receive(CancellationToken token)
         {
-            await UdpBroadcastService.ClearBufferAsync();
+            await BroadcastService.ClearBufferAsync();
             while (true)
             {
-                var data = await UdpBroadcastService.ReceiveAsync(token);
+                var data = await BroadcastService.ReceiveAsync(token);
 
                 if (data == null || data.Length == 0)
                     continue;
@@ -388,7 +391,7 @@ namespace LANPaint.ViewModels
             int sendedBytesAmount = default;
             try
             {
-                sendedBytesAmount = await UdpBroadcastService.SendAsync(bytes);
+                sendedBytesAmount = await BroadcastService.SendAsync(bytes);
             }
             catch (SocketException exception)
             {
@@ -400,10 +403,9 @@ namespace LANPaint.ViewModels
 
         private void HandleBroadcasterSocketException(SocketException exception)
         {
-            Debug.WriteLine(exception.Message);
-            Debug.WriteLine($"SocketErrorCode: {exception.SocketErrorCode}");
-            UdpBroadcastService?.Dispose();
-            UdpBroadcastService = null;
+#warning Lock this code and check BroadcastService for null to avoid of showing alert twice?(In case disconect occurs while sending drawing)
+            BroadcastService?.Dispose();
+            BroadcastService = null;
             IsBroadcast = IsReceive = false;
 
             ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
@@ -416,6 +418,6 @@ namespace LANPaint.ViewModels
                 MessageBoxResult.OK);
         }
 
-        public void Dispose() => UdpBroadcastService?.Dispose();
+        public void Dispose() => BroadcastService?.Dispose();
     }
 }

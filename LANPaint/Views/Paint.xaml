@@ -84,7 +84,7 @@
                 <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsReceive, Mode=TwoWay}" Command="{Binding ReceiveChangedCommand}"/>
                 <Separator Margin="5,0"/>
                 <Button Command="{Binding SynchronizeCommand}">
-                    <Image Height="24" Source="../Resources/sync.png"/>
+                    <Image Height="24" Source="../Resources/synchronize.png"/>
                 </Button>
                 <Separator Margin="5,0"/>
                 <Button Command="{Binding OpenSettingsCommand}">
@@ -98,8 +98,6 @@
                      Background="{Binding Background, Mode=TwoWay, Converter={StaticResource ColorBrushConverter}}"
                      IsEraser="{Binding IsEraser}"
                      Strokes="{Binding Strokes, Mode=TwoWay}"/>
-                     <!--Height="{Binding RelativeSource={RelativeSource AncestorType=Border}, Path=ActualHeight}"
-                     Width="{Binding RelativeSource={RelativeSource AncestorType=Border}, Path=ActualWidth}"-->
         </Border>
         <DockPanel Grid.Row="2" >
             <Label DockPanel.Dock="Left" Content="{Binding ElementName=DrawingBoard,Path=MousePosition}"/>

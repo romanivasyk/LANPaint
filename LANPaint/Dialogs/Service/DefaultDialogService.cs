@@ -20,8 +20,8 @@ namespace LANPaint.Dialogs.Service
 
         public bool? ShowCustomDialog<T>(CustomDialogViewModelBase<T> viewModel)
         {
-            var customView = new CustomDialogWindowShell { DataContext = viewModel };
-            return customView.ShowDialog();
+            var customDialog = new CustomDialogWindowShell { DataContext = viewModel };
+            return customDialog.ShowDialog();
         }
 
         public MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, MessageBoxSettings settings)
@@ -33,13 +33,13 @@ namespace LANPaint.Dialogs.Service
             return messageBox.Show(FindOwnerWindow(ownerViewModel));
         }
 
-        public MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, string message, string title = "", MessageBoxButton button = MessageBoxButton.OK,
+        public MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, string message, string caption = "", MessageBoxButton button = MessageBoxButton.OK,
             MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None)
         {
             var settings = new MessageBoxSettings
             {
                 Message = message,
-                Title = title,
+                Caption = caption,
                 Button = button,
                 Icon = icon,
                 DefaultResult = defaultResult

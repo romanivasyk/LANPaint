@@ -3,9 +3,9 @@ using System.Net;
 
 namespace LANPaint.Services.UDP.Factory
 {
-    public class ChainerFactory : IUDPBroadcastFactory, IDisposable
+    public class ChainerFactory : IBroadcastFactory, IDisposable
     {
-        private IUDPBroadcast _cachedInstance;
+        private IBroadcast _cachedInstance;
         public int SegmentLength { get; }
 
         public ChainerFactory(int segmentLength = 8192)
@@ -15,23 +15,23 @@ namespace LANPaint.Services.UDP.Factory
             SegmentLength = segmentLength;
         }
 
-        public IUDPBroadcast Create(IPAddress ipAddress)
+        public IBroadcast Create(IPAddress ipAddress)
         {
             _cachedInstance?.Dispose();
 
             _cachedInstance = SegmentLength < 1024
-                ? new Chainer(new UDPBroadcastImpl(ipAddress))
-                : new Chainer(new UDPBroadcastImpl(ipAddress), SegmentLength);
+                ? new Chainer(new UdpBroadcastImpl(ipAddress))
+                : new Chainer(new UdpBroadcastImpl(ipAddress), SegmentLength);
             return _cachedInstance;
         }
 
-        public IUDPBroadcast Create(IPAddress ipAddress, int port)
+        public IBroadcast Create(IPAddress ipAddress, int port)
         {
             _cachedInstance?.Dispose();
 
             _cachedInstance = SegmentLength < 1024
-                ? new Chainer(new UDPBroadcastImpl(ipAddress, port))
-                : new Chainer(new UDPBroadcastImpl(ipAddress, port), SegmentLength);
+                ? new Chainer(new UdpBroadcastImpl(ipAddress, port))
+                : new Chainer(new UdpBroadcastImpl(ipAddress, port), SegmentLength);
             return _cachedInstance;
         }
 

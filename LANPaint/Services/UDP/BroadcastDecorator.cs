@@ -1,20 +1,18 @@
 ﻿using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
 {
-    public abstract class UDPBroadcastDecorator : IUDPBroadcast
+    public abstract class BroadcastDecorator : IBroadcast
     {
-        public UdpClient Client => UdpBroadcast.Client;
-        public IPEndPoint LocalEndPoint => UdpBroadcast.LocalEndPoint;
+        public IPEndPoint LocalEndPoint => Broadcast.LocalEndPoint;
 
-        protected readonly IUDPBroadcast UdpBroadcast;
+        protected readonly IBroadcast Broadcast;
 
-        protected UDPBroadcastDecorator(IUDPBroadcast udpBroadcast)
+        protected BroadcastDecorator(IBroadcast broadcast)
         {
-            UdpBroadcast = udpBroadcast;
+            Broadcast = broadcast;
         }
 
         public abstract Task<byte[]> ReceiveAsync(CancellationToken token = default);

@@ -75,8 +75,8 @@ namespace LANPaint.UserControls
         //and restore it after erasing mode disabled
         private Color _cachedStrokeColor;
 
-        //Store strokes used as eraser to change their color in case
-        //background color will be changed
+        //Store strokes used as eraser to synchronize their color
+        //in case if Background color will be changed
         private readonly List<Stroke> _eraserStrokes;
 
         static Board()
@@ -125,9 +125,9 @@ namespace LANPaint.UserControls
             }
 
             if (e.Removed.Count <= 0) return;
-            foreach (var item in e.Removed)
+            foreach (var stroke in e.Removed)
             {
-                _eraserStrokes.Remove(item);
+                _eraserStrokes.Remove(stroke);
             }
         }
 

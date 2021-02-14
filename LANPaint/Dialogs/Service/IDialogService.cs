@@ -13,7 +13,7 @@ namespace LANPaint.Dialogs.Service
 
         MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, MessageBoxSettings settings);
 
-        MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, string message, string title = "",
+        MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, string message, string caption = "",
             MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.None,
             MessageBoxResult defaultResult = MessageBoxResult.None);
 

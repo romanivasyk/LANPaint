@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 
 namespace LANPaint.Services.UDP
 {
-    public abstract class UDPBroadcastBase : IUDPBroadcast
+    public abstract class UdpBroadcastBase : IBroadcast
     {
         public UdpClient Client { get; }
         public IPEndPoint LocalEndPoint { get; }
         public IPEndPoint BroadcastEndPoint { get; }
 
-        protected UDPBroadcastBase(IPAddress iPAddress, int port = 9876)
+        protected UdpBroadcastBase(IPAddress iPAddress, int port = 9876)
         {
             LocalEndPoint = new IPEndPoint(iPAddress, port);
             Client = new UdpClient(LocalEndPoint);
