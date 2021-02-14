@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LANPaint.Dialogs.FrameworkDialogs.SaveFile
+﻿namespace LANPaint.Dialogs.FrameworkDialogs.SaveFile
 {
-    public class SaveFileDialogSettings
+    public class SaveFileDialogSettings : FileDialogSettings
     {
+        public bool CheckFileExists { get; set; }
+        public bool CreatePrompt { get; set; }
+        public bool OverwritePrompt { get; set; }
     }
 }

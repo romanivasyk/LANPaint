@@ -1,12 +1,27 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.Windows;
 
 namespace LANPaint.Dialogs.FrameworkDialogs.OpenFile
 {
-    public class OpenFileDialogWrapper : IFrameworkDialog
+    internal sealed class OpenFileDialogWrapper : IFrameworkDialog
     {
-        public bool? ShowDialog()
+        private readonly OpenFileDialog _dialog;
+        private readonly OpenFileDialogSettingsSync _sync;
+
+        public OpenFileDialogWrapper(OpenFileDialogSettings settings)
         {
-            throw new NotImplementedException();
+            _dialog = new OpenFileDialog();
+            _sync = new OpenFileDialogSettingsSync(_dialog, settings);
+            _sync.ToDialog();
+        }
+
+        public bool? ShowDialog(Window owner)
+        {
+            if (owner == null) throw new ArgumentNullException(nameof(owner));
+            var result = _dialog.ShowDialog(owner);
+            _sync.ToSettings();
+            return result;
         }
     }
 }

@@ -49,14 +49,20 @@ namespace LANPaint.Dialogs.Service
             return ShowMessageBox(ownerViewModel, settings);
         }
 
-        public bool ShowOpenFileDialog(OpenFileDialogSettings settings)
+        public bool? ShowOpenFileDialog(INotifyPropertyChanged ownerViewModel, OpenFileDialogSettings settings)
         {
-            throw new System.NotImplementedException();
+            if (ownerViewModel == null) throw new ArgumentNullException(nameof(ownerViewModel));
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+            return _frameworkDialogFactory.CreateOpenFileDialog(settings).ShowDialog(FindOwnerWindow(ownerViewModel));
         }
 
-        public bool ShowSaveFileDialog(SaveFileDialogSettings settings)
+        public bool? ShowSaveFileDialog(INotifyPropertyChanged ownerViewModel, SaveFileDialogSettings settings)
         {
-            throw new System.NotImplementedException();
+            if (ownerViewModel == null) throw new ArgumentNullException(nameof(ownerViewModel));
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+
+            return _frameworkDialogFactory.CreateSaveFileDialog(settings).ShowDialog(FindOwnerWindow(ownerViewModel));
         }
 
         private Window FindOwnerWindow(INotifyPropertyChanged ownerViewModel)

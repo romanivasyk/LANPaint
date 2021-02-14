@@ -1,4 +1,6 @@
-﻿using LANPaint.Dialogs.Service;
+﻿using LANPaint.Dialogs.FrameworkDialogs.OpenFile;
+using LANPaint.Dialogs.FrameworkDialogs.SaveFile;
+using LANPaint.Dialogs.Service;
 using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.Services.Network;
@@ -13,6 +15,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,8 +23,6 @@ using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
 using System.Windows.Threading;
-using LANPaint.Dialogs.Alerts;
-using Microsoft.Win32;
 
 namespace LANPaint.ViewModels
 {
@@ -114,7 +115,7 @@ namespace LANPaint.ViewModels
             ClearCommand = new RelayCommand(OnClear, () => Strokes.Count > 0);
             ChoosePenCommand = new RelayCommand(() => IsEraser = false, () => IsEraser);
             ChooseEraserCommand = new RelayCommand(() => IsEraser = true, () => !IsEraser);
-            SaveDrawingCommand = new RelayCommand(OnSaveDrawing);
+            SaveDrawingCommand = new RelayCommand(OnSaveDrawing, () => Strokes.Count > 0);
             OpenDrawingCommand = new RelayCommand(OnOpenDrawing);
             BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged, () => UdpBroadcastService != null);
             ReceiveChangedCommand = new RelayCommand(OnReceiveChanged, () => UdpBroadcastService != null);
@@ -135,7 +136,7 @@ namespace LANPaint.ViewModels
 
                 if (IsBroadcast || IsReceive)
                 {
-                    ShowAlert("Connection Lost", "The PC was unexpectedly disconnected from " +
+                    ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
                                                  "the network. Please, go to Settings to setup new connection.");
                 }
                 IsBroadcast = IsReceive = false;
@@ -155,25 +156,48 @@ namespace LANPaint.ViewModels
 #warning REFACTOR THIS!
         private async void OnSaveDrawing()
         {
+            var settings = new SaveFileDialogSettings
+            {
+                Title = "Save Snapshot...",
+                InitialDirectory = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                Filter = "LANPaint Snapshots (*.lpsnp)|*.lpsnp"
+            };
+
+            var saveDialogResult = _dialogService.ShowSaveFileDialog(this, settings);
+            if (saveDialogResult == false) return;
+
             var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
             var snapshot = new BoardSnapshot(ARGBColor.FromColor(Background), strokes);
             var formatter = new BinaryFormatter();
-
             var bytes = formatter.OneLineSerialize(snapshot);
-            var dialog = new SaveFileDialog();
-            var path = dialog.ShowDialog() == true ? dialog.FileName : string.Empty;
-            if (string.IsNullOrEmpty(path)) return;
-            await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+
+            await using var stream = new FileStream(settings.FileName, FileMode.Create, FileAccess.Write, FileShare.None);
             await stream.WriteAsync(bytes);
         }
 
 #warning REFACTOR THIS!
         private async void OnOpenDrawing()
         {
-            var dialog = new OpenFileDialog();
-            var path = dialog.ShowDialog() == true ? dialog.FileName : string.Empty;
-            if (string.IsNullOrEmpty(path)) return;
-            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (Strokes.Count > 0)
+            {
+                var questionResult = _dialogService.ShowMessageBox(this, "Do you want to save current board?",
+                    "LANPaint - Save current board", MessageBoxButton.YesNo, MessageBoxImage.Question,
+                    MessageBoxResult.No);
+
+                if (questionResult == MessageBoxResult.Yes) OnSaveDrawing();
+            }
+
+            var settings = new OpenFileDialogSettings
+            {
+                Title = "Open Snapshot...",
+                InitialDirectory = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                Filter = "LANPaint Snapshots (*.lpsnp)|*.lpsnp"
+            };
+
+            var openDialogResult = _dialogService.ShowOpenFileDialog(this, settings);
+            if (openDialogResult == false) return;
+
+            await using var stream = new FileStream(settings.FileName, FileMode.Open, FileAccess.Read, FileShare.Read);
             var buffer = new byte[stream.Length];
             await stream.ReadAsync(buffer);
 
@@ -342,6 +366,7 @@ namespace LANPaint.ViewModels
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
             ClearCommand?.RaiseCanExecuteChanged();
+            SaveDrawingCommand?.RaiseCanExecuteChanged();
             SynchronizeCommand?.RaiseCanExecuteChanged();
             if (e.Added.Count <= 0 || !IsBroadcast) return;
             var strokesToSend = e.Added.Where(addedStroke => !_receivedStrokes.Contains(addedStroke)).ToArray();
@@ -380,7 +405,7 @@ namespace LANPaint.ViewModels
             UdpBroadcastService = null;
             IsBroadcast = IsReceive = false;
 
-            ShowAlert("Connection Lost", "The PC was unexpectedly disconnected from " +
+            ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
                                          "the network. Please, go to Settings to setup new connection.");
         }
 
