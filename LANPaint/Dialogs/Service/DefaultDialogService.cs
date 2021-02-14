@@ -1,10 +1,10 @@
 ﻿using LANPaint.Dialogs.FrameworkDialogs.MessageBox;
 using LANPaint.Dialogs.FrameworkDialogs.OpenFile;
 using LANPaint.Dialogs.FrameworkDialogs.SaveFile;
-using LANPaint.Dialogs.Views;
 using System;
 using System.ComponentModel;
 using System.Windows;
+using LANPaint.Dialogs.CustomDialogs;
 using LANPaint.Dialogs.FrameworkDialogs;
 
 namespace LANPaint.Dialogs.Service
@@ -18,11 +18,10 @@ namespace LANPaint.Dialogs.Service
             _frameworkDialogFactory = frameworkDialogFactory ?? throw new ArgumentNullException(nameof(frameworkDialogFactory));
         }
 
-        public bool ShowCustomDialog<T>(DialogViewModelBase<T> viewModel)
+        public bool? ShowCustomDialog<T>(CustomDialogViewModelBase<T> viewModel)
         {
-            var customView = new DialogWindow { DataContext = viewModel };
-            var result = customView.ShowDialog();
-            return result ?? false;
+            var customView = new CustomDialogWindowShell { DataContext = viewModel };
+            return customView.ShowDialog();
         }
 
         public MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, MessageBoxSettings settings)

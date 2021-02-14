@@ -5,11 +5,11 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Windows.Threading;
-using LANPaint.Dialogs.Views;
+using LANPaint.Dialogs.CustomDialogs;
 
 namespace LANPaint.ViewModels
 {
-    public class SettingsViewModel : DialogViewModelBase<IPEndPoint>
+    public class SettingsViewModel : CustomDialogViewModelBase<IPEndPoint>
     {
         private const int PortMinValue = 1024;
         private const int PortMaxValue = 65535;
@@ -75,7 +75,7 @@ namespace LANPaint.ViewModels
         private void OnOkCommand(IDialogWindow window)
         {
             var result = new IPEndPoint(SelectedNetworkInterfaceUiInfo.IpAddress, Port);
-            CloseDialogWithResult(window, result);
+            CloseDialogWithResult(window, true, result);
         }
 
         private void OnCancelCommand(IDialogWindow window) => CloseDialogWithResult(window);

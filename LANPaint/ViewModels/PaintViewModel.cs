@@ -271,7 +271,7 @@ namespace LANPaint.ViewModels
             else
                 settingsVm = new SettingsViewModel();
 
-            if (!_dialogService.ShowCustomDialog(settingsVm)) return;
+            if (_dialogService.ShowCustomDialog(settingsVm) == false) return;
 
             if ((UdpBroadcastService != null && Equals(settingsVm.Result, UdpBroadcastService.LocalEndPoint)) ||
                 settingsVm.Result == null) return;

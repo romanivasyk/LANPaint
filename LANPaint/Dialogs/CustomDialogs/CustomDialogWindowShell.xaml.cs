@@ -1,13 +1,13 @@
 ﻿using System.Windows;
 
-namespace LANPaint.Dialogs.Views
+namespace LANPaint.Dialogs.CustomDialogs
 {
     /// <summary>
     /// Interaction logic for DialogWindow.xaml
     /// </summary>
-    public partial class DialogWindow : Window, IDialogWindow
+    public partial class CustomDialogWindowShell : Window, IDialogWindow
     {
-        public DialogWindow()
+        public CustomDialogWindowShell()
         {
             InitializeComponent();
         }

@@ -3,12 +3,13 @@ using LANPaint.Dialogs.FrameworkDialogs.MessageBox;
 using LANPaint.Dialogs.FrameworkDialogs.OpenFile;
 using LANPaint.Dialogs.FrameworkDialogs.SaveFile;
 using System.Windows;
+using LANPaint.Dialogs.CustomDialogs;
 
 namespace LANPaint.Dialogs.Service
 {
     public interface IDialogService
     {
-        bool ShowCustomDialog<TResult>(DialogViewModelBase<TResult> viewModel);
+        bool? ShowCustomDialog<TResult>(CustomDialogViewModelBase<TResult> viewModel);
 
         MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, MessageBoxSettings settings);
 
