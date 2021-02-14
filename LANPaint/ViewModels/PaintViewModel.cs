@@ -12,7 +12,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -100,6 +99,7 @@ namespace LANPaint.ViewModels
         private readonly NetworkInterfaceHelper _networkInterfaceHelper;
         private readonly Dispatcher _dispatcher;
         private CancellationTokenSource _cancelReceiveTokenSource;
+        private readonly object _syncRoot = new object();
 
         public PaintViewModel(IBroadcastFactory broadcastFactory, IDialogService dialogService)
         {
@@ -393,6 +393,9 @@ namespace LANPaint.ViewModels
             {
                 sendedBytesAmount = await BroadcastService.SendAsync(bytes);
             }
+            //In case Broadcaster is null - we already dispose and clear it in another thread.
+            catch (NullReferenceException exception) when (BroadcastService == null)
+            { }
             catch (SocketException exception)
             {
                 HandleBroadcasterSocketException(exception);
@@ -403,13 +406,18 @@ namespace LANPaint.ViewModels
 
         private void HandleBroadcasterSocketException(SocketException exception)
         {
-#warning Lock this code and check BroadcastService for null to avoid of showing alert twice?(In case disconect occurs while sending drawing)
-            BroadcastService?.Dispose();
-            BroadcastService = null;
-            IsBroadcast = IsReceive = false;
+            //This lock prevents from clearing and showing Alert twice by different threads.
+            if (BroadcastService == null) return;
+            lock (_syncRoot)
+            {
+                if (BroadcastService == null) return;
+                BroadcastService?.Dispose();
+                BroadcastService = null;
+                IsBroadcast = IsReceive = false;
 
-            ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
-                                         "the network. Please, go to Settings to setup new connection.");
+                ShowAlert("LANPaint - Connection Lost", "The PC was unexpectedly disconnected from " +
+                                                        "the network. Please, go to Settings to setup new connection.");
+            }
         }
 
         private void ShowAlert(string title, string message)
