@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace LANPaint.ViewModels
+namespace LANPaint.MVVM
 {
     public class RelayCommand : ICommand
     {

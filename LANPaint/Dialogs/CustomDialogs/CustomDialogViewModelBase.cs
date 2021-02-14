@@ -1,4 +1,5 @@
-﻿using LANPaint.ViewModels;
+﻿using LANPaint.MVVM;
+using LANPaint.ViewModels;
 
 namespace LANPaint.Dialogs.CustomDialogs
 {

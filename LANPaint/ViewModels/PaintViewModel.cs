@@ -3,6 +3,7 @@ using LANPaint.Dialogs.FrameworkDialogs.SaveFile;
 using LANPaint.Dialogs.Service;
 using LANPaint.Extensions;
 using LANPaint.Model;
+using LANPaint.MVVM;
 using LANPaint.Services.Network;
 using LANPaint.Services.UDP;
 using LANPaint.Services.UDP.Factory;

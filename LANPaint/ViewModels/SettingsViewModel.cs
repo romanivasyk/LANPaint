@@ -1,11 +1,11 @@
-﻿using LANPaint.Dialogs.Service;
+﻿using LANPaint.Dialogs.CustomDialogs;
+using LANPaint.MVVM;
 using LANPaint.Services.Network;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
 using System.Windows.Threading;
-using LANPaint.Dialogs.CustomDialogs;
 
 namespace LANPaint.ViewModels
 {

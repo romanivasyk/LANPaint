@@ -65,10 +65,10 @@ namespace LANPaint.UserControls
             private set => base.DefaultDrawingAttributes = value;
         }
 
-        public new bool UseCustomCursor 
+        public new bool UseCustomCursor
         {
             get => base.UseCustomCursor;
-            private set => base.UseCustomCursor = value; 
+            private set => base.UseCustomCursor = value;
         }
 
         //Field used to store StrokeColor in case erasing mode enabled

@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace LANPaint.ViewModels
+namespace LANPaint.MVVM
 {
     public abstract class BindableBase : INotifyPropertyChanged
     {

@@ -8,9 +8,9 @@ namespace LANPaint.Services.UDP.Factory
         private IUDPBroadcast _cachedInstance;
         public int SegmentLength { get; }
 
-        public ChainerFactory(int segmentLength = default)
+        public ChainerFactory(int segmentLength = 8192)
         {
-            if (segmentLength > 0 && segmentLength < 1024)
+            if (segmentLength < 1024)
                 throw new ArgumentException("Provided segment length should be more than 1023.", nameof(segmentLength));
             SegmentLength = segmentLength;
         }
