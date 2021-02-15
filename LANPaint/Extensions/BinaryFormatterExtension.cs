@@ -12,9 +12,7 @@ namespace LANPaint.Extensions
         {
             using var stream = MemoryStreamManager.GetStream();
             formatter.Serialize(stream, data);
-            var bytes = stream.ToArray();
-
-            return bytes;
+            return stream.ToArray();
         }
 
         public static object OneLineDeserialize(this BinaryFormatter formatter, byte[] bytes)

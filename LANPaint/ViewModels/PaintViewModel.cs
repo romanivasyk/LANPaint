@@ -5,13 +5,13 @@ using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.MVVM;
 using LANPaint.Services.Broadcast;
+using LANPaint.Services.IO;
 using LANPaint.Services.Network;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
@@ -92,16 +92,18 @@ namespace LANPaint.ViewModels
 
         private readonly IDialogService _dialogService;
         private readonly IBroadcastFactory _broadcastFactory;
+        private readonly IFileService _fileService;
         private readonly ConcurrentBag<Stroke> _receivedStrokes;
         private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
         private readonly NetworkInterfaceHelper _networkInterfaceHelper;
         private readonly Dispatcher _dispatcher;
         private CancellationTokenSource _cancelReceiveTokenSource;
 
-        public PaintViewModel(IBroadcastFactory broadcastFactory, IDialogService dialogService)
+        public PaintViewModel(IBroadcastFactory broadcastFactory, IDialogService dialogService, IFileService fileService)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _broadcastFactory = broadcastFactory;
+            _fileService = fileService;
             _networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
             _networkInterfaceHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChangedHandler;
             if (_networkInterfaceHelper.IsAnyNetworkAvailable)
@@ -148,14 +150,15 @@ namespace LANPaint.ViewModels
             {
                 Title = "Save Snapshot...",
                 InitialDirectory = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                Filter = "LANPaint Snapshots (*.lpsnp)|*.lpsnp"
+                Filter = "LANPaint Snapshots (*.lpsnp)|*.lpsnp",
+                OverwritePrompt = true
             };
 
             var saveDialogResult = _dialogService.ShowSaveFileDialog(this, settings);
             if (saveDialogResult == false) return;
 
             var snapshot = TakeSnapshot();
-            await SaveSnapshotToFileAsync(snapshot, settings.FileName);
+            await _fileService.SaveToFileAsync(snapshot, settings.FileName);
         }
 
         private async void OnOpenDrawing()
@@ -179,8 +182,16 @@ namespace LANPaint.ViewModels
             var openDialogResult = _dialogService.ShowOpenFileDialog(this, settings);
             if (openDialogResult == false) return;
 
-            var snapshot = await ReadSnapshotFromFileAsync(settings.FileName);
-            ApplySnapshot(snapshot);
+            var dataFromFile = await _fileService.ReadFromFileAsync(settings.FileName);
+            if (dataFromFile is BoardSnapshot snapshot)
+            {
+                ApplySnapshot(snapshot);
+            }
+            else
+            {
+                _dialogService.ShowMessageBox(this, "File doesn't contain Snapshot or corrupted",
+                    "Error while reading the file", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+            }
         }
 
         private void OnBroadcastChanged()
@@ -398,25 +409,6 @@ namespace LANPaint.ViewModels
             ClearBoard();
             Background = snapshot.Background.AsColor();
             snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
-        }
-
-        private async Task SaveSnapshotToFileAsync(BoardSnapshot snapshot, string fileName)
-        {
-            var formatter = new BinaryFormatter();
-            var bytes = formatter.OneLineSerialize(snapshot);
-
-            await using var stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
-            await stream.WriteAsync(bytes);
-        }
-
-        private async Task<BoardSnapshot> ReadSnapshotFromFileAsync(string fileName)
-        {
-            await using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var buffer = new byte[stream.Length];
-            await stream.ReadAsync(buffer);
-
-            var formatter = new BinaryFormatter();
-            return (BoardSnapshot)formatter.OneLineDeserialize(buffer);
         }
 
         private void ClearBoard()
