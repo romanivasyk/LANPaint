@@ -136,15 +136,13 @@ namespace LANPaint.ViewModels
 
         private async void OnClear()
         {
-            Strokes.Clear();
-            _receivedStrokes.Clear();
+            ClearBoard();
 
             if (!IsBroadcast) return;
             var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
             await SendDataAsync(info);
         }
 
-#warning REFACTOR THIS!
         private async void OnSaveDrawing()
         {
             var settings = new SaveFileDialogSettings
@@ -157,16 +155,10 @@ namespace LANPaint.ViewModels
             var saveDialogResult = _dialogService.ShowSaveFileDialog(this, settings);
             if (saveDialogResult == false) return;
 
-            var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
-            var snapshot = new BoardSnapshot(ARGBColor.FromColor(Background), strokes);
-            var formatter = new BinaryFormatter();
-            var bytes = formatter.OneLineSerialize(snapshot);
-
-            await using var stream = new FileStream(settings.FileName, FileMode.Create, FileAccess.Write, FileShare.None);
-            await stream.WriteAsync(bytes);
+            var snapshot = TakeSnapshot();
+            await SaveSnapshotToFileAsync(snapshot, settings.FileName);
         }
 
-#warning REFACTOR THIS!
         private async void OnOpenDrawing()
         {
             if (Strokes.Count > 0)
@@ -188,18 +180,8 @@ namespace LANPaint.ViewModels
             var openDialogResult = _dialogService.ShowOpenFileDialog(this, settings);
             if (openDialogResult == false) return;
 
-            await using var stream = new FileStream(settings.FileName, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var buffer = new byte[stream.Length];
-            await stream.ReadAsync(buffer);
-
-            var formatter = new BinaryFormatter();
-            var snapshot = (BoardSnapshot)formatter.OneLineDeserialize(buffer);
-
-            Strokes.Clear();
-            _receivedStrokes.Clear();
-
-            Background = snapshot.Background.AsColor();
-            snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+            var snapshot = await ReadSnapshotFromFileAsync(settings.FileName);
+            ApplySnapshot(snapshot);
         }
 
         private void OnBroadcastChanged()
@@ -247,8 +229,7 @@ namespace LANPaint.ViewModels
 
         private async void OnSynchronize()
         {
-            var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
-            var snapshot = new BoardSnapshot(ARGBColor.FromColor(Background), strokes);
+            var snapshot = TakeSnapshot();
             await SendDataAsync(snapshot);
         }
 
@@ -320,8 +301,7 @@ namespace LANPaint.ViewModels
 
                     if (info.ClearBoard)
                     {
-                        Strokes.Clear();
-                        _receivedStrokes.Clear();
+                        ClearBoard();
                         continue;
                     }
 
@@ -344,12 +324,7 @@ namespace LANPaint.ViewModels
                 else
                 {
                     var snapshot = (BoardSnapshot)deserializedInfo;
-
-                    Strokes.Clear();
-                    _receivedStrokes.Clear();
-
-                    Background = snapshot.Background.AsColor();
-                    snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+                    ApplySnapshot(snapshot);
                 }
             }
         }
@@ -359,6 +334,7 @@ namespace LANPaint.ViewModels
             ClearCommand?.RaiseCanExecuteChanged();
             SaveDrawingCommand?.RaiseCanExecuteChanged();
             SynchronizeCommand?.RaiseCanExecuteChanged();
+
             if (e.Added.Count <= 0 || !IsBroadcast) return;
             var strokesToSend = e.Added.Where(addedStroke => !_receivedStrokes.Contains(addedStroke)).ToArray();
             if (strokesToSend.Length < 1) return;
@@ -380,8 +356,8 @@ namespace LANPaint.ViewModels
             {
                 sendedBytesAmount = await BroadcastService.SendAsync(bytes);
             }
-            //In case Broadcaster is null - we already dispose and clear it in another thread.
-            catch (NullReferenceException exception) when (BroadcastService == null)
+            //In case Broadcaster is null - we already dispose and clear it.
+            catch (NullReferenceException) when (BroadcastService == null)
             { }
             catch (SocketException)
             {
@@ -410,6 +386,44 @@ namespace LANPaint.ViewModels
         {
             _dialogService.ShowMessageBox(this, message, title, MessageBoxButton.OK, MessageBoxImage.Error,
                 MessageBoxResult.OK);
+        }
+
+        private BoardSnapshot TakeSnapshot()
+        {
+            var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
+            return new BoardSnapshot(ARGBColor.FromColor(Background), strokes);
+        }
+
+        private void ApplySnapshot(BoardSnapshot snapshot)
+        {
+            ClearBoard();
+            Background = snapshot.Background.AsColor();
+            snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+        }
+
+        private async Task SaveSnapshotToFileAsync(BoardSnapshot snapshot, string fileName)
+        {
+            var formatter = new BinaryFormatter();
+            var bytes = formatter.OneLineSerialize(snapshot);
+
+            await using var stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
+            await stream.WriteAsync(bytes);
+        }
+
+        private async Task<BoardSnapshot> ReadSnapshotFromFileAsync(string fileName)
+        {
+            await using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var buffer = new byte[stream.Length];
+            await stream.ReadAsync(buffer);
+
+            var formatter = new BinaryFormatter();
+            return (BoardSnapshot)formatter.OneLineDeserialize(buffer);
+        }
+
+        private void ClearBoard()
+        {
+            Strokes.Clear();
+            _receivedStrokes.Clear();
         }
 
         public void Dispose() => BroadcastService?.Dispose();
