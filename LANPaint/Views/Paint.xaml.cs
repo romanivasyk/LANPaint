@@ -11,13 +11,11 @@ namespace LANPaint.Views
 {
     public partial class Paint : Window
     {
-        private readonly ChainerFactory _broadcastFactory;
-
         public Paint()
         {
             InitializeComponent();
-            _broadcastFactory = new ChainerFactory();
-            var context = new PaintViewModel(_broadcastFactory, new DefaultDialogService(new DefaultFrameworkDialogFactory()), new DefaultFileService());
+            var broadcastFactory = new ChainerFactory();
+            var context = new PaintViewModel(broadcastFactory, new DefaultDialogService(new DefaultFrameworkDialogFactory()), new DefaultFileService());
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);

@@ -8,7 +8,6 @@ using LANPaint.Services.Broadcast;
 using LANPaint.Services.IO;
 using LANPaint.Services.Network;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -93,7 +92,7 @@ namespace LANPaint.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IBroadcastFactory _broadcastFactory;
         private readonly IFileService _fileService;
-        private readonly ConcurrentBag<Stroke> _receivedStrokes;
+        private readonly List<Stroke> _receivedStrokes;
         private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
         private readonly NetworkInterfaceHelper _networkInterfaceHelper;
         private readonly Dispatcher _dispatcher;
@@ -110,7 +109,7 @@ namespace LANPaint.ViewModels
                 BroadcastService = _broadcastFactory.Create(_networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
 
             _dialogService = dialogService;
-            _receivedStrokes = new ConcurrentBag<Stroke>();
+            _receivedStrokes = new List<Stroke>();
             _undoneStrokesStack = new Stack<(Stroke previous, Stroke undone)>();
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
@@ -258,6 +257,7 @@ namespace LANPaint.ViewModels
             if ((BroadcastService != null && Equals(settingsVm.Result, BroadcastService.LocalEndPoint)) ||
                 settingsVm.Result == null) return;
 
+            BroadcastService?.Dispose();
             BroadcastService = _broadcastFactory.Create(settingsVm.Result.Address, settingsVm.Result.Port);
             IsBroadcast = IsReceive = false;
         }
