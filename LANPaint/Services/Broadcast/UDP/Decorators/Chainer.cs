@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,8 +63,16 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
                     throw;
                 }
 
-#warning Probaly here we should to check is received data is of Packet type...
-                var packet = (Packet)_formatter.OneLineDeserialize(bytes);
+                Packet packet;
+                try
+                {
+                    packet = (Packet)_formatter.OneLineDeserialize(bytes);
+                }
+                catch (SerializationException)
+                {
+                    continue;
+                }
+
 
                 if (_segmentBuffer.ContainsKey(packet.SequenceGuid))
                 {
@@ -72,7 +81,8 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
                     if (_segmentBuffer[packet.SequenceGuid].Count != packet.SequenceLength ||
                         _segmentBuffer[packet.SequenceGuid].Last().Key + 1 != packet.SequenceLength) continue;
 
-                    var messageLength = _segmentBuffer[packet.SequenceGuid].Values.Sum(segment => segment.Payload.LongLength);
+                    var messageLength = _segmentBuffer[packet.SequenceGuid].Values
+                        .Sum(segment => segment.Payload.LongLength);
                     var message = new byte[messageLength];
                     var messageOffset = 0;
                     foreach (var segment in _segmentBuffer[packet.SequenceGuid].Values)
@@ -80,6 +90,7 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
                         Buffer.BlockCopy(segment.Payload, 0, message, messageOffset, segment.Payload.Length);
                         messageOffset += segment.Payload.Length;
                     }
+
                     _segmentBuffer.Remove(packet.SequenceGuid);
                     return message;
                 }
@@ -92,7 +103,7 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
 
                     var segments = new SortedList<long, Segment>
                     {
-                        { packet.Segment.SequenceIndex, packet.Segment }
+                        {packet.Segment.SequenceIndex, packet.Segment}
                     };
                     _segmentBuffer.Add(packet.SequenceGuid, segments);
                 }
