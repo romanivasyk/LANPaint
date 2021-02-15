@@ -47,6 +47,7 @@ namespace LANPaint.Model
     {
         [NonSerialized]
         public static readonly ARGBColor Default = new ARGBColor(255, 0, 0, 0);
+
         public byte A { get; }
         public byte R { get; }
         public byte G { get; }
@@ -80,7 +81,9 @@ namespace LANPaint.Model
     [Serializable]
     public readonly struct SerializableStroke : IEquatable<SerializableStroke>
     {
+        [NonSerialized]
         public static readonly SerializableStroke Default = new SerializableStroke(new StrokeAttributes(), null);
+
         public IEnumerable<Point> Points { get; }
         public StrokeAttributes Attributes { get; }
 
