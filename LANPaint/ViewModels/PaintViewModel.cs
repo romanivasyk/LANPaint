@@ -71,8 +71,7 @@ namespace LANPaint.ViewModels
             get => _broadcastService;
             private set
             {
-#warning Do we really need to notify listeners about change of this property?
-                SetProperty(ref _broadcastService, value);
+                _broadcastService = value;
                 BroadcastChangedCommand?.RaiseCanExecuteChanged();
                 ReceiveChangedCommand?.RaiseCanExecuteChanged();
                 SynchronizeCommand?.RaiseCanExecuteChanged();

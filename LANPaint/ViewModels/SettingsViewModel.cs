@@ -1,4 +1,5 @@
-﻿using LANPaint.Dialogs.CustomDialogs;
+﻿using System;
+using LANPaint.Dialogs.CustomDialogs;
 using LANPaint.MVVM;
 using LANPaint.Services.Network;
 using System.Collections.ObjectModel;
@@ -11,7 +12,6 @@ namespace LANPaint.ViewModels
 {
     public class SettingsViewModel : CustomDialogViewModelBase<IPEndPoint>
     {
-#warning Change this two constants to Range?
         private const int PortMinValue = 1024;
         private const int PortMaxValue = 65535;
         private readonly Dispatcher _dispatcher;
@@ -35,8 +35,7 @@ namespace LANPaint.ViewModels
             get => _port;
             set
             {
-#warning Do we really need to notify listeners about change of this property?
-                if (!SetProperty(ref _port, value)) return;
+                _port = value;
                 IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
                 OkCommand.RaiseCanExecuteChanged();
             }
