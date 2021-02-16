@@ -144,6 +144,7 @@ namespace LANPaint.Services.Broadcast
         public void Dispose()
         {
             _broadcastImpl?.Dispose();
+            _broadcastImpl = null;
             _networkInterfaceHelper.Interfaces.CollectionChanged -= NetworkInterfacesCollectionChanged;
             _isDisposed = true;
         }
