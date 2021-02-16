@@ -106,22 +106,24 @@ namespace LANPaint.Services.Broadcast
                     data = await _broadcastImpl.ReceiveAsync(_cancelReceiveTokenSource.Token);
                 }
                 catch (OperationCanceledException) when (_cancelReceiveTokenSource.IsCancellationRequested)
-                { }
+                {
+                    _cancelReceiveTokenSource?.Dispose();
+                    IsReceiving = false;
+                }
+#warning Refactor this
                 catch (AggregateException exception) when (
                     exception.InnerException is ObjectDisposedException disposedException &&
                     (disposedException.ObjectName == typeof(Socket).FullName ||
                      disposedException.ObjectName == typeof(UdpClient).FullName ||
                      disposedException.ObjectName == typeof(TcpClient).FullName))
-                { }
-                catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
-                {
-                    IsReady = false;
-                }
-                finally
                 {
                     _cancelReceiveTokenSource?.Dispose();
-                    //_cancelReceiveTokenSource = null;
-                    IsReceiving = false;
+                    IsReceiving = IsReady = false;
+                }
+                catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
+                {
+                    _cancelReceiveTokenSource?.Dispose();
+                    IsReceiving = IsReady = false;
                 }
 
                 if (!IsReceiving) return;
@@ -141,14 +143,7 @@ namespace LANPaint.Services.Broadcast
 
         public void Dispose()
         {
-            if (IsReceiving)
-            {
-                _cancelReceiveTokenSource.Cancel();
-                IsReceiving = false;
-            }
-
             _broadcastImpl?.Dispose();
-            IsReady = false;
             _networkInterfaceHelper.Interfaces.CollectionChanged -= NetworkInterfacesCollectionChanged;
             _isDisposed = true;
         }
