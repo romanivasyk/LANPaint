@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace LANPaint.Services.Broadcast
 {
@@ -20,12 +21,14 @@ namespace LANPaint.Services.Broadcast
         private bool _isDisposed;
 
         private IBroadcast _broadcastImpl;
+        private CancellationTokenSource _cancelReceiveTokenSource;
         private readonly IBroadcastFactory _broadcastFactory;
         private readonly NetworkInterfaceHelper _networkInterfaceHelper;
-        private CancellationTokenSource _cancelReceiveTokenSource;
+        private readonly Dispatcher _dispatcher;
 
         public BroadcastService(IBroadcastFactory broadcastFactory)
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             _broadcastFactory = broadcastFactory ?? throw new ArgumentNullException(nameof(broadcastFactory));
             _networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
             _networkInterfaceHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChanged;
@@ -33,13 +36,16 @@ namespace LANPaint.Services.Broadcast
 
         private void NetworkInterfacesCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            if (_networkInterfaceHelper.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
+            if (_broadcastImpl != null && _networkInterfaceHelper.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
 
-            _cancelReceiveTokenSource?.Cancel();
+            _cancelReceiveTokenSource?.Dispose();
             IsReady = IsReceiving = false;
             _broadcastImpl?.Dispose();
             _broadcastImpl = null;
-            ConnectionLost?.Invoke();
+
+            //ObservableCollection uses worker thread to notify about change,
+            //so we should use Main Thread for UI related code.
+            _dispatcher.Invoke(() => ConnectionLost?.Invoke());
         }
 
         public bool Initialize(IPAddress ipAddress, int port = default)
@@ -47,8 +53,8 @@ namespace LANPaint.Services.Broadcast
             if (_isDisposed) throw new ObjectDisposedException(nameof(BroadcastService));
             if (ipAddress == null) throw new ArgumentNullException(nameof(ipAddress));
             if (IsReady && Equals(LocalEndPoint, new IPEndPoint(ipAddress, port))) return true;
-            
-            if (!_networkInterfaceHelper.IsReadyToUse(ipAddress)) return false;
+
+            if (!_networkInterfaceHelper.IsReadyToUse(ipAddress)) return false; // Throw exception?
 
             _broadcastImpl?.Dispose();
             _broadcastImpl = port == default
@@ -59,14 +65,22 @@ namespace LANPaint.Services.Broadcast
             return true;
         }
 
-        public Task<int> SendAsync(byte[] data)
+        public async Task<int> SendAsync(byte[] data)
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(BroadcastService));
             if (!IsReady)
                 throw new ServiceNotInitializedException(
                     "Initialize() should be called to be able to use BroadcastService.");
 
-            return _broadcastImpl.SendAsync(data);
+            var bytesBroadcasted = 0;
+            try
+            {
+                bytesBroadcasted = await _broadcastImpl.SendAsync(data);
+            }
+            catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
+            { }
+
+            return bytesBroadcasted;
         }
 
         public async Task StartReceive()
@@ -91,24 +105,22 @@ namespace LANPaint.Services.Broadcast
                 {
                     data = await _broadcastImpl.ReceiveAsync(_cancelReceiveTokenSource.Token);
                 }
-                catch (OperationCanceledException)
-                {
-                }
+                catch (OperationCanceledException) when (_cancelReceiveTokenSource.IsCancellationRequested)
+                { }
                 catch (AggregateException exception) when (
                     exception.InnerException is ObjectDisposedException disposedException &&
                     (disposedException.ObjectName == typeof(Socket).FullName ||
                      disposedException.ObjectName == typeof(UdpClient).FullName ||
                      disposedException.ObjectName == typeof(TcpClient).FullName))
                 { }
-                catch (SocketException)
+                catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
                 {
                     IsReady = false;
-                    //HandleUnexpectedDisconnect();
-                    //No need to do - ConnectionLost event will be invoked by NetworkChanged handler method.
                 }
                 finally
                 {
                     _cancelReceiveTokenSource?.Dispose();
+                    //_cancelReceiveTokenSource = null;
                     IsReceiving = false;
                 }
 

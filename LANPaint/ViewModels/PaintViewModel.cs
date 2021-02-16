@@ -13,12 +13,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace LANPaint.ViewModels
 {
@@ -29,7 +27,6 @@ namespace LANPaint.ViewModels
         private bool _isReceive;
         private bool _isBroadcast;
         private StrokeCollection _strokes;
-        //private IBroadcast _broadcastService;
 
 #warning Change IsBroadcast and IsEraser property to Tool enum?
 #warning Or even by some ITool interface, each impl of which will have own behavior strategy?
@@ -63,17 +60,6 @@ namespace LANPaint.ViewModels
             get => _strokes;
             set => SetProperty(ref _strokes, value);
         }
-        //public IBroadcast BroadcastService
-        //{
-        //    get => _broadcastService;
-        //    private set
-        //    {
-        //        _broadcastService = value;
-        //        BroadcastChangedCommand?.RaiseCanExecuteChanged();
-        //        ReceiveChangedCommand?.RaiseCanExecuteChanged();
-        //        SynchronizeCommand?.RaiseCanExecuteChanged();
-        //    }
-        //}
 
         public RelayCommand ClearCommand { get; }
         public RelayCommand ChoosePenCommand { get; }
@@ -126,11 +112,8 @@ namespace LANPaint.ViewModels
 
         private async void OnDataReceived(object sender, DataReceivedEventArgs e)
         {
-            var deserializedInfo = await Task.Run(() =>
-            {
-                var binarySerializer = new BinaryFormatter();
-                return binarySerializer.OneLineDeserialize(e.Data);
-            });
+            var binarySerializer = new BinaryFormatter();
+            var deserializedInfo = binarySerializer.OneLineDeserialize(e.Data);
 
 #warning REFACTOR this huge if/else type checking statement. (HOW?)
             if (deserializedInfo is DrawingInfo info)
@@ -262,6 +245,11 @@ namespace LANPaint.ViewModels
             if (Equals(settingsVm.Result, _broadcastService.LocalEndPoint)) return;
 
             _broadcastService.Initialize(settingsVm.Result.Address, settingsVm.Result.Port);
+            
+            BroadcastChangedCommand?.RaiseCanExecuteChanged();
+            ReceiveChangedCommand?.RaiseCanExecuteChanged();
+            SynchronizeCommand?.RaiseCanExecuteChanged();
+
             IsBroadcast = IsReceive = false;
         }
 
@@ -292,56 +280,6 @@ namespace LANPaint.ViewModels
             await SendDataAsync(info);
         }
 
-        //        private async Task Receive(CancellationToken token)
-        //        {
-        //            await BroadcastService.ClearBufferAsync();
-        //            while (true)
-        //            {
-        //                var data = await BroadcastService.ReceiveAsync(token);
-
-        //                if (data == null || data.Length == 0)
-        //                    continue;
-
-        //                var deserializedInfo = await Task.Run(() =>
-        //                {
-        //                    var binarySerializer = new BinaryFormatter();
-        //                    return binarySerializer.OneLineDeserialize(data);
-        //                });
-
-        //#warning REFACTOR this huge if/else type checking statement. (HOW?)
-        //                if (deserializedInfo is DrawingInfo info)
-        //                {
-
-        //                    if (info.ClearBoard)
-        //                    {
-        //                        ClearBoard();
-        //                        continue;
-        //                    }
-
-        //                    if (info.Background != ARGBColor.FromColor(Background) && info.Stroke == SerializableStroke.Default)
-        //                    {
-        //                        Background = info.Background.AsColor();
-        //                    }
-
-        //                    if (info.Stroke == SerializableStroke.Default) continue;
-        //                    var stroke = info.Stroke.ToStroke();
-
-        //                    if (info.IsEraser)
-        //                    {
-        //                        stroke.DrawingAttributes.Color = Background;
-        //                    }
-
-        //                    _receivedStrokes.Add(stroke);
-        //                    Strokes.Add(stroke);
-        //                }
-        //                else
-        //                {
-        //                    var snapshot = (BoardSnapshot)deserializedInfo;
-        //                    ApplySnapshot(snapshot);
-        //                }
-        //            }
-        //        }
-
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
             ClearCommand?.RaiseCanExecuteChanged();
@@ -369,15 +307,15 @@ namespace LANPaint.ViewModels
 
         private void OnConnectionLost()
         {
-            if (IsBroadcast || IsReceive)
-            {
-                _dialogService.ShowMessageBox(this, "LANPaint - Connection Lost",
-                    "The PC was unexpectedly disconnected from " +
-                    "the network. Please, go to Settings to setup new connection.", MessageBoxButton.OK,
-                    MessageBoxImage.Error, MessageBoxResult.OK);
-            }
+            BroadcastChangedCommand.RaiseCanExecuteChanged();
+            ReceiveChangedCommand.RaiseCanExecuteChanged();
+            SynchronizeCommand.RaiseCanExecuteChanged();
 
+            if (!IsBroadcast && !IsReceive) return;
             IsBroadcast = IsReceive = false;
+            _dialogService.ShowMessageBox(this,
+                "The PC was unexpectedly disconnected from the network. Please, go to Settings to setup new connection.",
+                "LANPaint - Connection Lost", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
         }
 
         private BoardSnapshot TakeSnapshot()
@@ -399,6 +337,12 @@ namespace LANPaint.ViewModels
             _receivedStrokes.Clear();
         }
 
-        public void Dispose() => _broadcastService?.Dispose();
+        public void Dispose()
+        {
+
+            _broadcastService.DataReceived -= OnDataReceived;
+            _broadcastService.ConnectionLost -= OnConnectionLost;
+            _broadcastService?.Dispose();
+        }
     }
 }
