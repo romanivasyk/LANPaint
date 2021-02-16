@@ -5,6 +5,7 @@ using LANPaint.ViewModels;
 using System;
 using System.Windows;
 using System.Windows.Media;
+using LANPaint.Services.Broadcast;
 using LANPaint.Services.IO;
 
 namespace LANPaint.Views
@@ -15,7 +16,7 @@ namespace LANPaint.Views
         {
             InitializeComponent();
             var broadcastFactory = new ChainerFactory();
-            var context = new PaintViewModel(broadcastFactory, new DefaultDialogService(new DefaultFrameworkDialogFactory()), new DefaultFileService());
+            var context = new PaintViewModel(new BroadcastService(new ChainerFactory()), new DefaultDialogService(new DefaultFrameworkDialogFactory()), new DefaultFileService());
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);
