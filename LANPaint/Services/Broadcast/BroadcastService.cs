@@ -83,7 +83,7 @@ namespace LANPaint.Services.Broadcast
             return bytesBroadcasted;
         }
 
-        public async Task StartReceive()
+        public async Task StartReceiveAsync()
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(BroadcastService));
             if (!IsReady) throw new ServiceNotInitializedException(

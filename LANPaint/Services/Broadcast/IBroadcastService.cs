@@ -14,7 +14,7 @@ namespace LANPaint.Services.Broadcast
 
         public bool Initialize(IPAddress ipAddress, int port = default);
         public Task<int> SendAsync(byte[] data);
-        public Task StartReceive();
+        public Task StartReceiveAsync();
         public void CancelReceive();
     }
 

@@ -86,7 +86,10 @@ namespace LANPaint.ViewModels
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
 
             var networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
-            _broadcastService.Initialize(networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
+            if(networkInterfaceHelper.IsAnyNetworkAvailable)
+            {
+                _broadcastService.Initialize(networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
+            }
             _broadcastService.DataReceived += OnDataReceived;
             _broadcastService.ConnectionLost += OnConnectionLost;
 
@@ -110,7 +113,7 @@ namespace LANPaint.ViewModels
             PropertyChanged += PropertyChangedHandler;
         }
 
-        private async void OnDataReceived(object sender, DataReceivedEventArgs e)
+        private void OnDataReceived(object sender, DataReceivedEventArgs e)
         {
             var binarySerializer = new BinaryFormatter();
             var deserializedInfo = binarySerializer.OneLineDeserialize(e.Data);
@@ -221,7 +224,7 @@ namespace LANPaint.ViewModels
         {
             if (IsReceive)
             {
-                await _broadcastService.StartReceive();
+                await _broadcastService.StartReceiveAsync();
             }
             else
             {
