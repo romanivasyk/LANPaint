@@ -1,10 +1,11 @@
-﻿using System;
+﻿#if false
+using System;
 using System.Collections.Generic;
 
 namespace LANPaint.Model
 {
     [Serializable]
-    public readonly struct BoardSnapshot
+    public class BoardSnapshot
     {
         public ARGBColor Background { get; }
         public IEnumerable<SerializableStroke> Strokes { get; }
@@ -16,3 +17,4 @@ namespace LANPaint.Model
         }
     }
 }
+#endif

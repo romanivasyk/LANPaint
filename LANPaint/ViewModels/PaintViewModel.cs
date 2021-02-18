@@ -20,7 +20,7 @@ using System.Windows.Media;
 
 namespace LANPaint.ViewModels
 {
-    public class PaintViewModel : BindableBase, IDisposable
+    public class PaintViewModel : BindableBase, IDisposable, IDrawingStateVisitor
     {
         private bool _isEraser;
         private Color _backgroundColor;
@@ -86,7 +86,7 @@ namespace LANPaint.ViewModels
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
 
             var networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
-            if(networkInterfaceHelper.IsAnyNetworkAvailable)
+            if (networkInterfaceHelper.IsAnyNetworkAvailable)
             {
                 _broadcastService.Initialize(networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
             }
@@ -116,45 +116,17 @@ namespace LANPaint.ViewModels
         private void OnDataReceived(object sender, DataReceivedEventArgs e)
         {
             var binarySerializer = new BinaryFormatter();
-            var deserializedInfo = binarySerializer.OneLineDeserialize(e.Data);
+            var deserializedInfo = binarySerializer.OneLineDeserialize(e.Data) as IDrawingComponent;
 
-#warning REFACTOR this huge if/else type checking statement. (HOW?)
-            if (deserializedInfo is DrawingInfo info)
-            {
-
-                if (info.ClearBoard)
-                {
-                    ClearBoard();
-                }
-                else if (info.Background != ARGBColor.FromColor(Background) && info.Stroke == SerializableStroke.Default)
-                {
-                    Background = info.Background.AsColor();
-                }
-
-                if (info.Stroke == SerializableStroke.Default) return;
-                var stroke = info.Stroke.ToStroke();
-
-                if (info.IsEraser)
-                {
-                    stroke.DrawingAttributes.Color = Background;
-                }
-
-                _receivedStrokes.Add(stroke);
-                Strokes.Add(stroke);
-            }
-            else
-            {
-                var snapshot = (BoardSnapshot)deserializedInfo;
-                ApplySnapshot(snapshot);
-            }
+            deserializedInfo?.AcceptDrawingState(this);
         }
 
         private async void OnClear()
         {
-            ClearBoard();
+            ClearState();
 
             if (!IsBroadcast) return;
-            var info = new DrawingInfo(ARGBColor.Default, SerializableStroke.Default, IsEraser, true);
+            var info = new ClearDrawingStateComponent();
             await SendDataAsync(info);
         }
 
@@ -197,9 +169,9 @@ namespace LANPaint.ViewModels
             if (openDialogResult == false) return;
 
             var dataFromFile = await _fileService.ReadFromFileAsync(settings.FileName);
-            if (dataFromFile is BoardSnapshot snapshot)
+            if (dataFromFile is SnapshotStateComponent snapshot)
             {
-                ApplySnapshot(snapshot);
+                SnapshotState(snapshot);
             }
             else
             {
@@ -248,7 +220,7 @@ namespace LANPaint.ViewModels
             if (Equals(settingsVm.Result, _broadcastService.LocalEndPoint)) return;
 
             _broadcastService.Initialize(settingsVm.Result.Address, settingsVm.Result.Port);
-            
+
             BroadcastChangedCommand?.RaiseCanExecuteChanged();
             ReceiveChangedCommand?.RaiseCanExecuteChanged();
             SynchronizeCommand?.RaiseCanExecuteChanged();
@@ -279,7 +251,7 @@ namespace LANPaint.ViewModels
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
         {
             if (!IsBroadcast || e.PropertyName != nameof(Background)) return;
-            var info = new DrawingInfo(ARGBColor.FromColor(Background), SerializableStroke.Default, IsEraser);
+            var info = new BackgroundStateComponent(Background);
             await SendDataAsync(info);
         }
 
@@ -295,7 +267,7 @@ namespace LANPaint.ViewModels
 
             foreach (var stroke in strokesToSend)
             {
-                var info = new DrawingInfo(Background, SerializableStroke.FromStroke(stroke), IsEraser);
+                var info = new DrawStateComponent(stroke);
                 await SendDataAsync(info);
                 if (!IsBroadcast) break;
             }
@@ -321,24 +293,24 @@ namespace LANPaint.ViewModels
                 "LANPaint - Connection Lost", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
         }
 
-        private BoardSnapshot TakeSnapshot()
+        private SnapshotStateComponent TakeSnapshot()
         {
             var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
-            return new BoardSnapshot(ARGBColor.FromColor(Background), strokes);
+            return new SnapshotStateComponent(ARGBColor.FromColor(Background), strokes);
         }
 
-        private void ApplySnapshot(BoardSnapshot snapshot)
-        {
-            ClearBoard();
-            Background = snapshot.Background.AsColor();
-            snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
-        }
+        //private void ApplySnapshot(BoardSnapshot snapshot)
+        //{
+        //    ClearBoard();
+        //    Background = snapshot.Background.AsColor();
+        //    snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+        //}
 
-        private void ClearBoard()
-        {
-            Strokes.Clear();
-            _receivedStrokes.Clear();
-        }
+        //private void ClearBoard()
+        //{
+        //    Strokes.Clear();
+        //    _receivedStrokes.Clear();
+        //}
 
         public void Dispose()
         {
@@ -346,6 +318,40 @@ namespace LANPaint.ViewModels
             _broadcastService.DataReceived -= OnDataReceived;
             _broadcastService.ConnectionLost -= OnConnectionLost;
             _broadcastService?.Dispose();
+        }
+
+        public void ClearState()
+        {
+            Strokes.Clear();
+            _receivedStrokes.Clear();
+        }
+
+        public void ChangeBackgroundState(BackgroundStateComponent backgroundComponent)
+        {
+            Background = backgroundComponent.Background.AsColor();
+        }
+
+        public void EraseState(EraseStateComponent eraseComponent)
+        {
+            var stroke = eraseComponent.Stroke.ToStroke();
+            stroke.DrawingAttributes.Color = Background;
+
+            _receivedStrokes.Add(stroke);
+            Strokes.Add(stroke);
+        }
+
+        public void DrawState(DrawStateComponent drawComponent)
+        {
+            var stroke = drawComponent.Stroke.ToStroke();
+            _receivedStrokes.Add(stroke);
+            Strokes.Add(stroke);
+        }
+
+        public void SnapshotState(SnapshotStateComponent snapshotComponent)
+        {
+            ClearState();
+            Background = snapshotComponent.Background.AsColor();
+            snapshotComponent.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
         }
     }
 }
