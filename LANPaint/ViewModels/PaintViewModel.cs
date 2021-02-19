@@ -17,6 +17,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
+using LANPaint.DrawingInstructions;
+using LANPaint.DrawingInstructions.Interfaces;
 
 namespace LANPaint.ViewModels
 {
