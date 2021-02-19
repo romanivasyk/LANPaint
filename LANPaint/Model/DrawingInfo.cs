@@ -8,44 +8,6 @@ using System.Windows.Media;
 
 namespace LANPaint.Model
 {
-#if false
-    [Serializable]
-    public class DrawingInfo
-    {
-        public ARGBColor Background { get; }
-        public bool IsEraser { get; }
-        public bool ClearBoard { get; }
-        public SerializableStroke Stroke { get; }
-
-        public DrawingInfo(Color background, SerializableStroke stroke,
-                           bool isEraser = false, bool clearBoard = false) : this(stroke, isEraser, clearBoard)
-        {
-            Background = ARGBColor.FromColor(background);
-        }
-
-        public DrawingInfo(ARGBColor background, SerializableStroke stroke,
-                   bool isEraser = false, bool clearBoard = false) : this(stroke, isEraser, clearBoard)
-        {
-            Background = background;
-        }
-
-        private DrawingInfo(SerializableStroke stroke, bool isEraser = false, bool clearBoard = false)
-        {
-            Background = ARGBColor.Default;
-            Stroke = stroke;
-            IsEraser = isEraser;
-            ClearBoard = clearBoard;
-        }
-
-        public override string ToString()
-        {
-            return $"Background:{Background}, IsEraser:{IsEraser}, ClearBoard:{ClearBoard}, Stroke:{Stroke}";
-        }
-    }
-#endif
-#if true
-
-
     [Serializable]
     public readonly struct ARGBColor : IEquatable<ARGBColor>
     {
@@ -147,7 +109,7 @@ namespace LANPaint.Model
             return Attributes.GetHashCode() ^ pointsHash;
         }
     }
-#endif
+
     [Serializable]
     public struct StrokeAttributes
     {

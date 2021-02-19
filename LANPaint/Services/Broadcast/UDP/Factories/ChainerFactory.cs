@@ -18,16 +18,12 @@ namespace LANPaint.Services.Broadcast.UDP.Factories
 
         public IBroadcast Create(IPAddress ipAddress)
         {
-            return SegmentLength < MinSegmentLength
-                ? new Chainer(new UdpBroadcastImpl(ipAddress))
-                : new Chainer(new UdpBroadcastImpl(ipAddress), SegmentLength);
+            return new Chainer(new UdpBroadcastImpl(ipAddress), SegmentLength);
         }
 
         public IBroadcast Create(IPAddress ipAddress, int port)
         {
-            return SegmentLength < MinSegmentLength
-                ? new Chainer(new UdpBroadcastImpl(ipAddress, port))
-                : new Chainer(new UdpBroadcastImpl(ipAddress, port), SegmentLength);
+            return new Chainer(new UdpBroadcastImpl(ipAddress, port), SegmentLength);
         }
     }
 }

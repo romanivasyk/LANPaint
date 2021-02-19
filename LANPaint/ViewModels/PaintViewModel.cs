@@ -20,7 +20,7 @@ using System.Windows.Media;
 
 namespace LANPaint.ViewModels
 {
-    public class PaintViewModel : BindableBase, IDisposable, IDrawingStateVisitor
+    public class PaintViewModel : BindableBase, IDrawingInstructionRepository, IDisposable
     {
         private bool _isEraser;
         private Color _backgroundColor;
@@ -116,17 +116,17 @@ namespace LANPaint.ViewModels
         private void OnDataReceived(object sender, DataReceivedEventArgs e)
         {
             var binarySerializer = new BinaryFormatter();
-            var deserializedInfo = binarySerializer.OneLineDeserialize(e.Data) as IDrawingComponent;
+            var deserializedInfo = binarySerializer.OneLineDeserialize(e.Data) as IDrawingInstruction;
 
-            deserializedInfo?.AcceptDrawingState(this);
+            deserializedInfo?.ExecuteDrawingInstruction(this);
         }
 
         private async void OnClear()
         {
-            ClearState();
+            Clear();
 
             if (!IsBroadcast) return;
-            var info = new ClearDrawingStateComponent();
+            var info = new ClearInstruction();
             await SendDataAsync(info);
         }
 
@@ -169,9 +169,9 @@ namespace LANPaint.ViewModels
             if (openDialogResult == false) return;
 
             var dataFromFile = await _fileService.ReadFromFileAsync(settings.FileName);
-            if (dataFromFile is SnapshotStateComponent snapshot)
+            if (dataFromFile is SnapshotInstruction snapshot)
             {
-                SnapshotState(snapshot);
+                ApplySnapshot(snapshot);
             }
             else
             {
@@ -184,11 +184,11 @@ namespace LANPaint.ViewModels
         {
             if (IsBroadcast)
             {
-                //TODO: Setup broadcast
+                //Setup broadcast
             }
             else
             {
-                //TODO: Raise cancellation
+                //Raise cancellation
             }
         }
 
@@ -251,7 +251,7 @@ namespace LANPaint.ViewModels
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
         {
             if (!IsBroadcast || e.PropertyName != nameof(Background)) return;
-            var info = new BackgroundStateComponent(Background);
+            var info = new ChangeBackgroundInstruction(Background);
             await SendDataAsync(info);
         }
 
@@ -267,7 +267,7 @@ namespace LANPaint.ViewModels
 
             foreach (var stroke in strokesToSend)
             {
-                var info = new DrawStateComponent(stroke);
+                var info = new DrawInstruction(stroke);
                 await SendDataAsync(info);
                 if (!IsBroadcast) break;
             }
@@ -293,65 +293,51 @@ namespace LANPaint.ViewModels
                 "LANPaint - Connection Lost", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
         }
 
-        private SnapshotStateComponent TakeSnapshot()
+        private SnapshotInstruction TakeSnapshot()
         {
             var strokes = Strokes.Select(SerializableStroke.FromStroke).ToList();
-            return new SnapshotStateComponent(ARGBColor.FromColor(Background), strokes);
+            return new SnapshotInstruction(ARGBColor.FromColor(Background), strokes);
         }
 
-        //private void ApplySnapshot(BoardSnapshot snapshot)
-        //{
-        //    ClearBoard();
-        //    Background = snapshot.Background.AsColor();
-        //    snapshot.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
-        //}
-
-        //private void ClearBoard()
-        //{
-        //    Strokes.Clear();
-        //    _receivedStrokes.Clear();
-        //}
-
-        public void Dispose()
-        {
-
-            _broadcastService.DataReceived -= OnDataReceived;
-            _broadcastService.ConnectionLost -= OnConnectionLost;
-            _broadcastService?.Dispose();
-        }
-
-        public void ClearState()
+        public void Clear()
         {
             Strokes.Clear();
             _receivedStrokes.Clear();
         }
 
-        public void ChangeBackgroundState(BackgroundStateComponent backgroundComponent)
+        public void ChangeBackground(ChangeBackgroundInstruction changeBackgroundInstruction)
         {
-            Background = backgroundComponent.Background.AsColor();
+            Background = changeBackgroundInstruction.Background.AsColor();
         }
 
-        public void EraseState(EraseStateComponent eraseComponent)
+        public void Erase(EraseInstruction instruction)
         {
-            var stroke = eraseComponent.Stroke.ToStroke();
+            var stroke = instruction.ErasingStroke.ToStroke();
             stroke.DrawingAttributes.Color = Background;
 
             _receivedStrokes.Add(stroke);
             Strokes.Add(stroke);
         }
 
-        public void DrawState(DrawStateComponent drawComponent)
+        public void Draw(DrawInstruction instruction)
         {
-            var stroke = drawComponent.Stroke.ToStroke();
+            var stroke = instruction.DrawingStroke.ToStroke();
             _receivedStrokes.Add(stroke);
             Strokes.Add(stroke);
         }
 
-        public void SnapshotState(SnapshotStateComponent snapshotComponent)
+        public void ApplySnapshot(SnapshotInstruction instruction)
         {
-            ClearState();
-            Background = snapshotComponent.Background.AsColor();
-            snapshotComponent.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+            Clear();
+            Background = instruction.Background.AsColor();
+            instruction.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+        }
+
+        public void Dispose()
+        {
+            _broadcastService.DataReceived -= OnDataReceived;
+            _broadcastService.ConnectionLost -= OnConnectionLost;
+            _broadcastService?.Dispose();
         }
     }
 }
