@@ -19,7 +19,6 @@ namespace LANPaint.MVVM
         public void Execute() => Action();
 
 
-        #region ICommand Members
         public event EventHandler CanExecuteChanged;
         bool ICommand.CanExecute(object parameter) => parameter == null
             ? CanExecute()
@@ -33,7 +32,6 @@ namespace LANPaint.MVVM
                 throw new ArgumentException("This implementation of RelayCommand doesn't support parameters.",
                     nameof(parameter));
         }
-        #endregion
     }
 
     public class RelayCommand<T> : ICommand
@@ -52,11 +50,8 @@ namespace LANPaint.MVVM
         public void Execute(T parameter) => Action(parameter);
 
 
-        #region ICommand Members
         public event EventHandler CanExecuteChanged;
         bool ICommand.CanExecute(object parameter) => CanExecute((T)parameter);
         void ICommand.Execute(object parameter) => Execute((T)parameter);
-        #endregion
-
     }
 }

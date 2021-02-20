@@ -101,12 +101,9 @@
                      IsEraser="{Binding IsEraser}"
                      Strokes="{Binding Strokes, Mode=TwoWay}"/>
         </Border>
-        <DockPanel Grid.Row="2" >
-            <Label DockPanel.Dock="Left" Content="{Binding ElementName=DrawingBoard,Path=MousePosition}"/>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Label Margin="5,0" Content="{Binding ElementName=DrawingBoard, Path=ActualWidth}"/>
-                <Label Margin="5,0" Content="{Binding ElementName=DrawingBoard, Path=ActualHeight}"/>
-            </StackPanel>
-        </DockPanel>
+        <StackPanel Grid.Row="2" DockPanel.Dock="Right" Orientation="Horizontal">
+            <Label Content="Mouse:"/>
+            <Label DockPanel.Dock="Left" Content="{Binding ElementName=DrawingBoard,Path=MousePosition, Mode=OneWay}"/>
+        </StackPanel>
     </Grid>
 </Window>

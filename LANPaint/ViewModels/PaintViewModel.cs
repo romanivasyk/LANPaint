@@ -1,6 +1,8 @@
 ﻿using LANPaint.Dialogs.FrameworkDialogs.OpenFile;
 using LANPaint.Dialogs.FrameworkDialogs.SaveFile;
 using LANPaint.Dialogs.Service;
+using LANPaint.DrawingInstructions;
+using LANPaint.DrawingInstructions.Interfaces;
 using LANPaint.Extensions;
 using LANPaint.Model;
 using LANPaint.MVVM;
@@ -17,8 +19,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
-using LANPaint.DrawingInstructions;
-using LANPaint.DrawingInstructions.Interfaces;
 
 namespace LANPaint.ViewModels
 {
@@ -29,9 +29,7 @@ namespace LANPaint.ViewModels
         private bool _isReceive;
         private bool _isBroadcast;
         private StrokeCollection _strokes;
-
-#warning Change IsBroadcast and IsEraser property to Tool enum?
-#warning Or even by some ITool interface, each impl of which will have own behavior strategy?
+        
         public bool IsEraser
         {
             get => _isEraser;

@@ -43,8 +43,9 @@ namespace LANPaint.Services.Broadcast
             _broadcastImpl?.Dispose();
             _broadcastImpl = null;
 
-            //ObservableCollection uses worker thread to notify about change,
-            //so we should use Main Thread for UI related code.
+            //ObservableCollection uses a worker thread to notify about change,
+            //so we should use thread that was used to create the current instance
+            //just in case the handler will use UI related code.
             _dispatcher.Invoke(() => ConnectionLost?.Invoke());
         }
 
@@ -54,7 +55,7 @@ namespace LANPaint.Services.Broadcast
             if (ipAddress == null) throw new ArgumentNullException(nameof(ipAddress));
             if (IsReady && Equals(LocalEndPoint, new IPEndPoint(ipAddress, port))) return true;
 
-            if (!_networkInterfaceHelper.IsReadyToUse(ipAddress)) return false; // Throw exception?
+            if (!_networkInterfaceHelper.IsReadyToUse(ipAddress)) return false; //Throw exception here?
 
             _broadcastImpl?.Dispose();
             _broadcastImpl = port == default
@@ -89,7 +90,7 @@ namespace LANPaint.Services.Broadcast
             if (!IsReady) throw new ServiceNotInitializedException(
                 "Initialize() should be called to be able to use BroadcastService.");
 
-            if (IsReceiving) return; // Throw exception here?
+            if (IsReceiving) return; //Throw exception here?
 
             _cancelReceiveTokenSource?.Dispose();
             _cancelReceiveTokenSource = new CancellationTokenSource();
@@ -110,7 +111,6 @@ namespace LANPaint.Services.Broadcast
                     _cancelReceiveTokenSource?.Dispose();
                     IsReceiving = false;
                 }
-#warning Refactor this
                 catch (AggregateException exception) when (
                     exception.InnerException is ObjectDisposedException disposedException &&
                     (disposedException.ObjectName == typeof(Socket).FullName ||

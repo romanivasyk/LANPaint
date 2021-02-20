@@ -15,8 +15,13 @@ namespace LANPaint.Views
         public Paint()
         {
             InitializeComponent();
-            var broadcastFactory = new ChainerFactory();
-            var context = new PaintViewModel(new BroadcastService(new ChainerFactory(49152)), new DefaultDialogService(new DefaultFrameworkDialogFactory()), new DefaultFileService());
+            var broadcastFactory = new ChainerFactory(49152);
+            var broadcastService = new BroadcastService(broadcastFactory);
+            var frameworkDialogFactory = new DefaultFrameworkDialogFactory();
+            var dialogService = new DefaultDialogService(frameworkDialogFactory);
+            var fileService = new DefaultFileService();
+
+            var context = new PaintViewModel(broadcastService, dialogService, fileService);
             DataContext = context;
 
             context.Background = Color.FromRgb(255, 255, 255);
