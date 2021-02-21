@@ -29,7 +29,7 @@ namespace LANPaint.ViewModels
         private bool _isReceive;
         private bool _isBroadcast;
         private StrokeCollection _strokes;
-        
+
         public bool IsEraser
         {
             get => _isEraser;
@@ -330,7 +330,7 @@ namespace LANPaint.ViewModels
         {
             Clear();
             Background = instruction.Background.AsColor();
-            instruction.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
+            Strokes = new StrokeCollection(instruction.Strokes.Select(stroke => stroke.ToStroke()));
         }
 
         public void Dispose()
