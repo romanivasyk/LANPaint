@@ -221,10 +221,7 @@ namespace LANPaint.ViewModels
 
             _broadcastService.Initialize(settingsVm.Result.Address, settingsVm.Result.Port);
 
-            BroadcastChangedCommand?.RaiseCanExecuteChanged();
-            ReceiveChangedCommand?.RaiseCanExecuteChanged();
-            SynchronizeCommand?.RaiseCanExecuteChanged();
-
+            RaiseNetworkRelatedCanExecuteChanged();
             IsBroadcast = IsReceive = false;
         }
 
@@ -257,9 +254,7 @@ namespace LANPaint.ViewModels
 
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
         {
-            ClearCommand?.RaiseCanExecuteChanged();
-            SaveDrawingCommand?.RaiseCanExecuteChanged();
-            SynchronizeCommand?.RaiseCanExecuteChanged();
+            RaiseStrokeRelatedCanExecuteChanged();
 
             if (e.Added.Count <= 0 || !IsBroadcast) return;
             var strokesToSend = e.Added.Where(addedStroke => !_receivedStrokes.Contains(addedStroke)).ToArray();
@@ -282,9 +277,7 @@ namespace LANPaint.ViewModels
 
         private void OnConnectionLost()
         {
-            BroadcastChangedCommand.RaiseCanExecuteChanged();
-            ReceiveChangedCommand.RaiseCanExecuteChanged();
-            SynchronizeCommand.RaiseCanExecuteChanged();
+            RaiseNetworkRelatedCanExecuteChanged();
 
             if (!IsBroadcast && !IsReceive) return;
             IsBroadcast = IsReceive = false;
@@ -303,6 +296,7 @@ namespace LANPaint.ViewModels
         {
             Strokes.Clear();
             _receivedStrokes.Clear();
+            RaiseStrokeRelatedCanExecuteChanged();
         }
 
         public void ChangeBackground(ChangeBackgroundInstruction changeBackgroundInstruction)
@@ -330,7 +324,25 @@ namespace LANPaint.ViewModels
         {
             Clear();
             Background = instruction.Background.AsColor();
+
+            Strokes.StrokesChanged -= OnStrokesCollectionChanged;
             Strokes = new StrokeCollection(instruction.Strokes.Select(stroke => stroke.ToStroke()));
+            Strokes.StrokesChanged += OnStrokesCollectionChanged;
+            RaiseStrokeRelatedCanExecuteChanged();
+        }
+
+        private void RaiseStrokeRelatedCanExecuteChanged()
+        {
+            ClearCommand?.RaiseCanExecuteChanged();
+            SaveDrawingCommand?.RaiseCanExecuteChanged();
+            SynchronizeCommand?.RaiseCanExecuteChanged();
+        }
+
+        private void RaiseNetworkRelatedCanExecuteChanged()
+        {
+            BroadcastChangedCommand.RaiseCanExecuteChanged();
+            ReceiveChangedCommand.RaiseCanExecuteChanged();
+            SynchronizeCommand.RaiseCanExecuteChanged();
         }
 
         public void Dispose()
