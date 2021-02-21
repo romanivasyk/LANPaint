@@ -84,6 +84,19 @@ namespace LANPaint.UserControls
             DefaultStyleKeyProperty.OverrideMetadata(typeof(Board), new FrameworkPropertyMetadata(typeof(Board)));
         }
 
+        private static void OnStrokesCollectionChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var board = (Board) boardControl;
+            var newStrokeCollection = (StrokeCollection)e.NewValue;
+            var eraserColor = ((SolidColorBrush)board.Background).Color;
+            board._eraserStrokes.Clear();
+
+            foreach (var stroke in newStrokeCollection)
+            {
+                if(stroke.DrawingAttributes.Color == eraserColor) board._eraserStrokes.Add(stroke);
+            }
+        }
+
         public Board()
         {
             _cachedStrokeColor = DefaultDrawingAttributes.Color;
@@ -100,8 +113,11 @@ namespace LANPaint.UserControls
             StrokeColor = Color.FromRgb(0, 0, 0);
             DefaultDrawingAttributes.IgnorePressure = true;
 
-            var overriddenMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
-            BackgroundProperty.OverrideMetadata(typeof(Board), overriddenMetadata);
+            var overriddenBackgroundMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
+            BackgroundProperty.OverrideMetadata(typeof(Board), overriddenBackgroundMetadata);
+
+            var overriddenStrokesMetadata = new FrameworkPropertyMetadata(new StrokeCollection(), OnStrokesCollectionChanged);
+            StrokesProperty.OverrideMetadata(typeof(Board), overriddenStrokesMetadata);
         }
 
         protected override void OnStrokesReplaced(InkCanvasStrokesReplacedEventArgs e)
