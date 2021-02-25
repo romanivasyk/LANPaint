@@ -11,44 +11,43 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
 {
     public class Chainer : BroadcastDecorator
     {
-        public int SegmentPayloadLength { get; }
-
+        private readonly int _segmentPayloadLength;
         private readonly BinaryFormatter _formatter;
         private readonly Dictionary<Guid, SortedList<long, Segment>> _segmentBuffer;
 
         public Chainer(IBroadcast broadcaster, int segmentPayloadLength = 8192) : base(broadcaster)
         {
-            SegmentPayloadLength = segmentPayloadLength;
+            _segmentPayloadLength = segmentPayloadLength;
             _formatter = new BinaryFormatter();
             _segmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
         }
 
         public override async Task<int> SendAsync(byte[] payload)
         {
+            if (payload == null) throw new ArgumentNullException(nameof(payload));
             var sequenceGuid = Guid.NewGuid();
-            var sequenceLength = payload.Length % SegmentPayloadLength > 0 ?
-                                 payload.Length / SegmentPayloadLength + 1 :
-                                 payload.Length / SegmentPayloadLength;
+            var sequenceLength = payload.Length % _segmentPayloadLength > 0
+                ? payload.Length / _segmentPayloadLength + 1
+                : payload.Length / _segmentPayloadLength;
 
+            var bytesSentCount = 0;
             for (var i = 0; i < sequenceLength; i++)
             {
-                var beginWith = i * SegmentPayloadLength;
+                var beginWith = i * _segmentPayloadLength;
 
-                var endBefore = i + 1 == sequenceLength ?
-                                         payload.Length :
-                                         beginWith + SegmentPayloadLength;
+                var endBefore = i + 1 == sequenceLength ? payload.Length : beginWith + _segmentPayloadLength;
 
                 var segment = new Segment(i, payload[beginWith..endBefore]);
                 var packet = new Packet(sequenceGuid, sequenceLength, segment);
 
                 var bytes = _formatter.OneLineSerialize(packet);
-                await Broadcast.SendAsync(bytes);
+                bytesSentCount += await Broadcast.SendAsync(bytes);
             }
 
-            return payload.Length;
+            return bytesSentCount;
         }
 
-        public override async Task<byte[]> ReceiveAsync(CancellationToken token = default)
+        public override async Task<byte[]> ReceiveAsync(CancellationToken token)
         {
             while (true)
             {

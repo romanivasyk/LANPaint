@@ -9,7 +9,7 @@ namespace LANPaint.Services.Broadcast
     {
         IPEndPoint LocalEndPoint { get; }
 
-        Task<byte[]> ReceiveAsync(CancellationToken token = default);
+        Task<byte[]> ReceiveAsync(CancellationToken token);
         Task<int> SendAsync(byte[] bytes);
         ValueTask ClearBufferAsync();
     }
