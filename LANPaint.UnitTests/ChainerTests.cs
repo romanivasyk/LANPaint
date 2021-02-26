@@ -11,30 +11,32 @@ namespace LANPaint.UnitTests
 {
     public class ChainerTest
     {
+        private readonly Mock<IBroadcast> _broadcastMock;
+
+        public ChainerTest()
+        {
+            _broadcastMock = new Mock<IBroadcast>();
+            _broadcastMock.Setup(broadcast => broadcast.SendAsync(It.IsAny<byte[]>())).ReturnsAsync((byte[] dataParam) => dataParam.Length);
+        }
+        
         [Fact]
         public void LocalEndPoint_CheckInnerCall()
         {
-            var broadcast = new Mock<IBroadcast>();
-            var chainer = new Chainer(broadcast.Object);
-
+            var chainer = new Chainer(_broadcastMock.Object);
             var endPoint = chainer.LocalEndPoint;
-
-            broadcast.Verify(b => b.LocalEndPoint, Times.Once);
+            _broadcastMock.Verify(broadcast => broadcast.LocalEndPoint, Times.Once);
         }
         
         //Does it even make sense to check this?
         [Fact]
         public async void SendAsync_CheckReturnValue()
         {
-            var broadcast = new Mock<IBroadcast>();
-            broadcast.Setup(b => b.SendAsync(It.IsAny<byte[]>())).ReturnsAsync((byte[] dataParam) => dataParam.Length);
-
             const int dataLength = 10000;
             var data = new byte[dataLength];
-            var chainer = new Chainer(broadcast.Object);
+            var chainer = new Chainer(_broadcastMock.Object);
 
             var result = await chainer.SendAsync(data);
-
+            
             //We know that Chainer wraps data into Package, so sent amount of bytes
             //definitely will be more than initial payload size.
             Assert.True(result > dataLength);
@@ -45,9 +47,9 @@ namespace LANPaint.UnitTests
         {
             var storage = new Stack<byte[]>();
             var broadcastMock = new Mock<IBroadcast>();
-            broadcastMock.Setup(b => b.SendAsync(It.IsAny<byte[]>())).Callback((byte[] dataParam) => storage.Push(dataParam))
+            broadcastMock.Setup(broadcast => broadcast.SendAsync(It.IsAny<byte[]>())).Callback((byte[] dataParam) => storage.Push(dataParam))
                 .ReturnsAsync((byte[] dataParam) => dataParam.Length);
-            broadcastMock.Setup(b => b.ReceiveAsync(CancellationToken.None)).ReturnsAsync(() => storage.Pop());
+            broadcastMock.Setup(broadcast => broadcast.ReceiveAsync(CancellationToken.None)).ReturnsAsync(() => storage.Pop());
             var broadcast = broadcastMock.Object;
             var data = RandomizeByteSequence(24000);
 
@@ -78,45 +80,33 @@ namespace LANPaint.UnitTests
         public async void SendAsync_CheckCountOfSendCalls(int dataLength, int maxSegmentLength,
             int expectedSendCallsNumber)
         {
-            var broadcast = new Mock<IBroadcast>();
-            broadcast.Setup(b => b.SendAsync(It.IsAny<byte[]>())).ReturnsAsync((byte[] dataParam) => dataParam.Length);
             var data = new byte[dataLength];
-            var chainer = new Chainer(broadcast.Object, maxSegmentLength);
-
+            var chainer = new Chainer(_broadcastMock.Object, maxSegmentLength);
             await chainer.SendAsync(data);
-
-            broadcast.Verify(b => b.SendAsync(It.IsAny<byte[]>()), Times.Exactly(expectedSendCallsNumber));
+            _broadcastMock.Verify(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()), Times.Exactly(expectedSendCallsNumber));
         }
 
         [Fact]
         public async void SendAsync_PassingNullData()
         {
-            var broadcast = new Mock<IBroadcast>();
-            var chainer = new Chainer(broadcast.Object);
-
+            var chainer = new Chainer(_broadcastMock.Object);
             await Assert.ThrowsAsync<ArgumentNullException>(() => chainer.SendAsync(null));
         }
 
         [Fact]
         public async void ClearBufferAsync_CheckInnerCall()
         {
-            var broadcast = new Mock<IBroadcast>();
-            var chainer = new Chainer(broadcast.Object);
-
+            var chainer = new Chainer(_broadcastMock.Object);
             await chainer.ClearBufferAsync();
-
-            broadcast.Verify(b => b.ClearBufferAsync(), Times.Once);
+            _broadcastMock.Verify(broadcast => broadcast.ClearBufferAsync(), Times.Once);
         }
         
         [Fact]
         public void Dispose_CheckInnerCall()
         {
-            var broadcast = new Mock<IBroadcast>();
-            var chainer = new Chainer(broadcast.Object);
-            
+            var chainer = new Chainer(_broadcastMock.Object);
             chainer.Dispose();
-
-            broadcast.Verify(b => b.Dispose(), Times.Once);
+            _broadcastMock.Verify(broadcast => broadcast.Dispose(), Times.Once);
         }
     }
 }

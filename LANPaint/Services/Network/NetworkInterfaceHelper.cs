@@ -8,7 +8,7 @@ using System.Net.Sockets;
 
 namespace LANPaint.Services.Network
 {
-    public class NetworkInterfaceHelper : IDisposable
+    public class NetworkInterfaceHelper : INetworkInterfaceHelper
     {
         public bool IsAnyNetworkAvailable { get; private set; }
 

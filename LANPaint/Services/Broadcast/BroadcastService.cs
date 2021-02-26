@@ -23,14 +23,14 @@ namespace LANPaint.Services.Broadcast
         private IBroadcast _broadcastImpl;
         private CancellationTokenSource _cancelReceiveTokenSource;
         private readonly IBroadcastFactory _broadcastFactory;
-        private readonly NetworkInterfaceHelper _networkInterfaceHelper;
+        private readonly INetworkInterfaceHelper _networkInterfaceHelper;
         private readonly Dispatcher _dispatcher;
 
-        public BroadcastService(IBroadcastFactory broadcastFactory)
+        public BroadcastService(IBroadcastFactory broadcastFactory, INetworkInterfaceHelper networkInterfaceHelper)
         {
             _dispatcher = Dispatcher.CurrentDispatcher;
             _broadcastFactory = broadcastFactory ?? throw new ArgumentNullException(nameof(broadcastFactory));
-            _networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
+            _networkInterfaceHelper = networkInterfaceHelper ?? throw new ArgumentNullException(nameof(networkInterfaceHelper));
             _networkInterfaceHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChanged;
         }
 
