@@ -40,21 +40,25 @@ namespace LANPaint.ViewModels
                 ChoosePenCommand?.RaiseCanExecuteChanged();
             }
         }
+
         public Color Background
         {
             get => _backgroundColor;
             set => SetProperty(ref _backgroundColor, value);
         }
+
         public bool IsReceive
         {
             get => _isReceive;
             set => SetProperty(ref _isReceive, value);
         }
+
         public bool IsBroadcast
         {
             get => _isBroadcast;
             set => SetProperty(ref _isBroadcast, value);
         }
+
         public StrokeCollection Strokes
         {
             get => _strokes;
@@ -90,6 +94,7 @@ namespace LANPaint.ViewModels
             {
                 _broadcastService.Initialize(networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
             }
+
             _broadcastService.DataReceived += OnDataReceived;
             _broadcastService.ConnectionLost += OnConnectionLost;
 
@@ -262,8 +267,11 @@ namespace LANPaint.ViewModels
 
             foreach (var stroke in strokesToSend)
             {
-                var info = new DrawInstruction(stroke);
-                await SendDataAsync(info);
+                IDrawingInstruction instruction = null;
+                if (IsEraser) instruction = new EraseInstruction(stroke);
+                else instruction = new DrawInstruction(stroke);
+
+                await SendDataAsync(instruction);
                 if (!IsBroadcast) break;
             }
         }
