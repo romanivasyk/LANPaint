@@ -15,7 +15,7 @@ namespace LANPaint.Views
         public Paint()
         {
             InitializeComponent();
-            var broadcastFactory = new ChainerFactory(49152);
+            var broadcastFactory = new ChainerFactory(16384);
             var broadcastService = new BroadcastService(broadcastFactory);
             var frameworkDialogFactory = new DefaultFrameworkDialogFactory();
             var dialogService = new DefaultDialogService(frameworkDialogFactory);
