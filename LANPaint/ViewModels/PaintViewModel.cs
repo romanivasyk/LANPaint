@@ -332,10 +332,7 @@ namespace LANPaint.ViewModels
         {
             Clear();
             Background = instruction.Background.AsColor();
-
-            Strokes.StrokesChanged -= OnStrokesCollectionChanged;
-            Strokes = new StrokeCollection(instruction.Strokes.Select(stroke => stroke.ToStroke()));
-            Strokes.StrokesChanged += OnStrokesCollectionChanged;
+            instruction.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke=>Strokes.Add(stroke));
             RaiseStrokeRelatedCanExecuteChanged();
         }
 
