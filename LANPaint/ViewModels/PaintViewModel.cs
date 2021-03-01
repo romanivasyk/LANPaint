@@ -318,8 +318,8 @@ namespace LANPaint.ViewModels
 
         public void ChangeBackground(ChangeBackgroundInstruction changeBackgroundInstruction)
         {
-            Background = changeBackgroundInstruction.Background.AsColor();
             _receivedBackground = changeBackgroundInstruction.Background.AsColor();
+            Background = changeBackgroundInstruction.Background.AsColor();
             RaiseStrokeRelatedCanExecuteChanged();
         }
 
