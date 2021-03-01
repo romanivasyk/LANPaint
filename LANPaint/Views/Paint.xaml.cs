@@ -23,8 +23,6 @@ namespace LANPaint.Views
 
             var context = new PaintViewModel(broadcastService, dialogService, fileService);
             DataContext = context;
-
-            context.Background = Color.FromRgb(255, 255, 255);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
