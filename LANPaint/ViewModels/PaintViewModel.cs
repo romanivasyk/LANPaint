@@ -40,21 +40,25 @@ namespace LANPaint.ViewModels
                 ChoosePenCommand?.RaiseCanExecuteChanged();
             }
         }
+
         public Color Background
         {
             get => _backgroundColor;
             set => SetProperty(ref _backgroundColor, value);
         }
+
         public bool IsReceive
         {
             get => _isReceive;
             set => SetProperty(ref _isReceive, value);
         }
+
         public bool IsBroadcast
         {
             get => _isBroadcast;
             set => SetProperty(ref _isBroadcast, value);
         }
+
         public StrokeCollection Strokes
         {
             get => _strokes;
@@ -78,6 +82,8 @@ namespace LANPaint.ViewModels
         private readonly IFileService _fileService;
         private readonly List<Stroke> _receivedStrokes;
         private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
+        private readonly Color _defaultBackground = Colors.White;
+        private Color? _receivedBackground;
 
         public PaintViewModel(IBroadcastService broadcastService, IDialogService dialogService, IFileService fileService)
         {
@@ -90,6 +96,7 @@ namespace LANPaint.ViewModels
             {
                 _broadcastService.Initialize(networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
             }
+
             _broadcastService.DataReceived += OnDataReceived;
             _broadcastService.ConnectionLost += OnConnectionLost;
 
@@ -98,15 +105,17 @@ namespace LANPaint.ViewModels
             _undoneStrokesStack = new Stack<(Stroke previous, Stroke undone)>();
             Strokes = new StrokeCollection();
             Strokes.StrokesChanged += OnStrokesCollectionChanged;
+            Background = _defaultBackground;
 
-            ClearCommand = new RelayCommand(OnClear, () => Strokes.Count > 0);
+            ClearCommand = new RelayCommand(OnClear, () => Strokes.Count > 0 || Background != _defaultBackground);
             ChoosePenCommand = new RelayCommand(() => IsEraser = false, () => IsEraser);
             ChooseEraserCommand = new RelayCommand(() => IsEraser = true, () => !IsEraser);
-            SaveDrawingCommand = new RelayCommand(OnSaveDrawing, () => Strokes.Count > 0);
+            SaveDrawingCommand = new RelayCommand(OnSaveDrawing, () => Strokes.Count > 0 || Background != _defaultBackground);
             OpenDrawingCommand = new RelayCommand(OnOpenDrawing);
             BroadcastChangedCommand = new RelayCommand(OnBroadcastChanged, () => _broadcastService.IsReady);
             ReceiveChangedCommand = new RelayCommand(OnReceiveChanged, () => _broadcastService.IsReady);
-            SynchronizeCommand = new RelayCommand(OnSynchronize, () => _broadcastService.IsReady && Strokes.Count > 0);
+            SynchronizeCommand = new RelayCommand(OnSynchronize,
+                () => _broadcastService.IsReady && (Strokes.Count > 0 || Background != _defaultBackground));
             OpenSettingsCommand = new RelayCommand(OnOpenSettings);
             UndoCommand = new RelayCommand(OnUndo);
             RedoCommand = new RelayCommand(OnRedo);
@@ -247,9 +256,13 @@ namespace LANPaint.ViewModels
 
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
         {
-            if (!IsBroadcast || e.PropertyName != nameof(Background)) return;
-            var info = new ChangeBackgroundInstruction(Background);
-            await SendDataAsync(info);
+            if(e.PropertyName == nameof(Background))
+            {
+                RaiseStrokeRelatedCanExecuteChanged();
+                if (!IsBroadcast || _receivedBackground == Background) return;
+                var info = new ChangeBackgroundInstruction(Background);
+                await SendDataAsync(info);
+            }
         }
 
         private async void OnStrokesCollectionChanged(object sender, StrokeCollectionChangedEventArgs e)
@@ -262,8 +275,11 @@ namespace LANPaint.ViewModels
 
             foreach (var stroke in strokesToSend)
             {
-                var info = new DrawInstruction(stroke);
-                await SendDataAsync(info);
+                IDrawingInstruction instruction = null;
+                if (IsEraser) instruction = new EraseInstruction(stroke);
+                else instruction = new DrawInstruction(stroke);
+
+                await SendDataAsync(instruction);
                 if (!IsBroadcast) break;
             }
         }
@@ -296,12 +312,15 @@ namespace LANPaint.ViewModels
         {
             Strokes.Clear();
             _receivedStrokes.Clear();
+            Background = _defaultBackground;
             RaiseStrokeRelatedCanExecuteChanged();
         }
 
         public void ChangeBackground(ChangeBackgroundInstruction changeBackgroundInstruction)
         {
+            _receivedBackground = changeBackgroundInstruction.Background.AsColor();
             Background = changeBackgroundInstruction.Background.AsColor();
+            RaiseStrokeRelatedCanExecuteChanged();
         }
 
         public void Erase(EraseInstruction instruction)
@@ -324,10 +343,7 @@ namespace LANPaint.ViewModels
         {
             Clear();
             Background = instruction.Background.AsColor();
-
-            Strokes.StrokesChanged -= OnStrokesCollectionChanged;
-            Strokes = new StrokeCollection(instruction.Strokes.Select(stroke => stroke.ToStroke()));
-            Strokes.StrokesChanged += OnStrokesCollectionChanged;
+            instruction.Strokes.Select(stroke => stroke.ToStroke()).ToList().ForEach(stroke => Strokes.Add(stroke));
             RaiseStrokeRelatedCanExecuteChanged();
         }
 

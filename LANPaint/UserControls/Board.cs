@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
@@ -31,7 +32,7 @@ namespace LANPaint.UserControls
 
         public Point MousePosition
         {
-            get => (Point)GetValue(MousePositionProperty);
+            get => (Point) GetValue(MousePositionProperty);
             private set => SetValue(MousePositionProperty, value);
         }
 
@@ -49,13 +50,13 @@ namespace LANPaint.UserControls
 
         public bool IsEraser
         {
-            get => (bool)GetValue(IsEraserProperty);
+            get => (bool) GetValue(IsEraserProperty);
             set => SetValue(IsEraserProperty, value);
         }
 
         public Cursor EraserCursor
         {
-            get => (Cursor)GetValue(EraserCursorProperty);
+            get => (Cursor) GetValue(EraserCursorProperty);
             set => SetValue(EraserCursorProperty, value);
         }
 
@@ -84,19 +85,6 @@ namespace LANPaint.UserControls
             DefaultStyleKeyProperty.OverrideMetadata(typeof(Board), new FrameworkPropertyMetadata(typeof(Board)));
         }
 
-        private static void OnStrokesCollectionChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
-        {
-            var board = (Board) boardControl;
-            var newStrokeCollection = (StrokeCollection)e.NewValue;
-            var eraserColor = ((SolidColorBrush)board.Background).Color;
-            board._eraserStrokes.Clear();
-
-            foreach (var stroke in newStrokeCollection)
-            {
-                if(stroke.DrawingAttributes.Color == eraserColor) board._eraserStrokes.Add(stroke);
-            }
-        }
-
         public Board()
         {
             _cachedStrokeColor = DefaultDrawingAttributes.Color;
@@ -113,38 +101,12 @@ namespace LANPaint.UserControls
             StrokeColor = Color.FromRgb(0, 0, 0);
             DefaultDrawingAttributes.IgnorePressure = true;
 
-            var overriddenBackgroundMetadata = new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
+            var overriddenBackgroundMetadata =
+                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBackgroundChanged);
             BackgroundProperty.OverrideMetadata(typeof(Board), overriddenBackgroundMetadata);
 
             var overriddenStrokesMetadata = new FrameworkPropertyMetadata(new StrokeCollection(), OnStrokesCollectionChanged);
             StrokesProperty.OverrideMetadata(typeof(Board), overriddenStrokesMetadata);
-        }
-
-        protected override void OnStrokesReplaced(InkCanvasStrokesReplacedEventArgs e)
-        {
-            base.OnStrokesReplaced(e);
-            if (e.PreviousStrokes != null)
-            {
-                e.PreviousStrokes.StrokesChanged -= OnStrokesChanged;
-            }
-            e.NewStrokes.StrokesChanged += OnStrokesChanged;
-        }
-
-        private void OnStrokesChanged(object sender, StrokeCollectionChangedEventArgs e)
-        {
-            if (e.Added.Count > 0)
-            {
-                if (IsEraser)
-                {
-                    _eraserStrokes.AddRange(e.Added);
-                }
-            }
-
-            if (e.Removed.Count <= 0) return;
-            foreach (var stroke in e.Removed)
-            {
-                _eraserStrokes.Remove(stroke);
-            }
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -153,38 +115,26 @@ namespace LANPaint.UserControls
             MousePosition = e.GetPosition(this);
         }
 
-        private void OnBackgroundChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
-        {
-            var control = (Board)boardControl;
-            var newBackgroundColor = ((SolidColorBrush)e.NewValue).Color;
-
-            if (IsEraser)
-            {
-                control.DefaultDrawingAttributes.Color = newBackgroundColor;
-            }
-            _eraserStrokes.ForEach(stroke => stroke.DrawingAttributes.Color = newBackgroundColor);
-        }
-
         private static void OnThicknessChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
         {
-            var control = (Board)boardControl;
-            control.DefaultDrawingAttributes.Width = (double)e.NewValue;
-            control.DefaultDrawingAttributes.Height = (double)e.NewValue;
+            var control = (Board) boardControl;
+            control.DefaultDrawingAttributes.Width = (double) e.NewValue;
+            control.DefaultDrawingAttributes.Height = (double) e.NewValue;
         }
 
         private static void OnColorChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
         {
-            var control = (Board)boardControl;
-            control.DefaultDrawingAttributes.Color = (Color)e.NewValue;
+            var control = (Board) boardControl;
+            control.DefaultDrawingAttributes.Color = (Color) e.NewValue;
         }
 
         private static void OnIsEraserChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
         {
-            var control = (Board)boardControl;
-            if ((bool)e.NewValue)
+            var control = (Board) boardControl;
+            if ((bool) e.NewValue)
             {
                 control._cachedStrokeColor = control.DefaultDrawingAttributes.Color;
-                control.DefaultDrawingAttributes.Color = ((SolidColorBrush)control.Background).Color;
+                control.DefaultDrawingAttributes.Color = ((SolidColorBrush) control.Background).Color;
                 control.Cursor = control.EraserCursor;
             }
             else
@@ -192,6 +142,48 @@ namespace LANPaint.UserControls
                 control.DefaultDrawingAttributes.Color = control._cachedStrokeColor;
                 control.Cursor = Cursors.Pen;
             }
+        }
+
+        private void OnBackgroundChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (Board) boardControl;
+            var newBackgroundColor = ((SolidColorBrush) e.NewValue).Color;
+
+            if (IsEraser)
+            {
+                control.DefaultDrawingAttributes.Color = newBackgroundColor;
+            }
+
+            _eraserStrokes.ForEach(stroke => stroke.DrawingAttributes.Color = newBackgroundColor);
+        }
+
+        private static void OnStrokesCollectionChanged(DependencyObject boardControl, DependencyPropertyChangedEventArgs e)
+        {
+            var board = (Board) boardControl;
+            var oldStrokeCollection = e.OldValue as StrokeCollection;
+            var newStrokeCollection = (StrokeCollection) e.NewValue;
+            var eraserColor = ((SolidColorBrush) board.Background).Color;
+            board._eraserStrokes.Clear();
+
+            if (oldStrokeCollection != null) oldStrokeCollection.StrokesChanged -= board.OnStrokesChanged;
+            newStrokeCollection.StrokesChanged += board.OnStrokesChanged;
+
+            foreach (var stroke in newStrokeCollection)
+            {
+                if (stroke.DrawingAttributes.Color == eraserColor) board._eraserStrokes.Add(stroke);
+            }
+        }
+
+        private void OnStrokesChanged(object sender, StrokeCollectionChangedEventArgs e)
+        {
+            if (e.Added.Count > 0)
+            {
+                var erasingStrokes =
+                    e.Added.Where(stroke => stroke.DrawingAttributes.Color == ((SolidColorBrush) Background).Color).ToArray();
+                if (erasingStrokes.Length > 0) _eraserStrokes.AddRange(erasingStrokes);
+            }
+
+            e.Removed.ToList().ForEach(stroke => _eraserStrokes.Remove(stroke));
         }
 
         private static object GetDefaultEraserCursor()
