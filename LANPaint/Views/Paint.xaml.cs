@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿using System.Reflection;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using LANPaint.Converters;
 
 namespace LANPaint.Views
 {
@@ -7,6 +11,32 @@ namespace LANPaint.Views
         public Paint()
         {
             InitializeComponent();
+        }
+
+        private void ToolBar_Loaded(object sender, RoutedEventArgs e)
+        {
+            var toolBar = sender as ToolBar;
+            if (toolBar?.Template.FindName("OverflowGrid", toolBar) is not FrameworkElement overflowGrid) return;
+
+            var toolBarType = toolBar.GetType();
+            var hasOverflowItemsPropertyInfo =
+                toolBarType.GetField("HasOverflowItemsProperty", BindingFlags.Public | BindingFlags.Static);
+            var hasOverflowItemsProperty = (DependencyProperty) hasOverflowItemsPropertyInfo.GetValue(toolBar);
+
+            var overflowGridType = overflowGrid.GetType();
+            var visibilityPropertyInfo = overflowGridType.GetField("VisibilityProperty",
+                BindingFlags.Public | BindingFlags.FlattenHierarchy | BindingFlags.Static);
+            var visibilityProperty = (DependencyProperty) visibilityPropertyInfo.GetValue(overflowGrid);
+
+            var binding = new Binding
+            {
+                Source = toolBar,
+                Path = new PropertyPath(hasOverflowItemsProperty),
+                Mode = BindingMode.OneWay,
+                Converter = new ToolbarOverflowVisibilityConverter()
+            };
+
+            BindingOperations.SetBinding(overflowGrid, visibilityProperty, binding);
         }
     }
 }
