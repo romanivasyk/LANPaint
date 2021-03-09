@@ -5,7 +5,7 @@
         xmlns:controls="clr-namespace:LANPaint.UserControls"
         xmlns:converters="clr-namespace:LANPaint.Converters"
         WindowStartupLocation="CenterScreen"
-        Title="LAN Paint" Height="600" Width="935" Icon="../Resources/pen.png">
+        Title="LAN Paint" Width="970" Height="650" Icon="../Resources/pen.png">
 
     <Window.Resources>
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
@@ -16,6 +16,8 @@
             <Setter Property="Foreground" Value="Black"/>
             <Style.Triggers>
                 <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderBrush" Value="Transparent"/>
                     <Setter Property="Content" Value="On"/>
                 </Trigger>
                 <Trigger Property="IsChecked" Value="False">
@@ -37,7 +39,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <ToolBarTray Background="Transparent" HorizontalAlignment="Center">
-            <ToolBar Background="{Binding Path=Background, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ToolBarTray, AncestorLevel=1}}" UseLayoutRounding="True">
+            <ToolBar Background="{Binding Path=Background, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ToolBarTray, AncestorLevel=1}}" UseLayoutRounding="True" Loaded="ToolBar_Loaded">
                 <Button Command="{Binding OpenDrawingCommand}">
                     <Image Source="../Resources/open.png" Height="24"/>
                 </Button>
@@ -46,7 +48,7 @@
                 </Button>
                 <Separator Margin="5,0"/>
                 <Label Content="Tool width:"/>
-                <ComboBox x:Name="ToolThickness" SelectedIndex="0">
+                <ComboBox Width="29" x:Name="ToolThickness" SelectedIndex="0">
                     <ComboBoxItem>2</ComboBoxItem>
                     <ComboBoxItem>4</ComboBoxItem>
                     <ComboBoxItem>8</ComboBoxItem>
@@ -74,16 +76,16 @@
                     <Image Height="24" Source="../Resources/eraser.png"/>
                 </Button>
                 <Separator Margin="5,0"/>
-                <Label Content="Clean Up:"/>
+                <Label Content="Clear:"/>
                 <Button Command="{Binding ClearCommand}">
                     <Image Height="24" Source="../Resources/cancel.png"/>
                 </Button>
                 <Separator Margin="5,0"/>
                 <Label Content="Broadcast:"/>
-                <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsBroadcast, Mode=TwoWay}" Command="{Binding BroadcastChangedCommand}"/>
+                <CheckBox Width="23" Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsBroadcast, Mode=TwoWay}" Command="{Binding BroadcastChangedCommand}"/>
                 <Separator Margin="5,0"/>
                 <Label Content="Receive:"/>
-                <CheckBox Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsReceive, Mode=TwoWay}" Command="{Binding ReceiveChangedCommand}"/>
+                <CheckBox Width="23" Style="{DynamicResource CheckBoxStyle}" IsChecked="{Binding IsReceive, Mode=TwoWay}" Command="{Binding ReceiveChangedCommand}"/>
                 <Separator Margin="5,0"/>
                 <Button Command="{Binding SynchronizeCommand}">
                     <Image Height="24" Source="../Resources/synchronize.png"/>

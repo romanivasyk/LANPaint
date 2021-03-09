@@ -161,13 +161,16 @@ namespace LANPaint.UserControls
         {
             var board = (Board) boardControl;
             var oldStrokeCollection = e.OldValue as StrokeCollection;
-            var newStrokeCollection = (StrokeCollection) e.NewValue;
-            var eraserColor = ((SolidColorBrush) board.Background).Color;
+            var newStrokeCollection = e.NewValue as StrokeCollection;
+            var eraserColor = ((SolidColorBrush) board.Background)?.Color;
+            
             board._eraserStrokes.Clear();
-
             if (oldStrokeCollection != null) oldStrokeCollection.StrokesChanged -= board.OnStrokesChanged;
+            
+            if (newStrokeCollection == null) return;
             newStrokeCollection.StrokesChanged += board.OnStrokesChanged;
-
+            
+            if (eraserColor == null) return;
             foreach (var stroke in newStrokeCollection)
             {
                 if (stroke.DrawingAttributes.Color == eraserColor) board._eraserStrokes.Add(stroke);
