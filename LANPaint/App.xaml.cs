@@ -14,6 +14,7 @@ namespace LANPaint
         private PaintViewModel _paintDataContext;
         
         //TODO: Move this stuff to some kind of Setup or ApplicationBootstrapper with DI container.
+        //https://www.codeproject.com/Articles/812379/Using-Ninject-to-produce-a-loosely-coupled-modular
         private void OnStartupHandler(object sender, StartupEventArgs e)
         {
             var broadcastFactory = new ChainerFactory(16384);

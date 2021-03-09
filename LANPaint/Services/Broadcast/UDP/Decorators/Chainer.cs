@@ -33,7 +33,6 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
             for (var i = 0; i < sequenceLength; i++)
             {
                 var beginWith = i * SegmentPayloadLength;
-
                 var endBefore = i + 1 == sequenceLength ?
                                          payload.Length :
                                          beginWith + SegmentPayloadLength;
