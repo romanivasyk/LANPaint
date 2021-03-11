@@ -1,5 +1,6 @@
 ﻿using LANPaint.Services.Network;
 using System;
+using System.Collections.Specialized;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -34,7 +35,7 @@ namespace LANPaint.Services.Broadcast
             _networkInterfaceHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChanged;
         }
 
-        private void NetworkInterfacesCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void NetworkInterfacesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (_broadcastImpl != null && _networkInterfaceHelper.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
 
@@ -87,8 +88,9 @@ namespace LANPaint.Services.Broadcast
         public async Task StartReceiveAsync()
         {
             if (_isDisposed) throw new ObjectDisposedException(nameof(BroadcastService));
-            if (!IsReady) throw new ServiceNotInitializedException(
-                "Initialize() should be called to be able to use BroadcastService.");
+            if (!IsReady)
+                throw new ServiceNotInitializedException(
+                    "Initialize() should be called to be able to use BroadcastService.");
 
             if (IsReceiving) return; //Throw exception here?
 
@@ -96,7 +98,6 @@ namespace LANPaint.Services.Broadcast
             _cancelReceiveTokenSource = new CancellationTokenSource();
 
             IsReceiving = true;
-
             await _broadcastImpl.ClearBufferAsync();
 
             while (true)
@@ -118,7 +119,10 @@ namespace LANPaint.Services.Broadcast
                      disposedException.ObjectName == typeof(TcpClient).FullName))
                 {
                     _cancelReceiveTokenSource?.Dispose();
-                    IsReceiving = IsReady = false;
+                    IsReceiving = false;
+                    
+                    if (_broadcastImpl is null || Equals(new IPEndPoint(IPAddress.None, 0), _broadcastImpl.LocalEndPoint))
+                        IsReady = false;
                 }
                 catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
                 {
@@ -152,7 +156,8 @@ namespace LANPaint.Services.Broadcast
 
     public class ServiceNotInitializedException : Exception
     {
-        public ServiceNotInitializedException(string message = null, Exception innerException = null) : base(message, innerException)
+        public ServiceNotInitializedException(string message = null, Exception innerException = null) : base(message,
+            innerException)
         { }
     }
 }
