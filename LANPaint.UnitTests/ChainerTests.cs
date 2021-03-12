@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using LANPaint.Services.Broadcast;
-using LANPaint.Services.Broadcast.UDP.Decorators;
+using LANPaint.Services.Broadcast.Decorators;
 using Moq;
 using Xunit;
 

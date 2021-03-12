@@ -2,7 +2,7 @@
 using LANPaint.Dialogs.FrameworkDialogs;
 using LANPaint.Dialogs.Service;
 using LANPaint.Services.Broadcast;
-using LANPaint.Services.Broadcast.UDP.Factories;
+using LANPaint.Services.Broadcast.Factories;
 using LANPaint.Services.IO;
 using LANPaint.Services.Network;
 using LANPaint.ViewModels;

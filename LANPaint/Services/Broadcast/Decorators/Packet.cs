@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LANPaint.Services.Broadcast.UDP.Decorators
+namespace LANPaint.Services.Broadcast.Decorators
 {
     [Serializable]
     public readonly struct Packet

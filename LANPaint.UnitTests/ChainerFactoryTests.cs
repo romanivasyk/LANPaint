@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Net;
-using LANPaint.Services.Broadcast.UDP.Factories;
+using LANPaint.Services.Broadcast.Factories;
 using Xunit;
 
 namespace LANPaint.UnitTests

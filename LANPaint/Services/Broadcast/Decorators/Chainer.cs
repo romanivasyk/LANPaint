@@ -1,13 +1,13 @@
-﻿using LANPaint.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
+using LANPaint.Extensions;
 
-namespace LANPaint.Services.Broadcast.UDP.Decorators
+namespace LANPaint.Services.Broadcast.Decorators
 {
     public class Chainer : BroadcastDecorator
     {

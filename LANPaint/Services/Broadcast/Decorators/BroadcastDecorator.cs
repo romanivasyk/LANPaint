@@ -3,7 +3,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LANPaint.Services.Broadcast.UDP.Decorators
+namespace LANPaint.Services.Broadcast.Decorators
 {
     public abstract class BroadcastDecorator : IBroadcast
     {
