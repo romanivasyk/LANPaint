@@ -11,13 +11,20 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
 {
     public class Chainer : BroadcastDecorator
     {
-        private readonly int _segmentPayloadLength;
+        public const int MinSegmentLength = 1024;
+        public const int MaxSegmentLength = 65535;
+
+        private readonly int _payloadSegmentLength;
         private readonly BinaryFormatter _formatter;
         private readonly Dictionary<Guid, SortedList<long, Segment>> _segmentBuffer;
 
-        public Chainer(IBroadcast broadcaster, int segmentPayloadLength = 8192) : base(broadcaster)
+        public Chainer(IBroadcast broadcaster, int payloadSegmentLength = 8192) : base(broadcaster)
         {
-            _segmentPayloadLength = segmentPayloadLength;
+            if (payloadSegmentLength < MinSegmentLength || payloadSegmentLength > MaxSegmentLength)
+                throw new ArgumentOutOfRangeException(nameof(payloadSegmentLength),
+                    $"Provided segment length should be in range from {Chainer.MinSegmentLength} to {Chainer.MaxSegmentLength}");
+
+            _payloadSegmentLength = payloadSegmentLength;
             _formatter = new BinaryFormatter();
             _segmentBuffer = new Dictionary<Guid, SortedList<long, Segment>>();
         }
@@ -26,16 +33,15 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             var sequenceGuid = Guid.NewGuid();
-            var sequenceLength = payload.Length % _segmentPayloadLength > 0
-                ? payload.Length / _segmentPayloadLength + 1
-                : payload.Length / _segmentPayloadLength;
+            var sequenceLength = payload.Length % _payloadSegmentLength > 0
+                ? payload.Length / _payloadSegmentLength + 1
+                : payload.Length / _payloadSegmentLength;
 
             var bytesSentCount = 0;
             for (var i = 0; i < sequenceLength; i++)
             {
-                var beginWith = i * _segmentPayloadLength;
-
-                var endBefore = i + 1 == sequenceLength ? payload.Length : beginWith + _segmentPayloadLength;
+                var beginWith = i * _payloadSegmentLength;
+                var endBefore = i + 1 == sequenceLength ? payload.Length : beginWith + _payloadSegmentLength;
 
                 var segment = new Segment(i, payload[beginWith..endBefore]);
                 var packet = new Packet(sequenceGuid, sequenceLength, segment);
@@ -47,13 +53,14 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
             return bytesSentCount;
         }
 
-        public override async Task<byte[]> ReceiveAsync(CancellationToken token)
+        public override async Task<byte[]> ReceiveAsync(CancellationToken token = default)
         {
             while (true)
             {
                 byte[] bytes;
                 try
                 {
+                    token.ThrowIfCancellationRequested();
                     bytes = await Broadcast.ReceiveAsync(token);
                 }
                 catch
@@ -65,7 +72,7 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
                 Packet packet;
                 try
                 {
-                    packet = (Packet)_formatter.OneLineDeserialize(bytes);
+                    packet = (Packet) _formatter.OneLineDeserialize(bytes);
                 }
                 catch (SerializationException)
                 {

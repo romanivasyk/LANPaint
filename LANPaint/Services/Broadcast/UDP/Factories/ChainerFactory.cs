@@ -6,24 +6,25 @@ namespace LANPaint.Services.Broadcast.UDP.Factories
 {
     public class ChainerFactory : IBroadcastFactory
     {
-        private const int MinSegmentLength = 1024;
-        public int SegmentLength { get; }
+        public int PayloadSegmentLength { get; }
 
-        public ChainerFactory(int segmentLength = 8192)
+        public ChainerFactory(int payloadSegmentLength)
         {
-            if (segmentLength < MinSegmentLength)
-                throw new ArgumentException("Provided segment length should be more than 1023.", nameof(segmentLength));
-            SegmentLength = segmentLength;
+            if (payloadSegmentLength < Chainer.MinSegmentLength || payloadSegmentLength > Chainer.MaxSegmentLength)
+                throw new ArgumentOutOfRangeException(nameof(payloadSegmentLength),
+                    $"Provided segment length should be in range from {Chainer.MinSegmentLength} to {Chainer.MaxSegmentLength}");
+
+            PayloadSegmentLength = payloadSegmentLength;
         }
 
         public IBroadcast Create(IPAddress ipAddress)
         {
-            return new Chainer(new UdpBroadcastImpl(ipAddress), SegmentLength);
+            return new Chainer(new UdpBroadcastImpl(ipAddress), PayloadSegmentLength);
         }
 
         public IBroadcast Create(IPAddress ipAddress, int port)
         {
-            return new Chainer(new UdpBroadcastImpl(ipAddress, port), SegmentLength);
+            return new Chainer(new UdpBroadcastImpl(ipAddress, port), PayloadSegmentLength);
         }
     }
 }

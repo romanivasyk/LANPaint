@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +13,7 @@ namespace LANPaint.Services.Broadcast.UDP.Decorators
 
         protected BroadcastDecorator(IBroadcast broadcast)
         {
-            Broadcast = broadcast;
+            Broadcast = broadcast ?? throw new ArgumentNullException(nameof(broadcast));
         }
 
         public abstract Task<byte[]> ReceiveAsync(CancellationToken token = default);
