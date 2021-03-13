@@ -9,7 +9,6 @@
 
     <Window.Resources>
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
-        <converters:BrushColorConverter x:Key="BrushColorConverter"/>
         <converters:ColorBrushConverter x:Key="ColorBrushConverter"/>
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <Style x:Key="CheckBoxStyle" TargetType="{x:Type CheckBox}">
