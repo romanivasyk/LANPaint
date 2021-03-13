@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Windows.Threading;
+using System.Threading;
 
 #nullable enable
 namespace LANPaint.Services.Network.Watchers
@@ -13,13 +13,13 @@ namespace LANPaint.Services.Network.Watchers
         public bool IsAnyNetworkAvailable { get; private set; }
         public ImmutableArray<NetworkInterface> Interfaces { get; private set; }
         public event NetworkStateChangedEventHandler? NetworkStateChanged;
-        private readonly Dispatcher _dispatcher;
+        private readonly SynchronizationContext? _synchronizationContext;
 
         public NetworkWatcher()
         {
             IsAnyNetworkAvailable = NetworkInterface.GetIsNetworkAvailable();
             Interfaces = GetIPv4Interfaces();
-            _dispatcher = Dispatcher.CurrentDispatcher;
+            _synchronizationContext = SynchronizationContext.Current;
             NetworkChange.NetworkAddressChanged += AddressChangedHandler;
             NetworkChange.NetworkAvailabilityChanged += AvailabilityChangedHandler;
         }
@@ -27,14 +27,25 @@ namespace LANPaint.Services.Network.Watchers
         private void AddressChangedHandler(object? sender, EventArgs e)
         {
             Interfaces = GetIPv4Interfaces();
-            _dispatcher.Invoke(() => NetworkStateChanged?.Invoke(this, EventArgs.Empty));
+            NotifyStateChanged();
         }
 
         private void AvailabilityChangedHandler(object? sender, NetworkAvailabilityEventArgs e)
         {
             IsAnyNetworkAvailable = e.IsAvailable;
             Interfaces = GetIPv4Interfaces();
-            _dispatcher.Invoke(() => NetworkStateChanged?.Invoke(this, EventArgs.Empty));
+            NotifyStateChanged();
+        }
+
+        private void NotifyStateChanged()
+        {
+            if (_synchronizationContext is null)
+            {
+                NetworkStateChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            _synchronizationContext.Send(state => NetworkStateChanged?.Invoke(this, EventArgs.Empty), null);
         }
 
         private static ImmutableArray<NetworkInterface> GetIPv4Interfaces()
