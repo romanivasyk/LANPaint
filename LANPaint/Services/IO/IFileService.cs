@@ -4,7 +4,7 @@ namespace LANPaint.Services.IO
 {
     public interface IFileService
     {
-        Task SaveToFileAsync(object info, string fileName);
-        Task<object> ReadFromFileAsync(string fileName);
+        public Task SaveToFileAsync(object info, string fileName);
+        public Task<object> ReadFromFileAsync(string fileName);
     }
 }

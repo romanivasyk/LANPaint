@@ -4,6 +4,6 @@ namespace LANPaint.Dialogs.FrameworkDialogs.MessageBox
 {
     public interface IMessageBox
     {
-        MessageBoxResult Show(Window owner);
+        public MessageBoxResult Show(Window owner);
     }
 }

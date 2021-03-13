@@ -9,16 +9,16 @@ namespace LANPaint.Dialogs.Service
 {
     public interface IDialogService
     {
-        bool? ShowCustomDialog<TResult>(CustomDialogViewModelBase<TResult> viewModel);
+        public bool? ShowCustomDialog<TResult>(CustomDialogViewModelBase<TResult> viewModel);
 
-        MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, MessageBoxSettings settings);
+        public MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, MessageBoxSettings settings);
 
-        MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, string message, string caption = "",
+        public MessageBoxResult ShowMessageBox(INotifyPropertyChanged ownerViewModel, string message, string caption = "",
             MessageBoxButton button = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.None,
             MessageBoxResult defaultResult = MessageBoxResult.None);
 
-        bool? ShowOpenFileDialog(INotifyPropertyChanged ownerViewModel, OpenFileDialogSettings settings);
+        public bool? ShowOpenFileDialog(INotifyPropertyChanged ownerViewModel, OpenFileDialogSettings settings);
 
-        bool? ShowSaveFileDialog(INotifyPropertyChanged ownerViewModel, SaveFileDialogSettings settings);
+        public bool? ShowSaveFileDialog(INotifyPropertyChanged ownerViewModel, SaveFileDialogSettings settings);
     }
 }

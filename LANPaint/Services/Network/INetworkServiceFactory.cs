@@ -5,7 +5,7 @@ namespace LANPaint.Services.Network
 {
     public interface INetworkServiceFactory
     {
-        INetworkWatcher CreateWatcher();
-        INetworkUtility CreateUtility();
+        public INetworkWatcher CreateWatcher();
+        public INetworkUtility CreateUtility();
     }
 }

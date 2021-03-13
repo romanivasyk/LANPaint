@@ -6,8 +6,8 @@ namespace LANPaint.Dialogs.FrameworkDialogs
 {
     public interface IFrameworkDialogFactory
     {
-        IMessageBox CreateMessageBox(MessageBoxSettings settings);
-        IFrameworkDialog CreateOpenFileDialog(OpenFileDialogSettings settings);
-        IFrameworkDialog CreateSaveFileDialog(SaveFileDialogSettings settings);
+        public IMessageBox CreateMessageBox(MessageBoxSettings settings);
+        public IFrameworkDialog CreateOpenFileDialog(OpenFileDialogSettings settings);
+        public IFrameworkDialog CreateSaveFileDialog(SaveFileDialogSettings settings);
     }
 }

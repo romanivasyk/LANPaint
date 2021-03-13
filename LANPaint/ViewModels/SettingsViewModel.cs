@@ -100,11 +100,11 @@ namespace LANPaint.ViewModels
 
         private void NetworkStateChangedHandler(object sender, EventArgs e) => UpdateInterfaceCollection();
     }
-
+    
     public class NetworkInterfaceUiInfo
     {
-        public string Name { get; set; }
-        public IPAddress IpAddress { get; set; }
-        public bool IsReadyToUse { get; set; }
+        public string Name { get; init; }
+        public IPAddress IpAddress { get; init; }
+        public bool IsReadyToUse { get; init; }
     }
 }

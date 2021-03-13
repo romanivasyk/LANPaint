@@ -2,8 +2,8 @@
 {
     public interface IDialogWindow
     {
-        bool? DialogResult { get; set; }
-        object DataContext { get; set; }
-        bool? ShowDialog();
+        public bool? DialogResult { get; set; }
+        public object DataContext { get; set; }
+        public bool? ShowDialog();
     }
 }

@@ -7,10 +7,10 @@ namespace LANPaint.Services.Broadcast
 {
     public interface IBroadcast : IDisposable
     {
-        IPEndPoint LocalEndPoint { get; }
+        public IPEndPoint LocalEndPoint { get; }
 
-        Task<byte[]> ReceiveAsync(CancellationToken token);
-        Task<int> SendAsync(byte[] bytes);
-        ValueTask ClearBufferAsync();
+        public Task<byte[]> ReceiveAsync(CancellationToken token);
+        public Task<int> SendAsync(byte[] bytes);
+        public ValueTask ClearBufferAsync();
     }
 }
