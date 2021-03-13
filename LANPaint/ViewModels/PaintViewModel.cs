@@ -8,7 +8,6 @@ using LANPaint.Model;
 using LANPaint.MVVM;
 using LANPaint.Services.Broadcast;
 using LANPaint.Services.IO;
-using LANPaint.Services.Network;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -19,6 +18,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
+using LANPaint.Services.Network;
 
 namespace LANPaint.ViewModels
 {
@@ -80,22 +80,19 @@ namespace LANPaint.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IBroadcastService _broadcastService;
         private readonly IFileService _fileService;
+        private readonly INetworkServiceFactory _networkServiceFactory;
         private readonly List<Stroke> _receivedStrokes;
         private readonly Stack<(Stroke previous, Stroke undone)> _undoneStrokesStack;
         private readonly Color _defaultBackground = Colors.White;
         private Color? _receivedBackground;
 
-        public PaintViewModel(IBroadcastService broadcastService, IDialogService dialogService, IFileService fileService)
+        public PaintViewModel(IBroadcastService broadcastService, IDialogService dialogService, IFileService fileService,
+            INetworkServiceFactory networkServiceFactory)
         {
             _broadcastService = broadcastService ?? throw new ArgumentNullException(nameof(broadcastService));
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
-
-            var networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
-            if (networkInterfaceHelper.IsAnyNetworkAvailable)
-            {
-                _broadcastService.Initialize(networkInterfaceHelper.GetAnyReadyToUseIPv4Address());
-            }
+            _networkServiceFactory = networkServiceFactory ?? throw new ArgumentNullException(nameof(networkServiceFactory));
 
             _broadcastService.DataReceived += OnDataReceived;
             _broadcastService.ConnectionLost += OnConnectionLost;
@@ -221,8 +218,9 @@ namespace LANPaint.ViewModels
 
         private void OnOpenSettings()
         {
-            var settingsVm = new SettingsViewModel(_broadcastService.LocalEndPoint.Address,
-                _broadcastService.LocalEndPoint.Port);
+            using var watcher = _networkServiceFactory.CreateWatcher();
+            var settingsVm = new SettingsViewModel(watcher, _networkServiceFactory.CreateUtility(),
+                _broadcastService.LocalEndPoint.Address, _broadcastService.LocalEndPoint.Port);
 
             if (_dialogService.ShowCustomDialog(settingsVm) == false) return;
 
@@ -256,7 +254,7 @@ namespace LANPaint.ViewModels
 
         private async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
         {
-            if(e.PropertyName == nameof(Background))
+            if (e.PropertyName == nameof(Background))
             {
                 RaiseStrokeRelatedCanExecuteChanged();
                 if (!IsBroadcast || _receivedBackground == Background) return;
@@ -275,7 +273,7 @@ namespace LANPaint.ViewModels
 
             foreach (var stroke in strokesToSend)
             {
-                IDrawingInstruction instruction = null;
+                IDrawingInstruction instruction;
                 if (IsEraser) instruction = new EraseInstruction(stroke);
                 else instruction = new DrawInstruction(stroke);
 
@@ -365,7 +363,6 @@ namespace LANPaint.ViewModels
         {
             _broadcastService.DataReceived -= OnDataReceived;
             _broadcastService.ConnectionLost -= OnConnectionLost;
-            _broadcastService?.Dispose();
         }
     }
 }

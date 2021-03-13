@@ -3,10 +3,10 @@ using LANPaint.Dialogs.CustomDialogs;
 using LANPaint.MVVM;
 using LANPaint.Services.Network;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
-using System.Windows.Threading;
+using LANPaint.Services.Network.Utilities;
+using LANPaint.Services.Network.Watchers;
 
 namespace LANPaint.ViewModels
 {
@@ -14,11 +14,11 @@ namespace LANPaint.ViewModels
     {
         private const int PortMinValue = 1024;
         private const int PortMaxValue = 65535;
-        private readonly Dispatcher _dispatcher;
         private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
         private int _port;
         private bool _isPortValid;
-        private readonly NetworkInterfaceHelper _networkInterfaceHelper;
+        private readonly INetworkWatcher _networkWatcher;
+        private readonly INetworkUtility _networkUtility;
 
         public NetworkInterfaceUiInfo SelectedNetworkInterfaceUiInfo
         {
@@ -30,6 +30,7 @@ namespace LANPaint.ViewModels
                 OkCommand.RaiseCanExecuteChanged();
             }
         }
+
         public int Port
         {
             get => _port;
@@ -40,23 +41,26 @@ namespace LANPaint.ViewModels
                 OkCommand.RaiseCanExecuteChanged();
             }
         }
+
         public bool IsPortValid
         {
             get => _isPortValid;
             private set => SetProperty(ref _isPortValid, value);
         }
+
         public ObservableCollection<NetworkInterfaceUiInfo> Interfaces { get; }
 
         public RelayCommand<IDialogWindow> OkCommand { get; }
         public RelayCommand<IDialogWindow> CancelCommand { get; }
 
-        public SettingsViewModel() : base("Settings")
+        public SettingsViewModel(INetworkWatcher networkWatcher, INetworkUtility networkUtility) : base("Settings")
         {
             Interfaces = new ObservableCollection<NetworkInterfaceUiInfo>();
-            _networkInterfaceHelper = NetworkInterfaceHelper.GetInstance();
-            _dispatcher = Dispatcher.CurrentDispatcher;
+            _networkWatcher = networkWatcher ?? throw new ArgumentNullException(nameof(networkWatcher));
+            _networkUtility = networkUtility ?? throw new ArgumentNullException(nameof(networkUtility));
+
             UpdateInterfaceCollection();
-            _networkInterfaceHelper.Interfaces.CollectionChanged += CollectionChangedHandler;
+            _networkWatcher.NetworkStateChanged += NetworkStateChangedHandler;
 
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
                 () => Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(Port) &&
@@ -66,7 +70,8 @@ namespace LANPaint.ViewModels
             OkCommand.RaiseCanExecuteChanged();
         }
 
-        public SettingsViewModel(IPAddress ipAddress, int port) : this()
+        public SettingsViewModel(INetworkWatcher networkWatcher, INetworkUtility networkUtility, IPAddress ipAddress, int port) :
+            this(networkWatcher, networkUtility)
         {
             SelectedNetworkInterfaceUiInfo = Interfaces.FirstOrDefault(ni => ni.IpAddress.Equals(ipAddress));
             Port = port;
@@ -83,29 +88,18 @@ namespace LANPaint.ViewModels
 
         private void UpdateInterfaceCollection()
         {
-            var interfaces = _networkInterfaceHelper.Interfaces.Select(nic => new NetworkInterfaceUiInfo()
+            var interfaces = _networkWatcher.Interfaces.Select(nic => new NetworkInterfaceUiInfo()
             {
                 Name = nic.Name,
-                IpAddress = _networkInterfaceHelper.GetIpAddress(nic),
-                IsReadyToUse = _networkInterfaceHelper.IsReadyToUse(nic)
+                IpAddress = _networkUtility.GetIpAddress(nic),
+                IsReadyToUse = _networkUtility.IsReadyToUse(nic)
             }).ToList();
 
-            if (Dispatcher.CurrentDispatcher == _dispatcher)
-            {
-                Interfaces.Clear();
-                interfaces.ForEach(nicInfo => Interfaces.Add(nicInfo));
-            }
-            else
-            {
-                _dispatcher.Invoke(() =>
-                {
-                    Interfaces.Clear();
-                    interfaces.ForEach(nicInfo => Interfaces.Add(nicInfo));
-                });
-            }
+            Interfaces.Clear();
+            interfaces.ForEach(nicInfo => Interfaces.Add(nicInfo));
         }
 
-        private void CollectionChangedHandler(object sender, NotifyCollectionChangedEventArgs e) => UpdateInterfaceCollection();
+        private void NetworkStateChangedHandler(object sender, EventArgs e) => UpdateInterfaceCollection();
     }
 
     public class NetworkInterfaceUiInfo

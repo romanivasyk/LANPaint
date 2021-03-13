@@ -11,7 +11,7 @@ namespace LANPaint.Model
     public readonly struct SerializableStroke : IEquatable<SerializableStroke>
     {
         [NonSerialized]
-        public static readonly SerializableStroke Default = new SerializableStroke(new StrokeAttributes(), null);
+        public static readonly SerializableStroke Default = new SerializableStroke(new StrokeAttributes());
 
         public IEnumerable<Point> Points { get; }
         public StrokeAttributes Attributes { get; }

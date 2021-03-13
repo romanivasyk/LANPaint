@@ -21,7 +21,7 @@ namespace LANPaint.Services.Broadcast
     public delegate void DataReceivedEventHandler(object sender, DataReceivedEventArgs e);
     public class DataReceivedEventArgs : EventArgs
     {
-        public byte[] Data { get; set; }
+        public byte[] Data { get; }
 
         public DataReceivedEventArgs(byte[] data)
         {

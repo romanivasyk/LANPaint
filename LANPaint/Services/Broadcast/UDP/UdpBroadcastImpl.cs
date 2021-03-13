@@ -14,7 +14,7 @@ namespace LANPaint.Services.Broadcast.UDP
 
         public override Task<int> SendAsync(byte[] bytes) => Client.SendAsync(bytes, bytes.Length, BroadcastEndPoint);
 
-        public override async Task<byte[]> ReceiveAsync(CancellationToken token)
+        public override async Task<byte[]> ReceiveAsync(CancellationToken token = default)
         {
             UdpReceiveResult result;
             do

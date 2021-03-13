@@ -1,11 +1,11 @@
 ﻿using LANPaint.Services.Network;
 using System;
-using System.Collections.Specialized;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
+using LANPaint.Services.Network.Utilities;
+using LANPaint.Services.Network.Watchers;
 
 namespace LANPaint.Services.Broadcast
 {
@@ -24,30 +24,27 @@ namespace LANPaint.Services.Broadcast
         private IBroadcast _broadcastImpl;
         private CancellationTokenSource _cancelReceiveTokenSource;
         private readonly IBroadcastFactory _broadcastFactory;
-        private readonly INetworkInterfaceHelper _networkInterfaceHelper;
-        private readonly Dispatcher _dispatcher;
-
-        public BroadcastService(IBroadcastFactory broadcastFactory, INetworkInterfaceHelper networkInterfaceHelper)
+        private readonly INetworkWatcher _networkWatcher;
+        private readonly INetworkUtility _networkUtility;
+        
+        public BroadcastService(IBroadcastFactory broadcastFactory, INetworkWatcher networkWatcher, INetworkUtility networkUtility)
         {
-            _dispatcher = Dispatcher.CurrentDispatcher;
             _broadcastFactory = broadcastFactory ?? throw new ArgumentNullException(nameof(broadcastFactory));
-            _networkInterfaceHelper = networkInterfaceHelper ?? throw new ArgumentNullException(nameof(networkInterfaceHelper));
-            _networkInterfaceHelper.Interfaces.CollectionChanged += NetworkInterfacesCollectionChanged;
+            _networkWatcher = networkWatcher ?? throw new ArgumentNullException(nameof(networkWatcher));
+            _networkUtility = networkUtility ?? throw new ArgumentNullException(nameof(networkUtility));
+            _networkWatcher.NetworkStateChanged += NetworkStateChangedHandler;
         }
 
-        private void NetworkInterfacesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void NetworkStateChangedHandler(object sender, EventArgs e)
         {
-            if (_broadcastImpl != null && _networkInterfaceHelper.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
+            if (_broadcastImpl != null && _networkUtility.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
 
             _cancelReceiveTokenSource?.Dispose();
             IsReady = IsReceiving = false;
             _broadcastImpl?.Dispose();
             _broadcastImpl = null;
-
-            //ObservableCollection uses a worker thread to notify about change,
-            //so we should use thread that was used to create the current instance
-            //just in case the handler will use UI related code.
-            _dispatcher.Invoke(() => ConnectionLost?.Invoke());
+            
+            ConnectionLost?.Invoke();
         }
 
         public bool Initialize(IPAddress ipAddress, int port = default)
@@ -56,7 +53,7 @@ namespace LANPaint.Services.Broadcast
             if (ipAddress == null) throw new ArgumentNullException(nameof(ipAddress));
             if (IsReady && Equals(LocalEndPoint, new IPEndPoint(ipAddress, port))) return true;
 
-            if (!_networkInterfaceHelper.IsReadyToUse(ipAddress)) return false; //Throw exception here?
+            if (!_networkUtility.IsReadyToUse(ipAddress)) return false; //Throw exception here?
 
             _broadcastImpl?.Dispose();
             _broadcastImpl = port == default
@@ -79,7 +76,7 @@ namespace LANPaint.Services.Broadcast
             {
                 bytesBroadcasted = await _broadcastImpl.SendAsync(data);
             }
-            catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
+            catch (SocketException) when (!_networkUtility.IsReadyToUse(LocalEndPoint.Address))
             { }
 
             return bytesBroadcasted;
@@ -124,7 +121,7 @@ namespace LANPaint.Services.Broadcast
                     if (_broadcastImpl is null || Equals(new IPEndPoint(IPAddress.None, 0), _broadcastImpl.LocalEndPoint))
                         IsReady = false;
                 }
-                catch (SocketException) when (!_networkInterfaceHelper.IsReadyToUse(LocalEndPoint.Address))
+                catch (SocketException) when (!_networkUtility.IsReadyToUse(LocalEndPoint.Address))
                 {
                     _cancelReceiveTokenSource?.Dispose();
                     IsReceiving = IsReady = false;
@@ -149,7 +146,7 @@ namespace LANPaint.Services.Broadcast
         {
             _broadcastImpl?.Dispose();
             _broadcastImpl = null;
-            _networkInterfaceHelper.Interfaces.CollectionChanged -= NetworkInterfacesCollectionChanged;
+            _networkWatcher.NetworkStateChanged -= NetworkStateChangedHandler;
             _isDisposed = true;
         }
     }
