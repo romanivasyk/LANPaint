@@ -8,12 +8,12 @@ namespace LANPaint.Model
     public readonly struct ARGBColor : IEquatable<ARGBColor>
     {
         [NonSerialized]
-        public static readonly ARGBColor Default = new ARGBColor(255, 0, 0, 0);
+        public static readonly ARGBColor Default = new(255, 0, 0, 0);
 
-        public byte A { get; }
-        public byte R { get; }
-        public byte G { get; }
-        public byte B { get; }
+        public byte A { get; init; }
+        public byte R { get; init; }
+        public byte G { get; init; }
+        public byte B { get; init; }
 
         public ARGBColor(byte a, byte r, byte g, byte b)
         {
@@ -23,9 +23,9 @@ namespace LANPaint.Model
             B = b;
         }
 
-        public readonly Color AsColor() => Color.FromArgb(A, R, G, B);
+        public Color AsColor() => Color.FromArgb(A, R, G, B);
 
-        public static ARGBColor FromColor(Color color) => new ARGBColor(color.A, color.R, color.G, color.B);
+        public static ARGBColor FromColor(Color color) => new(color.A, color.R, color.G, color.B);
 
         public bool Equals([AllowNull] ARGBColor other) => A == other.A && R == other.R && G == other.G && B == other.B;
 

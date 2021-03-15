@@ -6,11 +6,11 @@ namespace LANPaint.Model
     [Serializable]
     public struct StrokeAttributes
     {
-        public ARGBColor Color { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-        public bool IgnorePressure { get; set; }
-        public bool IsHighlighter { get; set; }
-        public StylusTip StylusTip { get; set; }
+        public ARGBColor Color { get; init; }
+        public double Width { get; init; }
+        public double Height { get; init; }
+        public bool IgnorePressure { get; init; }
+        public bool IsHighlighter { get; init; }
+        public StylusTip StylusTip { get; init; }
     }
 }

@@ -10,11 +10,11 @@ namespace LANPaint.Model
     [Serializable]
     public readonly struct SerializableStroke : IEquatable<SerializableStroke>
     {
-        [NonSerialized]
-        public static readonly SerializableStroke Default = new SerializableStroke(new StrokeAttributes());
+        [NonSerialized] 
+        public static readonly SerializableStroke Default = new(new StrokeAttributes());
 
-        public IEnumerable<Point> Points { get; }
-        public StrokeAttributes Attributes { get; }
+        public IEnumerable<Point> Points { get; init; }
+        public StrokeAttributes Attributes { get; init; }
 
         public SerializableStroke(StrokeAttributes attributes, IEnumerable<Point> points = null)
         {
@@ -36,7 +36,7 @@ namespace LANPaint.Model
             return new SerializableStroke(attr, points);
         }
 
-        public readonly Stroke ToStroke() => new Stroke(new System.Windows.Input.StylusPointCollection(Points),
+        public Stroke ToStroke() => new(new System.Windows.Input.StylusPointCollection(Points),
             new DrawingAttributes
             {
                 Color = Attributes.Color.AsColor(),
@@ -57,10 +57,12 @@ namespace LANPaint.Model
             {
                 return Attributes.Equals(other.Attributes) && Points.SequenceEqual(other.Points);
             }
+
             if (Points == null && other.Points == null)
             {
                 return Attributes.Equals(other.Attributes);
             }
+
             return false;
         }
 
