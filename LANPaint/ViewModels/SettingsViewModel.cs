@@ -16,7 +16,7 @@ namespace LANPaint.ViewModels
         private const int PortMaxValue = 65535;
         private readonly Dispatcher _dispatcher;
         private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
-        private int _port;
+        private int? _port;
         private bool _isPortValid;
         private readonly NetworkInterfaceHelper _networkInterfaceHelper;
 
@@ -30,21 +30,25 @@ namespace LANPaint.ViewModels
                 OkCommand.RaiseCanExecuteChanged();
             }
         }
-        public int Port
+        
+        public int? Port
         {
             get => _port;
             set
             {
                 _port = value;
-                IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
+                IsPortValid = value.HasValue &&
+                              Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value.Value);
                 OkCommand.RaiseCanExecuteChanged();
             }
         }
+
         public bool IsPortValid
         {
             get => _isPortValid;
             private set => SetProperty(ref _isPortValid, value);
         }
+
         public ObservableCollection<NetworkInterfaceUiInfo> Interfaces { get; }
 
         public RelayCommand<IDialogWindow> OkCommand { get; }
@@ -59,9 +63,7 @@ namespace LANPaint.ViewModels
             _networkInterfaceHelper.Interfaces.CollectionChanged += CollectionChangedHandler;
 
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
-                () => Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(Port) &&
-                      SelectedNetworkInterfaceUiInfo != null &&
-                      SelectedNetworkInterfaceUiInfo.IsReadyToUse);
+                () => IsPortValid && SelectedNetworkInterfaceUiInfo != null && SelectedNetworkInterfaceUiInfo.IsReadyToUse);
             CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
             OkCommand.RaiseCanExecuteChanged();
         }
@@ -75,7 +77,9 @@ namespace LANPaint.ViewModels
 
         private void OnOkCommand(IDialogWindow window)
         {
-            var result = new IPEndPoint(SelectedNetworkInterfaceUiInfo.IpAddress, Port);
+            if (!Port.HasValue)
+                throw new InvalidOperationException("Nullable Port doesn't has a value! EndPoint cannot be created!");
+            var result = new IPEndPoint(SelectedNetworkInterfaceUiInfo.IpAddress, Port.Value);
             CloseDialogWithResult(window, true, result);
         }
 
@@ -110,8 +114,8 @@ namespace LANPaint.ViewModels
 
     public class NetworkInterfaceUiInfo
     {
-        public string Name { get; set; }
-        public IPAddress IpAddress { get; set; }
-        public bool IsReadyToUse { get; set; }
+        public string Name { get; init; }
+        public IPAddress IpAddress { get; init; }
+        public bool IsReadyToUse { get; init; }
     }
 }

@@ -4,62 +4,72 @@
              xmlns:converters="clr-namespace:LANPaint.Converters"
              MinHeight="120" MaxHeight="300" MinWidth="300" MaxWidth="450">
     <UserControl.Resources>
-        <converters:StringToIntConverter x:Key="StringToIntConverter"/>
+        <converters:StringToIntConverter x:Key="StringToIntConverter" />
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="20"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
+            <ColumnDefinition />
+            <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
-        <ListView 
-                  Grid.ColumnSpan="2"
-                  SelectionMode="Single"
-                  VerticalContentAlignment="Top"  
-                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                  ScrollViewer.CanContentScroll="False"
-                  Padding="0,0,0,20"
-                  MaxHeight="180"
-                  SelectedItem="{Binding SelectedNetworkInterfaceUiInfo}"
-                  ItemsSource="{Binding Interfaces}">
+        <ListView
+            Grid.ColumnSpan="2"
+            SelectionMode="Single"
+            VerticalContentAlignment="Top"
+            ScrollViewer.VerticalScrollBarVisibility="Auto"
+            ScrollViewer.CanContentScroll="False"
+            Padding="0,0,0,20"
+            MaxHeight="180"
+            SelectedItem="{Binding SelectedNetworkInterfaceUiInfo}"
+            ItemsSource="{Binding Interfaces}">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Network Interface"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding IpAddress}" Header="IP Address"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding IsReadyToUse}" Header="Is Ready"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Name}" Header="Network Interface" />
+                    <GridViewColumn DisplayMemberBinding="{Binding IpAddress}" Header="IP Address" />
+                    <GridViewColumn DisplayMemberBinding="{Binding IsReadyToUse}" Header="Is Ready" />
                 </GridView>
             </ListView.View>
         </ListView>
         <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Text="Port:" Margin="0,0,30,0"/>
-            <TextBox Width="60" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding Port, Converter={StaticResource StringToIntConverter}, UpdateSourceTrigger=PropertyChanged}" PreviewTextInput="Port_OnPreviewInput">
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Text="Port:"
+                       Margin="0,0,30,0" />
+            <TextBox Width="60" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1"
+                     Grid.Column="1"
+                     Text="{Binding Port, Converter={StaticResource StringToIntConverter}, UpdateSourceTrigger=PropertyChanged}"
+                     PreviewTextInput="Port_PreventInputNonNumbers" PreviewKeyDown="Port_PreventInputSpaces"
+                     ContextMenu="{x:Null}">
                 <TextBox.Style>
                     <Style TargetType="{x:Type TextBox}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsPortValid}" Value="false">
-                                <Setter Property="Background" Value="OrangeRed"/>
+                                <Setter Property="Background" Value="OrangeRed" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsPortValid}" Value="true">
-                                <Setter Property="Background" Value="WhiteSmoke"></Setter>
+                                <Setter Property="Background" Value="WhiteSmoke" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </TextBox.Style>
             </TextBox>
         </StackPanel>
-        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="5,20,5,5">
+        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom" Margin="5,20,5,5">
             <StackPanel.Resources>
                 <Style TargetType="{x:Type Button}">
-                    <Setter Property="Margin" Value="30,0"/>
+                    <Setter Property="Margin" Value="30,0" />
                 </Style>
             </StackPanel.Resources>
-            <Button Grid.Row="3" Grid.Column="0" Height="30" Width="100" Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="OK"></Button>
-            <Button Grid.Row="3" Grid.Column="1" Height="30" Width="100" Command="{Binding CancelCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" Content="Cancel"></Button>
+            <Button Grid.Row="3" Grid.Column="0" Height="30" Width="100" Command="{Binding OkCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"
+                    Content="OK" />
+            <Button Grid.Row="3" Grid.Column="1" Height="30" Width="100" Command="{Binding CancelCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"
+                    Content="Cancel" />
         </StackPanel>
     </Grid>
 </UserControl>
