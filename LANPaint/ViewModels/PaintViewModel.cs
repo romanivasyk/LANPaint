@@ -289,7 +289,7 @@ namespace LANPaint.ViewModels
             return await _broadcastService.SendAsync(bytes);
         }
 
-        private void OnConnectionLost()
+        private void OnConnectionLost(object sender, EventArgs e)
         {
             RaiseNetworkRelatedCanExecuteChanged();
 

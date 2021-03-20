@@ -10,7 +10,7 @@ namespace LANPaint.Services.Broadcast
 {
     public class BroadcastService : IBroadcastService
     {
-        public event Action ConnectionLost;
+        public event EventHandler ConnectionLost;
         public event DataReceivedEventHandler DataReceived;
 
         public IPEndPoint LocalEndPoint =>
@@ -43,7 +43,7 @@ namespace LANPaint.Services.Broadcast
             _broadcastImpl?.Dispose();
             _broadcastImpl = null;
             
-            ConnectionLost?.Invoke();
+            ConnectionLost?.Invoke(this, EventArgs.Empty);
         }
 
         public bool Initialize(IPAddress ipAddress, int port = default)

@@ -6,7 +6,7 @@ namespace LANPaint.Services.Broadcast
 {
     public interface IBroadcastService : IDisposable
     {
-        public event Action ConnectionLost;
+        public event EventHandler ConnectionLost;
         public event DataReceivedEventHandler DataReceived;
 
         public bool IsReady { get; }
