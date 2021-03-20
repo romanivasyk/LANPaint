@@ -1,9 +1,12 @@
 ﻿using System;
 using LANPaint.Dialogs.CustomDialogs;
 using LANPaint.MVVM;
+using LANPaint.Services.Network;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net;
+using System.Windows.Threading;
 using LANPaint.Services.Network.Utilities;
 using LANPaint.Services.Network.Watchers;
 
@@ -13,8 +16,9 @@ namespace LANPaint.ViewModels
     {
         private const int PortMinValue = 1024;
         private const int PortMaxValue = 65535;
+        private readonly Dispatcher _dispatcher;
         private NetworkInterfaceUiInfo _selectedNetworkInterfaceUiInfo;
-        private int _port;
+        private int? _port;
         private bool _isPortValid;
         private readonly INetworkWatcher _networkWatcher;
         private readonly INetworkUtility _networkUtility;
@@ -29,14 +33,15 @@ namespace LANPaint.ViewModels
                 OkCommand.RaiseCanExecuteChanged();
             }
         }
-
-        public int Port
+        
+        public int? Port
         {
             get => _port;
             set
             {
                 _port = value;
-                IsPortValid = Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value);
+                IsPortValid = value.HasValue &&
+                              Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(value.Value);
                 OkCommand.RaiseCanExecuteChanged();
             }
         }
@@ -54,6 +59,7 @@ namespace LANPaint.ViewModels
 
         public SettingsViewModel(INetworkWatcher networkWatcher, INetworkUtility networkUtility) : base("Settings")
         {
+            _dispatcher = Dispatcher.CurrentDispatcher;
             Interfaces = new ObservableCollection<NetworkInterfaceUiInfo>();
             _networkWatcher = networkWatcher ?? throw new ArgumentNullException(nameof(networkWatcher));
             _networkUtility = networkUtility ?? throw new ArgumentNullException(nameof(networkUtility));
@@ -62,9 +68,7 @@ namespace LANPaint.ViewModels
             _networkWatcher.NetworkStateChanged += NetworkStateChangedHandler;
 
             OkCommand = new RelayCommand<IDialogWindow>(OnOkCommand,
-                () => Enumerable.Range(PortMinValue, PortMaxValue - PortMinValue + 1).Contains(Port) &&
-                      SelectedNetworkInterfaceUiInfo != null &&
-                      SelectedNetworkInterfaceUiInfo.IsReadyToUse);
+                () => IsPortValid && SelectedNetworkInterfaceUiInfo != null && SelectedNetworkInterfaceUiInfo.IsReadyToUse);
             CancelCommand = new RelayCommand<IDialogWindow>(OnCancelCommand);
             OkCommand.RaiseCanExecuteChanged();
         }
@@ -79,7 +83,9 @@ namespace LANPaint.ViewModels
 
         private void OnOkCommand(IDialogWindow window)
         {
-            var result = new IPEndPoint(SelectedNetworkInterfaceUiInfo.IpAddress, Port);
+            if (!Port.HasValue)
+                throw new InvalidOperationException("Nullable Port doesn't has a value! EndPoint cannot be created!");
+            var result = new IPEndPoint(SelectedNetworkInterfaceUiInfo.IpAddress, Port.Value);
             CloseDialogWithResult(window, true, result);
         }
 
@@ -100,7 +106,7 @@ namespace LANPaint.ViewModels
 
         private void NetworkStateChangedHandler(object sender, EventArgs e) => UpdateInterfaceCollection();
     }
-    
+
     public class NetworkInterfaceUiInfo
     {
         public string Name { get; init; }
