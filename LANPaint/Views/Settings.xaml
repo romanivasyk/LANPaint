@@ -42,7 +42,7 @@
             <TextBox Width="60" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1"
                      Grid.Column="1"
                      Text="{Binding Port, Converter={StaticResource StringToIntConverter}, UpdateSourceTrigger=PropertyChanged}"
-                     PreviewTextInput="Port_PreventInputNonNumbers" PreviewKeyDown="Port_PreventInputSpaces"
+                     PreviewTextInput="Port_PreventInputNonNumbers" PreviewKeyDown="Port_PreviewKeyDown"
                      ContextMenu="{x:Null}">
                 <TextBox.Style>
                     <Style TargetType="{x:Type TextBox}">
