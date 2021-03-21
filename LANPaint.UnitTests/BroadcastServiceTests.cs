@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using LANPaint.Services.Broadcast;
 using LANPaint.Services.Network.Utilities;
@@ -15,7 +18,8 @@ namespace LANPaint.UnitTests
         private readonly Mock<IBroadcastFactory> _broadcastFactoryMock;
         private readonly Mock<INetworkWatcher> _networkWatcherMock;
         private readonly Mock<INetworkUtility> _networkUtilityMock;
-
+        private readonly IPAddress _ipAddress;
+        
         public BroadcastServiceTests()
         {
             _broadcastImplMock = new Mock<IBroadcast>();
@@ -29,6 +33,7 @@ namespace LANPaint.UnitTests
 
             _networkWatcherMock = new Mock<INetworkWatcher>();
             _networkUtilityMock = new Mock<INetworkUtility>();
+            _ipAddress = IPAddress.Parse("192.168.0.100");
         }
 
         [Fact]
@@ -71,13 +76,12 @@ namespace LANPaint.UnitTests
         [Fact]
         public void Initialize_WithReadyToUseIpAddress()
         {
-            var validIpAddress = IPAddress.Parse("192.168.0.100");
             var calledCreateWithAddress = false;
             var calledCreateWithAddressAndPort = false;
 
             _networkUtilityMock.Setup(utility =>
-                    utility.IsReadyToUse(It.IsAny<IPAddress>()))
-                .Returns((IPAddress ipAddress) => Equals(ipAddress, validIpAddress));
+                    utility.IsReadyToUse(_ipAddress))
+                .Returns((IPAddress ipAddress) => Equals(ipAddress, _ipAddress));
 
             _broadcastFactoryMock.Setup(factory => factory.Create(It.IsAny<IPAddress>()))
                 .Returns(() => _broadcastImplMock.Object)
@@ -89,91 +93,87 @@ namespace LANPaint.UnitTests
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
 
-            var result = broadcastService.Initialize(validIpAddress);
+            var result = broadcastService.Initialize(_ipAddress);
 
             Assert.True(result);
             Assert.True(broadcastService.IsReady);
             Assert.True(calledCreateWithAddress ^ calledCreateWithAddressAndPort);
-            _broadcastFactoryMock.Verify(factory => factory.Create(validIpAddress), Times.AtMostOnce);
-            _broadcastFactoryMock.Verify(factory => factory.Create(validIpAddress, 0), Times.AtMostOnce);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress), Times.AtMostOnce);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress, 0), Times.AtMostOnce);
         }
 
         [Fact]
         public void Initialize_WithReadyToUseIpAddressTwice()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             var calledCreateWithAddress = false;
             var calledCreateWithAddressAndPort = false;
 
-            _broadcastImplMock.Setup(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(ipAddress, 0));
-            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(It.IsAny<IPAddress>())).Returns(true);
-            _broadcastFactoryMock.Setup(factory => factory.Create(It.IsAny<IPAddress>()))
+            _broadcastImplMock.Setup(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            _broadcastFactoryMock.Setup(factory => factory.Create(_ipAddress))
                 .Returns(() => _broadcastImplMock.Object)
                 .Callback(() => calledCreateWithAddress = true);
-            _broadcastFactoryMock.Setup(factory => factory.Create(It.IsAny<IPAddress>(), It.IsAny<int>()))
+            _broadcastFactoryMock.Setup(factory => factory.Create(_ipAddress, It.IsAny<int>()))
                 .Returns(() => _broadcastImplMock.Object)
                 .Callback(() => calledCreateWithAddressAndPort = true);
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
 
-            var firstInitResult = broadcastService.Initialize(ipAddress);
-            var secondInitResult = broadcastService.Initialize(ipAddress);
+            var firstInitResult = broadcastService.Initialize(_ipAddress);
+            var secondInitResult = broadcastService.Initialize(_ipAddress);
 
             Assert.True(firstInitResult);
             Assert.True(secondInitResult);
             Assert.True(broadcastService.IsReady);
             Assert.True(calledCreateWithAddress ^ calledCreateWithAddressAndPort);
-            _broadcastFactoryMock.Verify(factory => factory.Create(ipAddress), Times.AtMostOnce);
-            _broadcastFactoryMock.Verify(factory => factory.Create(ipAddress, 0), Times.AtMostOnce);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress), Times.AtMostOnce);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress, 0), Times.AtMostOnce);
         }
 
         [Fact]
         public void Initialize_WithNotReadyToUseIpAddress()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             _networkUtilityMock.Setup(utility => utility.IsReadyToUse(It.IsAny<IPAddress>())).Returns(false);
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
 
-            var result = broadcastService.Initialize(ipAddress);
+            var result = broadcastService.Initialize(_ipAddress);
 
             Assert.False(result);
             Assert.False(broadcastService.IsReady);
-            _broadcastFactoryMock.Verify(factory => factory.Create(It.IsAny<IPAddress>()), Times.Never);
-            _broadcastFactoryMock.Verify(factory => factory.Create(It.IsAny<IPAddress>(), It.IsAny<int>()), Times.Never);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress), Times.Never);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress, It.IsAny<int>()), Times.Never);
         }
 
         [Fact]
         public void Initialize_WithReadyToUseIpAddressAndPort()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             const int port = 50100;
 
-            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(It.IsAny<IPAddress>())).Returns(true);
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
 
-            var result = broadcastService.Initialize(ipAddress, port);
+            var result = broadcastService.Initialize(_ipAddress, port);
 
             Assert.True(result);
             Assert.True(broadcastService.IsReady);
             _broadcastFactoryMock.Verify(factory => factory.Create(It.IsAny<IPAddress>()), Times.Never);
-            _broadcastFactoryMock.Verify(factory => factory.Create(ipAddress, port), Times.Once);
+            _broadcastFactoryMock.Verify(factory => factory.Create(_ipAddress, port), Times.Once);
         }
 
         [Fact]
         public void ConnectionLost_RaiseOnDisconnect()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             var isConnectionLostInvoked = false;
 
-            _networkUtilityMock.SetupSequence(utility => utility.IsReadyToUse(ipAddress)).Returns(true)
+            _networkUtilityMock.SetupSequence(utility => utility.IsReadyToUse(_ipAddress)).Returns(true)
                 .Returns(false);
-            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(ipAddress, 0));
+            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
             broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
-            broadcastService.Initialize(ipAddress);
+            broadcastService.Initialize(_ipAddress);
 
             _networkWatcherMock.Raise(watcher => watcher.NetworkStateChanged -= null, EventArgs.Empty);
 
@@ -184,15 +184,14 @@ namespace LANPaint.UnitTests
         [Fact]
         public void ConnectionLost_DontRaiseOnDisconnectNotUsedAdapter()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             var isConnectionLostInvoked = false;
 
-            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(ipAddress)).Returns(true);
-            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(ipAddress, 0));
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
             broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
-            broadcastService.Initialize(ipAddress);
+            broadcastService.Initialize(_ipAddress);
 
             _networkWatcherMock.Raise(watcher => watcher.NetworkStateChanged -= null, EventArgs.Empty);
 
@@ -203,11 +202,10 @@ namespace LANPaint.UnitTests
         [Fact]
         public void ConnectionLost_DontRaiseOnNotInitialized()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             var isConnectionLostInvoked = false;
 
-            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(ipAddress)).Returns(true);
-            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(ipAddress, 0));
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
             broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
@@ -221,15 +219,14 @@ namespace LANPaint.UnitTests
         [Fact]
         public void ConnectionLost_DontRaiseOnDisposed()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
             var isConnectionLostInvoked = false;
 
-            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(ipAddress)).Returns(true);
-            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(ipAddress, 0));
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
             broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
-            broadcastService.Initialize(ipAddress);
+            broadcastService.Initialize(_ipAddress);
             broadcastService.Dispose();
 
             _networkWatcherMock.Raise(watcher => watcher.NetworkStateChanged -= null, EventArgs.Empty);
@@ -241,11 +238,10 @@ namespace LANPaint.UnitTests
         [Fact]
         public async Task SendAsync_SendData()
         {
-            var ipAddress = IPAddress.Parse("192.168.0.100");
-            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(ipAddress)).Returns(true);
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            broadcastService.Initialize(ipAddress);
+            broadcastService.Initialize(_ipAddress);
             var data = RandomizeByteSequence(1024);
 
             var bytesSent = await broadcastService.SendAsync(data);
@@ -254,7 +250,86 @@ namespace LANPaint.UnitTests
             _broadcastImplMock.Verify(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()));
         }
 
-//TODO: Continue testing SendAsync method
+        [Fact]
+        public async Task SendAsync_ThrowOnDisposed()
+        {
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            broadcastService.Initialize(_ipAddress);
+            var data = RandomizeByteSequence(1024);
+
+            broadcastService.Dispose();
+            await Assert.ThrowsAsync<ObjectDisposedException>(() => broadcastService.SendAsync(data));
+        }
+
+        [Fact]
+        public async Task SendAsync_ThrowOnUninitialized()
+        {
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            var data = RandomizeByteSequence(1024);
+
+            await Assert.ThrowsAsync<ServiceNotInitializedException>(() => broadcastService.SendAsync(data));
+        }
+
+        [Fact]
+        public async Task ReceiveAsync_ThrowOnDisposed()
+        {
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            broadcastService.Initialize(_ipAddress);
+            var data = RandomizeByteSequence(1024);
+
+            broadcastService.Dispose();
+            await Assert.ThrowsAsync<ObjectDisposedException>(() => broadcastService.StartReceiveAsync());
+            Assert.False(broadcastService.IsReceiving);
+        }
+
+        [Fact]
+        public async Task ReceiveAsync_ThrowOnNotInitialized()
+        {
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            var data = RandomizeByteSequence(1024);
+
+            await Assert.ThrowsAsync<ServiceNotInitializedException>(() => broadcastService.StartReceiveAsync());
+            Assert.False(broadcastService.IsReceiving);
+        }
+
+        [Fact]
+        public async Task ReceiveAsync_ReceiveData()
+        {
+            var bytesToReceive = RandomizeByteSequence(1024);
+            var receivedData = new List<byte[]>();
+
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
+            _broadcastImplMock.SetupSequence(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(bytesToReceive).ReturnsAsync(() =>
+                {
+                    Task.Delay(5000).Wait();
+                    return Array.Empty<byte>();
+                });
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            broadcastService.DataReceived += (sender, args) => receivedData.Add(args.Data);
+            broadcastService.Initialize(_ipAddress);
+            var stopAfterHundredMillis = Task.Run(() =>
+            {
+                Task.Delay(100).Wait();
+                broadcastService.CancelReceive();
+            });
+            var receiving = broadcastService.StartReceiveAsync();
+
+            await Task.WhenAll(stopAfterHundredMillis, receiving);
+
+            Assert.Single(receivedData);
+            Assert.True(bytesToReceive.SequenceEqual(receivedData.First()));
+        }
+
         private static byte[] RandomizeByteSequence(int length)
         {
             var random = new Random();
