@@ -11,8 +11,15 @@ namespace LANPaint.Services.Broadcast.Decorators
 
         public Packet(Guid sequenceGuid, long sequenceLength, Segment segment)
         {
-            SequenceGuid = sequenceGuid;
-            SequenceLength = sequenceLength;
+            SequenceGuid = sequenceGuid == Guid.Empty
+                ? throw new ArgumentException("Sequence Guid cannot be empty!", nameof(sequenceGuid))
+                : sequenceGuid;
+            SequenceLength = sequenceLength <= 0 ? throw new ArgumentOutOfRangeException(nameof(sequenceLength)) : sequenceLength;
+
+            if (segment.SequenceIndex >= sequenceLength)
+                throw new ArgumentException(
+                    "Packet cannot contain segment which index in the packet sequence is equal or more of sequence length!",
+                    nameof(segment));
             Segment = segment;
         }
     }

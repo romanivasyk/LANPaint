@@ -10,7 +10,7 @@ namespace LANPaint.UnitTests
         [Fact]
         public void Ctor_ValidData()
         {
-            var index = 5;
+            const int index = 5;
             var data = new byte[] {50, 34, 124, 58, 255, 255, 0, 94, 183};
 
             var segment = new Segment(index, data);
@@ -22,16 +22,16 @@ namespace LANPaint.UnitTests
         [Fact]
         public void Ctor_PassNullData()
         {
-            var index = 5;
+            const int index = 5;
             byte[] data = null;
 
             Assert.Throws<ArgumentNullException>(() => new Segment(index, data));
         }
 
-        [InlineData(int.MinValue)]
+        [InlineData(long.MinValue)]
         [InlineData(-1)]
         [Theory]
-        public void Ctor_PassNegativeIndex(int index)
+        public void Ctor_PassNegativeIndex(long index)
         {
             var data = new byte[] {50, 34, 124, 58, 255, 255, 0, 94, 183};
             Assert.Throws<ArgumentOutOfRangeException>(() => new Segment(index, data));
@@ -40,7 +40,7 @@ namespace LANPaint.UnitTests
         [Fact]
         public void Ctor_PassZeroIndex()
         {
-            var index = 0;
+            const int index = 0;
             var data = new byte[] {50, 34, 124, 58, 255, 255, 0, 94, 183};
 
             var segment = new Segment(index, data);
