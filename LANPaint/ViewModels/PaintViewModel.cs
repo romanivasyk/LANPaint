@@ -174,16 +174,28 @@ namespace LANPaint.ViewModels
             var openDialogResult = _dialogService.ShowOpenFileDialog(this, settings);
             if (openDialogResult == false) return;
 
-            var dataFromFile = await _fileService.ReadFromFileAsync(settings.FileName);
-            if (dataFromFile is SnapshotInstruction snapshot)
+            await ApplyFromFile(settings.FileName);
+        }
+
+        public async Task ApplyFromFile(string fileName)
+        {
+            object dataFromFile;
+            try
             {
-                ApplySnapshot(snapshot);
+                dataFromFile = await _fileService.ReadFromFileAsync(fileName);
             }
-            else
+            catch (ArgumentException e)
             {
+                _dialogService.ShowMessageBox(this, "LANPaint cannot open this file.",
+                    "Error while reading the file", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
+                return;
+            }
+
+
+            if (dataFromFile is SnapshotInstruction snapshot) ApplySnapshot(snapshot);
+            else
                 _dialogService.ShowMessageBox(this, "File doesn't contain Snapshot or corrupted",
                     "Error while reading the file", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-            }
         }
 
         private void OnBroadcastChanged()

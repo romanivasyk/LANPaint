@@ -20,7 +20,7 @@ namespace LANPaint
 
         //TODO: Move this stuff to some kind of Setup or ApplicationBootstrapper with DI container.
         //https://www.codeproject.com/Articles/812379/Using-Ninject-to-produce-a-loosely-coupled-modular
-        private void OnStartupHandler(object sender, StartupEventArgs e)
+        private async void OnStartupHandler(object sender, StartupEventArgs e)
         {
             var broadcastFactory = new ChainerFactory(16384);
             var networkServiceFactory = new NetworkServiceFactory();
@@ -29,11 +29,12 @@ namespace LANPaint
             InitializeBroadcastService(networkServiceFactory, _broadcastService);
             var frameworkDialogFactory = new DefaultFrameworkDialogFactory();
             var dialogService = new DefaultDialogService(frameworkDialogFactory);
-            var fileService = new DefaultFileService();
+            var fileService = new DefaultFileService(new []{".lpsnp"});
 
             _paintDataContext = new PaintViewModel(_broadcastService, dialogService, fileService, networkServiceFactory);
-
             var paint = new Paint {DataContext = _paintDataContext,};
+            if (e.Args.Length > 0) await _paintDataContext.ApplyFromFile(e.Args.First());
+            
             paint.Show();
         }
 
