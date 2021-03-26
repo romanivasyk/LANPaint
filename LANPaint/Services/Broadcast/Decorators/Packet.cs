@@ -25,8 +25,9 @@ namespace LANPaint.Services.Broadcast.Decorators
 
         public Segment(long sequenceIndex, byte[] payload)
         {
+            if (sequenceIndex < 0) throw new ArgumentOutOfRangeException(nameof(sequenceIndex));
             SequenceIndex = sequenceIndex;
-            Payload = payload;
+            Payload = payload ?? throw new ArgumentNullException(nameof(payload));
         }
     }
 }
