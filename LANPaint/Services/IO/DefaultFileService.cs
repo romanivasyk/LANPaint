@@ -24,7 +24,7 @@ namespace LANPaint.Services.IO
         public async Task SaveToFileAsync(object data, string fileName)
         {
             if (string.IsNullOrEmpty(fileName)) throw new ArgumentNullException(nameof(fileName));
-            if (!Path.HasExtension(fileName) || _allowedExtensions.Any(ext => ext == Path.GetExtension(fileName)))
+            if (!Path.HasExtension(fileName) || !_allowedExtensions.Contains(Path.GetExtension(fileName)))
                 throw new ArgumentException($"\"{fileName}\" doesn't contain valid extension.");
 
             var bytes = _formatter.OneLineSerialize(data);
