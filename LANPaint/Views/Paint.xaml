@@ -10,7 +10,7 @@
 
     <Window.Resources>
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
-        <converters:ColorBrushConverter x:Key="ColorBrushConverter"/>
+        <xceedConverters:ColorToSolidColorBrushConverter x:Key="ColorToSolidColorBrushConverter"/>
         <xceedConverters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <Style x:Key="CheckBoxStyle" TargetType="{x:Type CheckBox}">
             <Setter Property="Foreground" Value="Black"/>
@@ -99,7 +99,7 @@
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black">
             <controls:Board x:Name="DrawingBoard" StrokeThickness="{Binding ElementName=ToolThickness, Path=Text, Mode=TwoWay, Converter={StaticResource ThicknessConverter}}"
                      StrokeColor="{Binding ElementName=PenColorPicker, Path=SelectedColor, Mode=TwoWay}" 
-                     Background="{Binding Background, Mode=TwoWay, Converter={StaticResource ColorBrushConverter}}"
+                     Background="{Binding Background, Mode=TwoWay, Converter={StaticResource ColorToSolidColorBrushConverter}}"
                      IsEraser="{Binding IsEraser}"
                      Strokes="{Binding Strokes, Mode=TwoWay}"/>
         </Border>

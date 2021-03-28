@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using LANPaint.Converters;
+using Xceed.Wpf.Toolkit.Core.Converters;
 
 namespace LANPaint.Views
 {
@@ -33,7 +34,7 @@ namespace LANPaint.Views
                 Source = toolBar,
                 Path = new PropertyPath(hasOverflowItemsProperty),
                 Mode = BindingMode.OneWay,
-                Converter = new ToolbarOverflowVisibilityConverter()
+                Converter = new VisibilityToBoolConverter {Inverted = true}
             };
 
             BindingOperations.SetBinding(overflowGrid, visibilityProperty, binding);
