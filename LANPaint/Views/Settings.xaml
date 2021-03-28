@@ -4,7 +4,7 @@
              xmlns:converters="clr-namespace:LANPaint.Converters"
              MinHeight="120" MaxHeight="300" MinWidth="300" MaxWidth="450">
     <UserControl.Resources>
-        <converters:StringToIntConverter x:Key="StringToIntConverter" />
+        <converters:NullableIntToStringConverter x:Key="NullableIntToStringConverter" />
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     </UserControl.Resources>
     <Grid>
@@ -41,7 +41,7 @@
                        Margin="0,0,30,0" />
             <TextBox Width="60" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1"
                      Grid.Column="1"
-                     Text="{Binding Port, Converter={StaticResource StringToIntConverter}, UpdateSourceTrigger=PropertyChanged}"
+                     Text="{Binding Port, Converter={StaticResource NullableIntToStringConverter}, UpdateSourceTrigger=PropertyChanged}"
                      PreviewTextInput="Port_PreventInputNonNumbers" PreviewKeyDown="Port_PreviewKeyDown"
                      ContextMenu="{x:Null}">
                 <TextBox.Style>
