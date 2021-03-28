@@ -4,13 +4,14 @@
         xmlns:xceedwpftoolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=Xceed.Wpf.Toolkit"
         xmlns:controls="clr-namespace:LANPaint.UserControls"
         xmlns:converters="clr-namespace:LANPaint.Converters"
+        xmlns:xceedConverters="clr-namespace:Xceed.Wpf.Toolkit.Core.Converters;assembly=Xceed.Wpf.Toolkit"
         WindowStartupLocation="CenterScreen"
         Title="LAN Paint" Width="970" Height="650" Icon="../Resources/pen.png">
 
     <Window.Resources>
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
         <converters:ColorBrushConverter x:Key="ColorBrushConverter"/>
-        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <xceedConverters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <Style x:Key="CheckBoxStyle" TargetType="{x:Type CheckBox}">
             <Setter Property="Foreground" Value="Black"/>
             <Style.Triggers>
@@ -62,7 +63,7 @@
                     <ComboBoxItem>45</ComboBoxItem>
                 </ComboBox>
                 <Label Content="Pen Color:"/>
-                <xceedwpftoolkit:ColorPicker IsEnabled="{Binding IsEraser, Converter={StaticResource InverseBooleanConverter}}" SelectedColor="Black" x:Name="PenColorPicker" MaxWidth="50"/>
+                <xceedwpftoolkit:ColorPicker IsEnabled="{Binding IsEraser, Converter={StaticResource InverseBoolConverter}}" SelectedColor="Black" x:Name="PenColorPicker" MaxWidth="50"/>
                 <Separator Margin="5,0"/>
                 <Label Content="Background Color:"/>
                 <xceedwpftoolkit:ColorPicker MaxWidth="50" SelectedColor="{Binding Background, Mode=TwoWay}"/>
