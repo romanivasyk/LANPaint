@@ -9,7 +9,7 @@
         Title="LAN Paint" Width="970" Height="650" Icon="../Resources/pen.png">
 
     <Window.Resources>
-        <converters:ThicknessConverter x:Key="ThicknessConverter"/>
+        <converters:StringToDoubleConverter x:Key="StringToDoubleConverter"/>
         <xceedConverters:ColorToSolidColorBrushConverter x:Key="ColorToSolidColorBrushConverter"/>
         <xceedConverters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <Style x:Key="CheckBoxStyle" TargetType="{x:Type CheckBox}">
@@ -97,7 +97,7 @@
             </ToolBar>
         </ToolBarTray>
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black">
-            <controls:Board x:Name="DrawingBoard" StrokeThickness="{Binding ElementName=ToolThickness, Path=Text, Mode=TwoWay, Converter={StaticResource ThicknessConverter}}"
+            <controls:Board x:Name="DrawingBoard" StrokeThickness="{Binding ElementName=ToolThickness, Path=Text, Mode=TwoWay, Converter={StaticResource StringToDoubleConverter}}"
                      StrokeColor="{Binding ElementName=PenColorPicker, Path=SelectedColor, Mode=TwoWay}" 
                      Background="{Binding Background, Mode=TwoWay, Converter={StaticResource ColorToSolidColorBrushConverter}}"
                      IsEraser="{Binding IsEraser}"

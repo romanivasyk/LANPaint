@@ -9,13 +9,15 @@ namespace LANPaint.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is not int && value is not null) throw new ArgumentException("Value type is not Nullable<int>");
-            return value?.ToString() ?? string.Empty;
+            if (value is int || value is null) return value?.ToString() ?? string.Empty;
+            throw new InvalidOperationException($"The type of {nameof(value)} is not Nullable<int>");
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return string.IsNullOrEmpty(value?.ToString()) ? null : new int?(int.Parse(value.ToString()));
+            if (value is string || value is null)
+                return string.IsNullOrEmpty(value?.ToString()) ? null : new int?(int.Parse(value.ToString()));
+            throw new InvalidOperationException($"The type of {nameof(value)} is not string");
         }
     }
 }

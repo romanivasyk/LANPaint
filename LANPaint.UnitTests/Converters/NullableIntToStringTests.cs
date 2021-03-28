@@ -10,8 +10,9 @@ namespace LANPaint.UnitTests.Converters
         [InlineData(5, "5")]
         [InlineData(-5, "-5")]
         [InlineData(0, "0")]
+        [InlineData(null, "")]
         [Theory]
-        public void ConvertValidInt(int? intToConvert, string expected)
+        public void ConvertValidNullableInt(int? intToConvert, string expected)
         {
             var converter = new NullableIntToStringConverter();
             var result = (string) converter.Convert(intToConvert, typeof(string), null, CultureInfo.CurrentCulture);
@@ -20,32 +21,12 @@ namespace LANPaint.UnitTests.Converters
         }
 
         [Fact]
-        public void ConvertNullInt()
-        {
-            int? nullableInt = default;
-            var converter = new NullableIntToStringConverter();
-            var result = (string) converter.Convert(nullableInt, typeof(string), null, CultureInfo.CurrentCulture);
-
-            Assert.Equal(string.Empty, result);
-        }
-
-        [Fact]
         public void ConvertNotSupportedType()
         {
             double? doubleToConvert = 1.5;
             var converter = new NullableIntToStringConverter();
-            Assert.Throws<ArgumentException>(() =>
+            Assert.Throws<InvalidOperationException>(() =>
                 (string) converter.Convert(doubleToConvert, typeof(string), null, CultureInfo.CurrentCulture));
-        }
-
-        [Fact]
-        public void ConvertNullNotSupportedType()
-        {
-            long? nullableLong = null;
-            var converter = new NullableIntToStringConverter();
-            var result = (string) converter.Convert(nullableLong, typeof(string), null, CultureInfo.CurrentCulture);
-
-            Assert.Equal(string.Empty, result);
         }
 
         [InlineData("0", 0)]
@@ -72,6 +53,15 @@ namespace LANPaint.UnitTests.Converters
             var converter = new NullableIntToStringConverter();
             Assert.Throws<FormatException>(() =>
                 (int?) converter.ConvertBack(invalidStringToConvert, typeof(int?), null, CultureInfo.CurrentCulture));
+        }
+
+        [Fact]
+        public void ConvertBackNotSupportedType()
+        {
+            const int intToConvert = 1;
+            var converter = new NullableIntToStringConverter();
+            Assert.Throws<InvalidOperationException>(() =>
+                (int?) converter.ConvertBack(intToConvert, typeof(int?), null, CultureInfo.CurrentCulture));
         }
     }
 }
