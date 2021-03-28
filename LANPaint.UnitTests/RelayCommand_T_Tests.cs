@@ -10,7 +10,11 @@ namespace LANPaint.UnitTests
         [Fact]
         public void Ctor_ValidData()
         {
-            static void Action(int a) {};
+            static void Action(int a)
+            {
+            }
+
+            ;
             static bool CanExecute() => true;
             var command = new RelayCommand<int>(Action, CanExecute);
         }
@@ -40,7 +44,9 @@ namespace LANPaint.UnitTests
         [Fact]
         public void CanExecute_DefaultCanExecute()
         {
-            static void Action(int a) {}
+            static void Action(int a)
+            {
+            }
 
             var command = new RelayCommand<int>(Action);
 
@@ -54,7 +60,9 @@ namespace LANPaint.UnitTests
         [Theory]
         public void CanExecute_CanExecuteTheory(bool canExecuteReturn, bool expectedReturn)
         {
-            static void Action(int a) {}
+            static void Action(int a)
+            {
+            }
 
             bool CanExecute() => canExecuteReturn;
             var command = new RelayCommand<int>(Action, CanExecute);
@@ -69,7 +77,9 @@ namespace LANPaint.UnitTests
         {
             var isCanExecuteChangedExecuted = false;
 
-            static void Action(int a) {}
+            static void Action(int a)
+            {
+            }
 
             var command = new RelayCommand<int>(Action);
             command.CanExecuteChanged += (sender, args) => isCanExecuteChangedExecuted = true;
@@ -99,7 +109,10 @@ namespace LANPaint.UnitTests
         [Theory]
         public void ICommandExecute_CanExecuteTheory(bool canExecuteReturn, bool expectedReturn)
         {
-            static void Action(int a) {}
+            static void Action(int a)
+            {
+            }
+
             bool CanExecute() => canExecuteReturn;
             var command = (ICommand) new RelayCommand<int>(Action, CanExecute);
 
