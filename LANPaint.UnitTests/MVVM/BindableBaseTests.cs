@@ -2,7 +2,7 @@
 using LANPaint.MVVM;
 using Xunit;
 
-namespace LANPaint.UnitTests
+namespace LANPaint.UnitTests.MVVM
 {
     public class BindableBaseTests
     {
