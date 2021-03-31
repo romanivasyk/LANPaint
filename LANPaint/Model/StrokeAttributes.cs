@@ -12,5 +12,11 @@ namespace LANPaint.Model
         public bool IgnorePressure { get; init; }
         public bool IsHighlighter { get; init; }
         public StylusTip StylusTip { get; init; }
+
+        public override int GetHashCode()
+        {
+            return Color.GetHashCode() ^ Width.GetHashCode() ^ Height.GetHashCode() ^ IgnorePressure.GetHashCode() ^
+                   IsHighlighter.GetHashCode() ^ StylusTip.GetHashCode();
+        }
     }
 }

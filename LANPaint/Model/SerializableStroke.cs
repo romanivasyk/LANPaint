@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
@@ -10,16 +10,17 @@ namespace LANPaint.Model
     [Serializable]
     public readonly struct SerializableStroke : IEquatable<SerializableStroke>
     {
-        [NonSerialized] 
-        public static readonly SerializableStroke Default = new(new StrokeAttributes());
+        public StrokeAttributes Attributes { get; }
+        public ReadOnlyCollection<Point> Points { get; }
 
-        public IEnumerable<Point> Points { get; init; }
-        public StrokeAttributes Attributes { get; init; }
-
-        public SerializableStroke(StrokeAttributes attributes, IEnumerable<Point> points = null)
+        public SerializableStroke(StrokeAttributes attributes, Point[] points)
         {
+            if (points is null)
+                throw new ArgumentNullException(nameof(points), "SerializableStroke cannot contain null points collection");
+            if (points.Length < 1)
+                throw new ArgumentException("SerializableStroke cannot contain empty points collection", nameof(points));
             Attributes = attributes;
-            Points = points;
+            Points = new ReadOnlyCollection<Point>(points);
         }
 
         public static SerializableStroke FromStroke(Stroke stroke)
@@ -29,10 +30,12 @@ namespace LANPaint.Model
                 Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
                 Height = stroke.DrawingAttributes.Height,
                 Width = stroke.DrawingAttributes.Width,
+                IgnorePressure = stroke.DrawingAttributes.IgnorePressure,
+                IsHighlighter = stroke.DrawingAttributes.IsHighlighter,
                 StylusTip = stroke.DrawingAttributes.StylusTip
             };
 
-            var points = stroke.StylusPoints.Select(point => point.ToPoint()).ToList();
+            var points = stroke.StylusPoints.Select(point => point.ToPoint()).ToArray();
             return new SerializableStroke(attr, points);
         }
 
@@ -51,26 +54,17 @@ namespace LANPaint.Model
 
         public static bool operator !=(SerializableStroke stroke, SerializableStroke other) => !stroke.Equals(other);
 
-        public bool Equals([AllowNull] SerializableStroke other)
+        public bool Equals([DisallowNull] SerializableStroke other)
         {
-            if (Points != null && other.Points != null)
-            {
-                return Attributes.Equals(other.Attributes) && Points.SequenceEqual(other.Points);
-            }
-
-            if (Points == null && other.Points == null)
-            {
-                return Attributes.Equals(other.Attributes);
-            }
-
-            return false;
+            return Attributes.Equals(other.Attributes) && Points.SequenceEqual(other.Points);
         }
 
-        public override bool Equals(object obj) => obj is SerializableStroke stroke && Equals(stroke);
+        public override bool Equals([AllowNull] object obj) => obj is SerializableStroke stroke && Equals(stroke);
 
         public override int GetHashCode()
         {
-            var pointsHash = Points.Aggregate<Point, int>(default, (current, point) => current + (point.GetHashCode() ^ current));
+            var pointsHash = Points.Aggregate<Point, int>(int.MaxValue,
+                (accumulator, point) => accumulator ^= point.X.GetHashCode() ^ point.Y.GetHashCode());
             return Attributes.GetHashCode() ^ pointsHash;
         }
     }
