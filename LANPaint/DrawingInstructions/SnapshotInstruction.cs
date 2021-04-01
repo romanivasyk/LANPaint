@@ -14,11 +14,12 @@ namespace LANPaint.DrawingInstructions
         public SnapshotInstruction(ARGBColor background, IEnumerable<SerializableStroke> strokes)
         {
             Background = background;
-            Strokes = strokes;
+            Strokes = strokes ?? throw new ArgumentNullException(nameof(strokes));
         }
 
         public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository)
         {
+            if (instructionRepository == null) throw new ArgumentNullException(nameof(instructionRepository));
             instructionRepository.ApplySnapshot(this);
         }
     }
