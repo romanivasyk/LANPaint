@@ -20,6 +20,7 @@ namespace LANPaint.DrawingInstructions
 
         public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository)
         {
+            if (instructionRepository == null) throw new ArgumentNullException(nameof(instructionRepository));
             instructionRepository.ChangeBackground(this);
         }
     }
