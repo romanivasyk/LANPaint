@@ -25,6 +25,7 @@ namespace LANPaint.Model
 
         public static SerializableStroke FromStroke(Stroke stroke)
         {
+            if (stroke == null) throw new ArgumentNullException(nameof(stroke));
             var attr = new StrokeAttributes
             {
                 Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),

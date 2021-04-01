@@ -153,7 +153,7 @@ namespace LANPaint.UnitTests.Model
             Assert.False(strokeInstanceResult);
             Assert.False(anotherStrokeInstanceResult);
         }
-        
+
         [Fact]
         public void EqualsPassNull()
         {
@@ -177,7 +177,7 @@ namespace LANPaint.UnitTests.Model
             Assert.True(equalityResult);
             Assert.False(nonEqualityResult);
         }
-        
+
         [Fact]
         public void EqualityOperatorForNonEqualsStrokesByPoints()
         {
@@ -210,10 +210,10 @@ namespace LANPaint.UnitTests.Model
                 StylusTip = StylusTip.Ellipse
             };
             var anotherStroke = new SerializableStroke(anotherAttributes, anotherPoints);
-            
+
             var equalityResult = stroke == anotherStroke;
             var nonEqualityResult = stroke != anotherStroke;
-            
+
             Assert.False(equalityResult);
             Assert.True(nonEqualityResult);
         }
@@ -298,6 +298,12 @@ namespace LANPaint.UnitTests.Model
             Assert.Equal(stroke.Attributes.IgnorePressure, _nonSerializableStroke.DrawingAttributes.IgnorePressure);
             Assert.Equal(stroke.Attributes.IsHighlighter, _nonSerializableStroke.DrawingAttributes.IsHighlighter);
             Assert.Equal(stroke.Attributes.StylusTip, _nonSerializableStroke.DrawingAttributes.StylusTip);
+        }
+
+        [Fact]
+        public void FromStrokePassNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => SerializableStroke.FromStroke(null));
         }
     }
 }
