@@ -15,11 +15,15 @@ namespace LANPaint.DrawingInstructions
             DrawingStroke = drawingStroke;
         }
 
-        public DrawInstruction(Stroke stroke) : this(SerializableStroke.FromStroke(stroke))
-        { }
+        public DrawInstruction(Stroke stroke)
+        {
+            if (stroke == null) throw new ArgumentNullException(nameof(stroke));
+            SerializableStroke.FromStroke(stroke);
+        }
 
         public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository)
         {
+            if (instructionRepository == null) throw new ArgumentNullException(nameof(instructionRepository));
             instructionRepository.Draw(this);
         }
     }
