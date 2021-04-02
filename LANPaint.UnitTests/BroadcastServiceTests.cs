@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using LANPaint.Extensions;
 using LANPaint.Services.Broadcast;
 using LANPaint.Services.Network.Utilities;
 using LANPaint.Services.Network.Watchers;
@@ -25,6 +26,15 @@ namespace LANPaint.UnitTests
             _broadcastImplMock = new Mock<IBroadcast>();
             _broadcastImplMock.Setup(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()))
                 .ReturnsAsync((byte[] data) => data?.Length ?? 0);
+            _broadcastImplMock.Setup(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
+                .Returns((CancellationToken token) =>
+                {
+                    return Task.Run(() =>
+                    {
+                        Task.Delay(TimeSpan.FromSeconds(10));
+                        return new byte[] {10, 15, 20};
+                    }).WithCancellation(token);
+                });
             _broadcastFactoryMock = new Mock<IBroadcastFactory>();
             _broadcastFactoryMock.Setup(factory => factory.Create(It.IsAny<IPAddress>()))
                 .Returns(() => _broadcastImplMock.Object);
@@ -317,19 +327,42 @@ namespace LANPaint.UnitTests
                 _networkUtilityMock.Object);
             broadcastService.DataReceived += (sender, args) => receivedData.Add(args.Data);
             broadcastService.Initialize(_ipAddress);
-            var stopAfterHundredMillis = Task.Run(() =>
+            var stopAfterDelay = Task.Run(() =>
             {
-                Task.Delay(100).Wait();
+                Task.Delay(20).Wait();
                 broadcastService.CancelReceive();
             });
             var receiving = broadcastService.StartReceiveAsync();
 
-            await Task.WhenAll(stopAfterHundredMillis, receiving);
+            await Task.WhenAll(stopAfterDelay, receiving);
 
             Assert.Single(receivedData);
             Assert.True(bytesToReceive.SequenceEqual(receivedData.First()));
         }
 
+        [Fact]
+        public async void CancelReceive()
+        {
+            _networkUtilityMock.Setup(utility => utility.IsReadyToUse(It.IsAny<IPAddress>())).Returns(true);
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            broadcastService.Initialize(_ipAddress);
+            var receiveTask = broadcastService.StartReceiveAsync();
+            broadcastService.CancelReceive();
+            await receiveTask;
+            
+            Assert.False(broadcastService.IsReceiving);
+        }
+        
+        [Fact]
+        public async void CancelReceive_ThrowOnDisposed()
+        {
+            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+                _networkUtilityMock.Object);
+            broadcastService.Dispose();
+            Assert.Throws<ObjectDisposedException>(() => broadcastService.CancelReceive());
+        }
+        
         private static byte[] RandomizeByteSequence(int length)
         {
             var random = new Random();
