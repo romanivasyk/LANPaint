@@ -38,7 +38,6 @@ namespace LANPaint.Services.Broadcast
 
         private void NetworkStateChangedHandler(object sender, EventArgs e)
         {
-            //if (_broadcastImpl != null && _networkUtility.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
             if (!IsReady || _networkUtility.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
             
             _cancelReceiveTokenSource?.Dispose();

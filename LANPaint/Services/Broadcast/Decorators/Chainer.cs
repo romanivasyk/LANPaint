@@ -100,19 +100,17 @@ namespace LANPaint.Services.Broadcast.Decorators
                     _segmentBuffer.Remove(packet.SequenceGuid);
                     return message;
                 }
-                else
-                {
-                    if (packet.SequenceLength == 1)
-                    {
-                        return packet.Segment.Payload;
-                    }
 
-                    var segments = new SortedList<long, Segment>
-                    {
-                        {packet.Segment.SequenceIndex, packet.Segment}
-                    };
-                    _segmentBuffer.Add(packet.SequenceGuid, segments);
+                if (packet.SequenceLength == 1)
+                {
+                    return packet.Segment.Payload;
                 }
+
+                var segments = new SortedList<long, Segment>
+                {
+                    {packet.Segment.SequenceIndex, packet.Segment}
+                };
+                _segmentBuffer.Add(packet.SequenceGuid, segments);
             }
         }
 

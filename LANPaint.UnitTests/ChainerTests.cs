@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using LANPaint.Services.Broadcast;
 using LANPaint.Services.Broadcast.Decorators;
 using Moq;
@@ -12,6 +13,7 @@ namespace LANPaint.UnitTests
     public class ChainerTest
     {
         private readonly Mock<IBroadcast> _broadcastImplMock;
+        private static readonly Random Random = new Random();
 
         public ChainerTest()
         {
@@ -81,25 +83,12 @@ namespace LANPaint.UnitTests
             broadcastImplMock.Setup(broadcast => broadcast.ReceiveAsync(CancellationToken.None))
                 .ReturnsAsync(() => storage.Pop());
             var broadcastImpl = broadcastImplMock.Object;
-            var data = RandomizeByteSequence(24000);
+            var data = GenerateRandomByteSequence(24000);
 
             await broadcastImpl.SendAsync(data);
             var result = await broadcastImpl.ReceiveAsync(CancellationToken.None);
 
             Assert.True(result.SequenceEqual(data));
-
-            byte[] RandomizeByteSequence(int length)
-            {
-                var random = new Random();
-                var sequence = new byte[length];
-
-                for (var i = 0; i < length; i++)
-                {
-                    sequence[i] = (byte) random.Next(256);
-                }
-
-                return sequence;
-            }
         }
 
         [Theory]
@@ -113,7 +102,8 @@ namespace LANPaint.UnitTests
             var data = new byte[dataLength];
             var chainer = new Chainer(_broadcastImplMock.Object, maxSegmentLength);
             await chainer.SendAsync(data);
-            _broadcastImplMock.Verify(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()), Times.Exactly(expectedSendCallsNumber));
+            _broadcastImplMock.Verify(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()),
+                Times.Exactly(expectedSendCallsNumber));
         }
 
         [Fact]
@@ -124,12 +114,120 @@ namespace LANPaint.UnitTests
         }
 
         [Fact]
-        public async void ReceiveAsync_CancelReceive()
+        public async void ReceiveAsync_ReceiveSegmented()
+        {
+            const int payloadLength = 20000;
+            const int packetLength = 5000;
+            var data = GenerateRandomByteSequence(payloadLength);
+            var chainStorage = new List<byte[]>();
+            _broadcastImplMock.Setup(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()))
+                .ReturnsAsync((byte[] dataParam) =>
+                {
+                    chainStorage.Add(dataParam);
+                    return dataParam.Length;
+                });
+
+            //It used just to fill chainStorage with payloadLength/packetLength packets with bytes to use it for receive
+            var chainerFiller = new Chainer(_broadcastImplMock.Object, packetLength);
+            await chainerFiller.SendAsync(data);
+            using var enumerator = chainStorage.GetEnumerator();
+            _broadcastImplMock.Setup(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
+                .Returns(() =>
+                {
+                    enumerator.MoveNext();
+                    return Task.FromResult<byte[]>(enumerator.Current);
+                });
+            var chainer = new Chainer(_broadcastImplMock.Object, 5000);
+
+            var result = await chainer.ReceiveAsync();
+
+            Assert.True(data.SequenceEqual(result));
+        }
+
+        [Fact]
+        public async void ReceiveAsync_ReceiveSegmentedOfTwoSequences()
+        {
+            const int payloadLength = 20000;
+            const int packetLength = 5000;
+            var data = GenerateRandomByteSequence(payloadLength);
+            var anotherData = GenerateRandomByteSequence(packetLength * 2);
+
+            var chainStorage = new List<byte[]>();
+            _broadcastImplMock.Setup(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()))
+                .ReturnsAsync((byte[] dataParam) =>
+                {
+                    chainStorage.Add(dataParam);
+                    return dataParam.Length;
+                });
+
+            //It used just to fill chainStorage with payloadLength/packetLength packets with bytes to use it for receive
+            var chainerFiller = new Chainer(_broadcastImplMock.Object, packetLength);
+            await chainerFiller.SendAsync(anotherData);
+            await chainerFiller.SendAsync(data);
+
+            //Remove segment to make one of the sequences unable to recompose
+            chainStorage.RemoveAt(0);
+
+            using var enumerator = chainStorage.GetEnumerator();
+            _broadcastImplMock.Setup(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
+                .Returns(() =>
+                {
+                    enumerator.MoveNext();
+                    return Task.FromResult<byte[]>(enumerator.Current);
+                });
+            var chainer = new Chainer(_broadcastImplMock.Object, 5000);
+
+            var result = await chainer.ReceiveAsync();
+
+            Assert.True(data.SequenceEqual(result));
+        }
+
+        [Fact]
+        public async void ReceiveAsync_CancelAfterFirstReceive()
+        {
+            const int payloadLength = 20000;
+            const int packetLength = 5000;
+            var data = GenerateRandomByteSequence(payloadLength);
+            var chainStorage = new List<byte[]>();
+            _broadcastImplMock.Setup(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()))
+                .ReturnsAsync((byte[] dataParam) =>
+                {
+                    chainStorage.Add(dataParam);
+                    return dataParam.Length;
+                });
+
+            //It used just to fill chainStorage with payloadLength/packetLength packets with bytes to use it for receive
+            var chainerFiller = new Chainer(_broadcastImplMock.Object, packetLength);
+            await chainerFiller.SendAsync(data);
+
+            var tokenSource = new CancellationTokenSource();
+            var isFirstIterationDone = false;
+            _broadcastImplMock.SetupSequence(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
+                .Returns(() =>
+                {
+                    isFirstIterationDone = true;
+                    return Task.FromResult(chainStorage[0]);
+                })
+                .Returns(
+                    () =>
+                    {
+                        tokenSource.Cancel();
+                        return Task.FromResult(chainStorage[1]);
+                    })
+                .Returns(() => throw new Exception());
+            var chainer = new Chainer(_broadcastImplMock.Object, 5000);
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() => chainer.ReceiveAsync(tokenSource.Token));
+            Assert.True(isFirstIterationDone);
+        }
+
+        [Fact]
+        public async void ReceiveAsync_CancelReceiveAtStart()
         {
             var tokenSource = new CancellationTokenSource();
             tokenSource.Cancel();
             var chainer = new Chainer(_broadcastImplMock.Object);
-            
+
             await Assert.ThrowsAsync<OperationCanceledException>(() => chainer.ReceiveAsync(tokenSource.Token));
         }
 
@@ -147,6 +245,18 @@ namespace LANPaint.UnitTests
             var chainer = new Chainer(_broadcastImplMock.Object);
             chainer.Dispose();
             _broadcastImplMock.Verify(broadcast => broadcast.Dispose(), Times.Once);
+        }
+
+        private static byte[] GenerateRandomByteSequence(int length)
+        {
+            var sequence = new byte[length];
+
+            for (var i = 0; i < length; i++)
+            {
+                sequence[i] = (byte) Random.Next(256);
+            }
+
+            return sequence;
         }
     }
 }
