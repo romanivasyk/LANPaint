@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace LANPaint.Extensions
 {
-    internal static class AsyncExtension
+    public static class AsyncExtension
     {
         public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
         {
