@@ -14,13 +14,11 @@ namespace LANPaint
 {
     public partial class App : Application
     {
-        private INetworkWatcher _watcher;
-        private IBroadcastService _broadcastService;
-        private PaintViewModel _paintDataContext;
+        private readonly INetworkWatcher _watcher;
+        private readonly IBroadcastService _broadcastService;
+        private readonly PaintViewModel _paintDataContext;
 
-        //TODO: Move this stuff to some kind of Setup or ApplicationBootstrapper with DI container.
-        //https://www.codeproject.com/Articles/812379/Using-Ninject-to-produce-a-loosely-coupled-modular
-        private async void OnStartupHandler(object sender, StartupEventArgs e)
+        public App()
         {
             var broadcastFactory = new ChainerFactory(16384);
             var networkServiceFactory = new NetworkServiceFactory();
@@ -32,6 +30,12 @@ namespace LANPaint
             var fileService = new DefaultFileService(new []{".lpsnp"});
 
             _paintDataContext = new PaintViewModel(_broadcastService, dialogService, fileService, networkServiceFactory);
+        }
+        
+        //TODO: Move this stuff to some kind of Setup or ApplicationBootstrapper with DI container.
+        //https://www.codeproject.com/Articles/812379/Using-Ninject-to-produce-a-loosely-coupled-modular
+        private async void OnStartupHandler(object sender, StartupEventArgs e)
+        {
             var paint = new Paint {DataContext = _paintDataContext,};
             if (e.Args.Length > 0) await _paintDataContext.ApplyFromFile(e.Args.First());
             

@@ -3,12 +3,11 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-#nullable enable
 namespace LANPaint.Services.Network.Utilities
 {
     public class NetworkUtility : INetworkUtility
     {
-        public IPAddress? GetIpAddress(NetworkInterface networkInterface)
+        public IPAddress GetIpAddress(NetworkInterface networkInterface)
         {
             return networkInterface.GetIPProperties().UnicastAddresses
                 .FirstOrDefault(information => information.Address.AddressFamily == AddressFamily.InterNetwork)?.Address;

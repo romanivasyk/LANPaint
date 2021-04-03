@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 using LANPaint.Services.Network.Utilities;
 using LANPaint.Services.Network.Watchers;
 
-#nullable enable
-
 namespace LANPaint.Services.Broadcast
 {
     public class BroadcastService : IBroadcastService
     {
-        public event EventHandler? ConnectionLost;
-        public event DataReceivedEventHandler? DataReceived;
+        public event EventHandler ConnectionLost;
+        public event DataReceivedEventHandler DataReceived;
 
         public IPEndPoint LocalEndPoint =>
             _broadcastImpl == null ? new IPEndPoint(IPAddress.None, 0) : _broadcastImpl.LocalEndPoint;
@@ -22,8 +20,8 @@ namespace LANPaint.Services.Broadcast
 
         private bool _isDisposed;
 
-        private IBroadcast? _broadcastImpl;
-        private CancellationTokenSource? _cancelReceiveTokenSource;
+        private IBroadcast _broadcastImpl;
+        private CancellationTokenSource _cancelReceiveTokenSource;
         private readonly IBroadcastFactory _broadcastFactory;
         private readonly INetworkWatcher _networkWatcher;
         private readonly INetworkUtility _networkUtility;
@@ -100,7 +98,7 @@ namespace LANPaint.Services.Broadcast
 
             while (true)
             {
-                byte[]? data = default;
+                byte[] data = default;
                 try
                 {
                     data = await _broadcastImpl.ReceiveAsync(_cancelReceiveTokenSource.Token);
@@ -155,7 +153,7 @@ namespace LANPaint.Services.Broadcast
 
     public class ServiceNotInitializedException : Exception
     {
-        public ServiceNotInitializedException(string? message = null, Exception? innerException = null) : base(message,
+        public ServiceNotInitializedException(string message = null, Exception innerException = null) : base(message,
             innerException)
         { }
     }

@@ -5,15 +5,14 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Threading;
 
-#nullable enable
 namespace LANPaint.Services.Network.Watchers
 {
     public class NetworkWatcher : INetworkWatcher
     {
         public bool IsAnyNetworkAvailable { get; private set; }
         public ImmutableArray<NetworkInterface> Interfaces { get; private set; }
-        public event NetworkStateChangedEventHandler? NetworkStateChanged;
-        private readonly SynchronizationContext? _synchronizationContext;
+        public event NetworkStateChangedEventHandler NetworkStateChanged;
+        private readonly SynchronizationContext _synchronizationContext;
 
         public NetworkWatcher()
         {
@@ -24,13 +23,13 @@ namespace LANPaint.Services.Network.Watchers
             NetworkChange.NetworkAvailabilityChanged += AvailabilityChangedHandler;
         }
 
-        private void AddressChangedHandler(object? sender, EventArgs e)
+        private void AddressChangedHandler(object sender, EventArgs e)
         {
             Interfaces = GetIPv4Interfaces();
             NotifyStateChanged();
         }
 
-        private void AvailabilityChangedHandler(object? sender, NetworkAvailabilityEventArgs e)
+        private void AvailabilityChangedHandler(object sender, NetworkAvailabilityEventArgs e)
         {
             IsAnyNetworkAvailable = e.IsAvailable;
             Interfaces = GetIPv4Interfaces();

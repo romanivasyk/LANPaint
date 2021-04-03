@@ -18,7 +18,7 @@ namespace LANPaint.Services.Broadcast.Decorators
         private readonly BinaryFormatter _formatter;
         private readonly Dictionary<Guid, SortedList<long, Segment>> _segmentBuffer;
 
-        public Chainer(IBroadcast broadcaster, int payloadSegmentLength = 8192) : base(broadcaster)
+        public Chainer(IBroadcast broadcast, int payloadSegmentLength = 8192) : base(broadcast)
         {
             if (payloadSegmentLength < MinSegmentLength || payloadSegmentLength > MaxSegmentLength)
                 throw new ArgumentOutOfRangeException(nameof(payloadSegmentLength),
