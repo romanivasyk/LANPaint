@@ -45,7 +45,7 @@ namespace LANPaint.Services.Network.Watchers
                 return;
             }
 
-            _synchronizationContext.Send(state => NetworkStateChanged?.Invoke(this, EventArgs.Empty), null);
+            _synchronizationContext.Send(_ => NetworkStateChanged?.Invoke(this, EventArgs.Empty), null);
         }
 
         private static ImmutableArray<NetworkInterface> GetIPv4Interfaces()

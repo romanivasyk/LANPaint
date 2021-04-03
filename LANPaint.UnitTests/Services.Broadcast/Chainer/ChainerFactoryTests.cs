@@ -3,7 +3,7 @@ using System.Net;
 using LANPaint.Services.Broadcast.Factories;
 using Xunit;
 
-namespace LANPaint.UnitTests
+namespace LANPaint.UnitTests.Services.Broadcast.Chainer
 {
     public class ChainerFactoryTests
     {

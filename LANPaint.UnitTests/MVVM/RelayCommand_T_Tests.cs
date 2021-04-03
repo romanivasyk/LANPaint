@@ -15,14 +15,13 @@ namespace LANPaint.UnitTests.MVVM
             }
             
             static bool CanExecute() => true;
-            var command = new RelayCommand<int>(Action, CanExecute);
+            var _ = new RelayCommand<int>(Action, CanExecute);
         }
 
         [Fact]
         public void Ctor_NullAction()
         {
-            Action<int> action = null;
-            Assert.Throws<ArgumentNullException>(() => new RelayCommand<int>(action));
+            Assert.Throws<ArgumentNullException>(() => new RelayCommand<int>(null));
         }
 
         [Fact]
@@ -81,7 +80,7 @@ namespace LANPaint.UnitTests.MVVM
             }
 
             var command = new RelayCommand<int>(Action);
-            command.CanExecuteChanged += (sender, args) => isCanExecuteChangedExecuted = true;
+            command.CanExecuteChanged += (_, _) => isCanExecuteChangedExecuted = true;
 
             command.RaiseCanExecuteChanged();
 

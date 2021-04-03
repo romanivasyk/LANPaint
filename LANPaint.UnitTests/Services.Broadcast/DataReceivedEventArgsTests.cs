@@ -3,7 +3,7 @@ using System.Linq;
 using LANPaint.Services.Broadcast;
 using Xunit;
 
-namespace LANPaint.UnitTests
+namespace LANPaint.UnitTests.Services.Broadcast
 {
     public class DataReceivedEventArgsTests
     {

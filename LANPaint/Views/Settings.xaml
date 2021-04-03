@@ -38,10 +38,9 @@
             </ListView.View>
         </ListView>
         <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Text="Port:"
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="Port:"
                        Margin="0,0,30,0" />
-            <TextBox Width="60" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1"
-                     Grid.Column="1"
+            <TextBox Width="60" MaxLength="5" HorizontalAlignment="Center" VerticalAlignment="Center"
                      Text="{Binding Port, Converter={StaticResource NullableIntToStringConverter}, UpdateSourceTrigger=PropertyChanged}"
                      PreviewTextInput="Port_PreventInputNonNumbers" PreviewKeyDown="Port_PreviewKeyDown"
                      ContextMenu="{x:Null}">
@@ -59,21 +58,21 @@
                 </TextBox.Style>
             </TextBox>
         </StackPanel>
-        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center"
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center"
                     VerticalAlignment="Bottom" Margin="5,20,5,5">
             <StackPanel.Resources>
                 <Style TargetType="{x:Type Button}">
                     <Setter Property="Margin" Value="30,0" />
                 </Style>
             </StackPanel.Resources>
-            <Button Grid.Row="3" Grid.Column="0" Height="30" Width="100" Command="{Binding OkCommand}"
+            <Button Height="30" Width="100" Command="{Binding OkCommand}"
                     CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"
                     Content="OK" IsDefault="True"
                     ToolTipService.ShowOnDisabled="True"
                     ToolTipService.IsEnabled="{Binding RelativeSource={RelativeSource Mode=Self}, Path=IsEnabled, Converter={StaticResource InverseBoolConverter}}"
                     ToolTipService.ToolTip="Choose valid adapter and set port from 1024 to 65535" />
 
-            <Button Grid.Row="3" Grid.Column="1" Name="CancelButton" Height="30" Width="100" Command="{Binding CancelCommand}"
+            <Button Name="CancelButton" Height="30" Width="100" Command="{Binding CancelCommand}"
                     CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"
                     Content="Cancel" />
         </StackPanel>

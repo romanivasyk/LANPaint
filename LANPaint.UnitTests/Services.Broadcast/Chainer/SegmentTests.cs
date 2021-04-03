@@ -3,7 +3,7 @@ using System.Linq;
 using LANPaint.Services.Broadcast.Decorators;
 using Xunit;
 
-namespace LANPaint.UnitTests
+namespace LANPaint.UnitTests.Services.Broadcast.Chainer
 {
     public class SegmentTests
     {
@@ -23,9 +23,7 @@ namespace LANPaint.UnitTests
         public void Ctor_PassNullData()
         {
             const int index = 5;
-            byte[] data = null;
-
-            Assert.Throws<ArgumentNullException>(() => new Segment(index, data));
+            Assert.Throws<ArgumentNullException>(() => new Segment(index, null));
         }
 
         [InlineData(long.MinValue)]

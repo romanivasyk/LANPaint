@@ -184,7 +184,7 @@ namespace LANPaint.ViewModels
             {
                 dataFromFile = await _fileService.ReadFromFileAsync(fileName);
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
                 _dialogService.ShowMessageBox(this, "LANPaint cannot open this file.",
                     "Error while reading the file", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);

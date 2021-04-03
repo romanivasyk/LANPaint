@@ -14,7 +14,7 @@ namespace LANPaint.UnitTests.MVVM
 
             const string memberName = "SomeMember";
             var bindableBase = new BindableBaseStub();
-            bindableBase.PropertyChanged += (sender, args) =>
+            bindableBase.PropertyChanged += (_, args) =>
             {
                 isRaised = true;
                 propertyNameEventArg = args.PropertyName;
@@ -34,7 +34,7 @@ namespace LANPaint.UnitTests.MVVM
             var propertyNameEventArg = string.Empty;
 
             var bindableBase = new BindableBaseStub();
-            bindableBase.PropertyChanged += (sender, args) =>
+            bindableBase.PropertyChanged += (_, args) =>
             {
                 isRaised = true;
                 propertyNameEventArg = args.PropertyName;
@@ -55,7 +55,7 @@ namespace LANPaint.UnitTests.MVVM
             const string valueToSet = "newValue";
 
             var bindableBase = new BindableBaseStub();
-            bindableBase.PropertyChanged += (sender, args) =>
+            bindableBase.PropertyChanged += (_, args) =>
             {
                 isRaised = true;
                 propertyNameEventArg = args.PropertyName;
@@ -79,7 +79,7 @@ namespace LANPaint.UnitTests.MVVM
             const string valueToSet = "newValue";
 
             var bindableBase = new BindableBaseStub();
-            bindableBase.PropertyChanged += (sender, args) =>
+            bindableBase.PropertyChanged += (_, args) =>
             {
                 isRaised = true;
                 propertyNameEventArg = args.PropertyName;
@@ -100,9 +100,9 @@ namespace LANPaint.UnitTests.MVVM
             var propertyNameEventArg = string.Empty;
             var propertyToSet = "propertyValue";
             const string valueToSet = "propertyValue";
-            
+
             var bindableBase = new BindableBaseStub();
-            bindableBase.PropertyChanged += (sender, args) =>
+            bindableBase.PropertyChanged += (_, args) =>
             {
                 isRaised = true;
                 propertyNameEventArg = args.PropertyName;
@@ -115,12 +115,12 @@ namespace LANPaint.UnitTests.MVVM
             Assert.Equal(valueToSet, propertyToSet);
             Assert.False(setPropertyResult);
         }
-        
+
         private class BindableBaseStub : BindableBase
         {
             public new bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
             {
-                return base.SetProperty<T>(ref storage, value, propertyName);
+                return base.SetProperty(ref storage, value, propertyName);
             }
 
             public new void NotifyPropertyChanged([CallerMemberName] string propertyName = "")

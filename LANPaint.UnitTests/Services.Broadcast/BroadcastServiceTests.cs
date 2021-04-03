@@ -8,10 +8,10 @@ using LANPaint.Extensions;
 using LANPaint.Services.Broadcast;
 using LANPaint.Services.Network.Utilities;
 using LANPaint.Services.Network.Watchers;
-using Xunit;
 using Moq;
+using Xunit;
 
-namespace LANPaint.UnitTests
+namespace LANPaint.UnitTests.Services.Broadcast
 {
     public class BroadcastServiceTests
     {
@@ -49,7 +49,7 @@ namespace LANPaint.UnitTests
         [Fact]
         public void CtorTest()
         {
-            var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
+            var _ = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
         }
 
@@ -182,7 +182,7 @@ namespace LANPaint.UnitTests
             _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
+            broadcastService.ConnectionLost += (_, _) => isConnectionLostInvoked = true;
             broadcastService.Initialize(_ipAddress);
 
             _networkWatcherMock.Raise(watcher => watcher.NetworkStateChanged -= null, EventArgs.Empty);
@@ -200,7 +200,7 @@ namespace LANPaint.UnitTests
             _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
+            broadcastService.ConnectionLost += (_, _) => isConnectionLostInvoked = true;
             broadcastService.Initialize(_ipAddress);
 
             _networkWatcherMock.Raise(watcher => watcher.NetworkStateChanged -= null, EventArgs.Empty);
@@ -218,7 +218,7 @@ namespace LANPaint.UnitTests
             _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
+            broadcastService.ConnectionLost += (_, _) => isConnectionLostInvoked = true;
 
             _networkWatcherMock.Raise(watcher => watcher.NetworkStateChanged -= null, EventArgs.Empty);
 
@@ -235,7 +235,7 @@ namespace LANPaint.UnitTests
             _broadcastImplMock.SetupGet(broadcast => broadcast.LocalEndPoint).Returns(new IPEndPoint(_ipAddress, 0));
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            broadcastService.ConnectionLost += (sender, e) => isConnectionLostInvoked = true;
+            broadcastService.ConnectionLost += (_, _) => isConnectionLostInvoked = true;
             broadcastService.Initialize(_ipAddress);
             broadcastService.Dispose();
 
@@ -291,7 +291,6 @@ namespace LANPaint.UnitTests
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
             broadcastService.Initialize(_ipAddress);
-            var data = RandomizeByteSequence(1024);
 
             broadcastService.Dispose();
             await Assert.ThrowsAsync<ObjectDisposedException>(() => broadcastService.StartReceiveAsync());
@@ -304,7 +303,6 @@ namespace LANPaint.UnitTests
             _networkUtilityMock.Setup(utility => utility.IsReadyToUse(_ipAddress)).Returns(true);
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            var data = RandomizeByteSequence(1024);
 
             await Assert.ThrowsAsync<ServiceNotInitializedException>(() => broadcastService.StartReceiveAsync());
             Assert.False(broadcastService.IsReceiving);
@@ -325,7 +323,7 @@ namespace LANPaint.UnitTests
                 });
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);
-            broadcastService.DataReceived += (sender, args) => receivedData.Add(args.Data);
+            broadcastService.DataReceived += (_, args) => receivedData.Add(args.Data);
             broadcastService.Initialize(_ipAddress);
             var stopAfterDelay = Task.Run(() =>
             {
@@ -355,7 +353,7 @@ namespace LANPaint.UnitTests
         }
         
         [Fact]
-        public async void CancelReceive_ThrowOnDisposed()
+        public void CancelReceive_ThrowOnDisposed()
         {
             var broadcastService = new BroadcastService(_broadcastFactoryMock.Object, _networkWatcherMock.Object,
                 _networkUtilityMock.Object);

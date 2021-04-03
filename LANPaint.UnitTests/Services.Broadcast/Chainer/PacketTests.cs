@@ -2,7 +2,7 @@
 using LANPaint.Services.Broadcast.Decorators;
 using Xunit;
 
-namespace LANPaint.UnitTests
+namespace LANPaint.UnitTests.Services.Broadcast.Chainer
 {
     public class PacketTests
     {

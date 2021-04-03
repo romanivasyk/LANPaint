@@ -64,7 +64,7 @@ namespace LANPaint.Model
 
         public override int GetHashCode()
         {
-            var pointsHash = Points.Aggregate<Point, int>(int.MaxValue,
+            var pointsHash = Points.Aggregate(int.MaxValue,
                 (accumulator, point) => accumulator ^= point.X.GetHashCode() ^ point.Y.GetHashCode());
             return Attributes.GetHashCode() ^ pointsHash;
         }
