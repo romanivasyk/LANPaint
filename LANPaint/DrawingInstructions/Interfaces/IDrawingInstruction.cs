@@ -1,7 +1,6 @@
-﻿namespace LANPaint.DrawingInstructions.Interfaces
+﻿namespace LANPaint.DrawingInstructions.Interfaces;
+
+public interface IDrawingInstruction
 {
-    public interface IDrawingInstruction
-    {
-        public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository);
-    }
+    public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository);
 }

@@ -2,9 +2,10 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources/pen.ico</ApplicationIcon>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

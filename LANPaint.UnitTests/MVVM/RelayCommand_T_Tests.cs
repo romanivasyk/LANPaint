@@ -3,120 +3,119 @@ using System.Windows.Input;
 using LANPaint.MVVM;
 using Xunit;
 
-namespace LANPaint.UnitTests.MVVM
+namespace LANPaint.UnitTests.MVVM;
+
+public class RelayCommandTTests
 {
-    public class RelayCommandTTests
+    [Fact]
+    public void Ctor_ValidData()
     {
-        [Fact]
-        public void Ctor_ValidData()
+        static void Action(int a)
         {
-            static void Action(int a)
-            {
-            }
+        }
             
-            static bool CanExecute() => true;
-            var _ = new RelayCommand<int>(Action, CanExecute);
-        }
+        static bool CanExecute() => true;
+        var _ = new RelayCommand<int>(Action, CanExecute);
+    }
 
-        [Fact]
-        public void Ctor_NullAction()
+    [Fact]
+    public void Ctor_NullAction()
+    {
+        Assert.Throws<ArgumentNullException>(() => new RelayCommand<int>(null));
+    }
+
+    [Fact]
+    public void Execute_ExecuteAction()
+    {
+        var state = 10;
+        const int addition = 5;
+        var expected = state + addition;
+
+        void Action(int input) => state += input;
+        var command = new RelayCommand<int>(Action);
+
+        command.Execute(addition);
+
+        Assert.Equal(expected, state);
+    }
+
+    [Fact]
+    public void CanExecute_DefaultCanExecute()
+    {
+        static void Action(int a)
         {
-            Assert.Throws<ArgumentNullException>(() => new RelayCommand<int>(null));
         }
 
-        [Fact]
-        public void Execute_ExecuteAction()
+        var command = new RelayCommand<int>(Action);
+
+        var canExecuteResult = command.CanExecute(default);
+
+        Assert.True(canExecuteResult);
+    }
+
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [Theory]
+    public void CanExecute_CanExecuteTheory(bool canExecuteReturn, bool expectedReturn)
+    {
+        static void Action(int a)
         {
-            var state = 10;
-            const int addition = 5;
-            var expected = state + addition;
-
-            void Action(int input) => state += input;
-            var command = new RelayCommand<int>(Action);
-
-            command.Execute(addition);
-
-            Assert.Equal(expected, state);
         }
 
-        [Fact]
-        public void CanExecute_DefaultCanExecute()
+        bool CanExecute() => canExecuteReturn;
+        var command = new RelayCommand<int>(Action, CanExecute);
+
+        var canExecuteResult = command.CanExecute(default);
+
+        Assert.Equal(expectedReturn, canExecuteResult);
+    }
+
+    [Fact]
+    public void RaiseCanExecute()
+    {
+        var isCanExecuteChangedExecuted = false;
+
+        static void Action(int a)
         {
-            static void Action(int a)
-            {
-            }
-
-            var command = new RelayCommand<int>(Action);
-
-            var canExecuteResult = command.CanExecute(default);
-
-            Assert.True(canExecuteResult);
         }
 
-        [InlineData(true, true)]
-        [InlineData(false, false)]
-        [Theory]
-        public void CanExecute_CanExecuteTheory(bool canExecuteReturn, bool expectedReturn)
+        var command = new RelayCommand<int>(Action);
+        command.CanExecuteChanged += (_, _) => isCanExecuteChangedExecuted = true;
+
+        command.RaiseCanExecuteChanged();
+
+        Assert.True(isCanExecuteChangedExecuted);
+    }
+
+    [Fact]
+    public void ICommandExecute_ExecuteAction()
+    {
+        var state = 10;
+        const int addition = 5;
+        var expected = state + addition;
+
+        void Action(int input) => state += input;
+        var command = (ICommand) new RelayCommand<int>(Action);
+
+        command.Execute(addition);
+
+        Assert.Equal(expected, state);
+    }
+
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [Theory]
+    public void ICommandExecute_CanExecuteTheory(bool canExecuteReturn, bool expectedReturn)
+    {
+        static void Action(int a)
         {
-            static void Action(int a)
-            {
-            }
-
-            bool CanExecute() => canExecuteReturn;
-            var command = new RelayCommand<int>(Action, CanExecute);
-
-            var canExecuteResult = command.CanExecute(default);
-
-            Assert.Equal(expectedReturn, canExecuteResult);
         }
 
-        [Fact]
-        public void RaiseCanExecute()
-        {
-            var isCanExecuteChangedExecuted = false;
+        bool CanExecute() => canExecuteReturn;
+        var command = (ICommand) new RelayCommand<int>(Action, CanExecute);
 
-            static void Action(int a)
-            {
-            }
+        var canExecuteResult = command.CanExecute(default(int));
 
-            var command = new RelayCommand<int>(Action);
-            command.CanExecuteChanged += (_, _) => isCanExecuteChangedExecuted = true;
-
-            command.RaiseCanExecuteChanged();
-
-            Assert.True(isCanExecuteChangedExecuted);
-        }
-
-        [Fact]
-        public void ICommandExecute_ExecuteAction()
-        {
-            var state = 10;
-            const int addition = 5;
-            var expected = state + addition;
-
-            void Action(int input) => state += input;
-            var command = (ICommand) new RelayCommand<int>(Action);
-
-            command.Execute(addition);
-
-            Assert.Equal(expected, state);
-        }
-
-        [InlineData(true, true)]
-        [InlineData(false, false)]
-        [Theory]
-        public void ICommandExecute_CanExecuteTheory(bool canExecuteReturn, bool expectedReturn)
-        {
-            static void Action(int a)
-            {
-            }
-
-            bool CanExecute() => canExecuteReturn;
-            var command = (ICommand) new RelayCommand<int>(Action, CanExecute);
-
-            var canExecuteResult = command.CanExecute(default(int));
-
-            Assert.Equal(expectedReturn, canExecuteResult);
-        }
+        Assert.Equal(expectedReturn, canExecuteResult);
     }
 }

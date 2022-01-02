@@ -1,9 +1,8 @@
-﻿namespace LANPaint.Dialogs.FrameworkDialogs.SaveFile
+﻿namespace LANPaint.Dialogs.FrameworkDialogs.SaveFile;
+
+public class SaveFileDialogSettings : FileDialogSettings
 {
-    public class SaveFileDialogSettings : FileDialogSettings
-    {
-        public bool CheckFileExists { get; set; }
-        public bool CreatePrompt { get; set; }
-        public bool OverwritePrompt { get; set; }
-    }
+    public bool CheckFileExists { get; set; }
+    public bool CreatePrompt { get; set; }
+    public bool OverwritePrompt { get; set; }
 }

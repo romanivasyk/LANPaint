@@ -1,9 +1,8 @@
 ﻿using System.Windows;
 
-namespace LANPaint.Dialogs.FrameworkDialogs
+namespace LANPaint.Dialogs.FrameworkDialogs;
+
+public interface IFrameworkDialog
 {
-    public interface IFrameworkDialog
-    {
-        public bool? ShowDialog(Window owner);
-    }
+    public bool? ShowDialog(Window owner);
 }

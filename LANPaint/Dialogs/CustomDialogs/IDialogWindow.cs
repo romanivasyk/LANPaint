@@ -1,9 +1,8 @@
-﻿namespace LANPaint.Dialogs.CustomDialogs
+﻿namespace LANPaint.Dialogs.CustomDialogs;
+
+public interface IDialogWindow
 {
-    public interface IDialogWindow
-    {
-        public bool? DialogResult { get; set; }
-        public object DataContext { get; set; }
-        public bool? ShowDialog();
-    }
+    public bool? DialogResult { get; set; }
+    public object DataContext { get; set; }
+    public bool? ShowDialog();
 }

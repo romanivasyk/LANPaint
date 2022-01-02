@@ -3,25 +3,24 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace LANPaint.Services.Network.Utilities
+namespace LANPaint.Services.Network.Utilities;
+
+public class NetworkUtility : INetworkUtility
 {
-    public class NetworkUtility : INetworkUtility
+    public IPAddress GetIpAddress(NetworkInterface networkInterface)
     {
-        public IPAddress GetIpAddress(NetworkInterface networkInterface)
-        {
-            return networkInterface.GetIPProperties().UnicastAddresses
-                .FirstOrDefault(information => information.Address.AddressFamily == AddressFamily.InterNetwork)?.Address;
-        }
+        return networkInterface.GetIPProperties().UnicastAddresses
+            .FirstOrDefault(information => information.Address.AddressFamily == AddressFamily.InterNetwork)?.Address;
+    }
 
-        public bool IsReadyToUse(NetworkInterface networkInterface)
-        {
-            return networkInterface.OperationalStatus == OperationalStatus.Up;
-        }
+    public bool IsReadyToUse(NetworkInterface networkInterface)
+    {
+        return networkInterface.OperationalStatus == OperationalStatus.Up;
+    }
 
-        public bool IsReadyToUse(IPAddress ipAddress)
-        {
-            return NetworkInterface.GetAllNetworkInterfaces().Any(networkInterface =>
-                Equals(GetIpAddress(networkInterface), ipAddress) && IsReadyToUse(networkInterface));
-        }
+    public bool IsReadyToUse(IPAddress ipAddress)
+    {
+        return NetworkInterface.GetAllNetworkInterfaces().Any(networkInterface =>
+            Equals(GetIpAddress(networkInterface), ipAddress) && IsReadyToUse(networkInterface));
     }
 }

@@ -3,25 +3,24 @@ using System.Windows.Media;
 using LANPaint.DrawingInstructions.Interfaces;
 using LANPaint.Model;
 
-namespace LANPaint.DrawingInstructions
+namespace LANPaint.DrawingInstructions;
+
+[Serializable]
+public class ChangeBackgroundInstruction : IDrawingInstruction
 {
-    [Serializable]
-    public class ChangeBackgroundInstruction : IDrawingInstruction
+    public ARGBColor Background { get; }
+
+    public ChangeBackgroundInstruction(ARGBColor background)
     {
-        public ARGBColor Background { get; }
+        Background = background;
+    }
 
-        public ChangeBackgroundInstruction(ARGBColor background)
-        {
-            Background = background;
-        }
+    public ChangeBackgroundInstruction(Color background) : this(ARGBColor.FromColor(background))
+    { }
 
-        public ChangeBackgroundInstruction(Color background) : this(ARGBColor.FromColor(background))
-        { }
-
-        public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository)
-        {
-            if (instructionRepository == null) throw new ArgumentNullException(nameof(instructionRepository));
-            instructionRepository.ChangeBackground(this);
-        }
+    public void ExecuteDrawingInstruction(IDrawingInstructionRepository instructionRepository)
+    {
+        if (instructionRepository == null) throw new ArgumentNullException(nameof(instructionRepository));
+        instructionRepository.ChangeBackground(this);
     }
 }

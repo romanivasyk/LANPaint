@@ -4,69 +4,69 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
 using System.Windows.Ink;
+using System.Windows.Input;
 
-namespace LANPaint.Model
+namespace LANPaint.Model;
+
+[Serializable]
+public readonly struct SerializableStroke : IEquatable<SerializableStroke>
 {
-    [Serializable]
-    public readonly struct SerializableStroke : IEquatable<SerializableStroke>
+    public StrokeAttributes Attributes { get; }
+    public ReadOnlyCollection<Point> Points { get; }
+
+    public SerializableStroke(StrokeAttributes attributes, Point[] points)
     {
-        public StrokeAttributes Attributes { get; }
-        public ReadOnlyCollection<Point> Points { get; }
+        if (points is null)
+            throw new ArgumentNullException(nameof(points), "SerializableStroke cannot contain null points collection");
+        if (points.Length < 1)
+            throw new ArgumentException("SerializableStroke cannot contain empty points collection", nameof(points));
+        Attributes = attributes;
+        Points = new ReadOnlyCollection<Point>(points);
+    }
 
-        public SerializableStroke(StrokeAttributes attributes, Point[] points)
+    public static SerializableStroke FromStroke(Stroke stroke)
+    {
+        if (stroke == null) throw new ArgumentNullException(nameof(stroke));
+        var attr = new StrokeAttributes
         {
-            if (points is null)
-                throw new ArgumentNullException(nameof(points), "SerializableStroke cannot contain null points collection");
-            if (points.Length < 1)
-                throw new ArgumentException("SerializableStroke cannot contain empty points collection", nameof(points));
-            Attributes = attributes;
-            Points = new ReadOnlyCollection<Point>(points);
-        }
+            Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
+            Height = stroke.DrawingAttributes.Height,
+            Width = stroke.DrawingAttributes.Width,
+            IgnorePressure = stroke.DrawingAttributes.IgnorePressure,
+            IsHighlighter = stroke.DrawingAttributes.IsHighlighter,
+            StylusTip = stroke.DrawingAttributes.StylusTip
+        };
 
-        public static SerializableStroke FromStroke(Stroke stroke)
+        var points = stroke.StylusPoints.Select(point => point.ToPoint()).ToArray();
+        return new SerializableStroke(attr, points);
+    }
+
+    public Stroke ToStroke() => new(new StylusPointCollection(Points),
+        new DrawingAttributes
         {
-            if (stroke == null) throw new ArgumentNullException(nameof(stroke));
-            var attr = new StrokeAttributes
-            {
-                Color = ARGBColor.FromColor(stroke.DrawingAttributes.Color),
-                Height = stroke.DrawingAttributes.Height,
-                Width = stroke.DrawingAttributes.Width,
-                IgnorePressure = stroke.DrawingAttributes.IgnorePressure,
-                IsHighlighter = stroke.DrawingAttributes.IsHighlighter,
-                StylusTip = stroke.DrawingAttributes.StylusTip
-            };
+            Color = Attributes.Color.AsColor(),
+            Height = Attributes.Height,
+            Width = Attributes.Width,
+            IgnorePressure = Attributes.IgnorePressure,
+            IsHighlighter = Attributes.IsHighlighter,
+            StylusTip = Attributes.StylusTip
+        });
 
-            var points = stroke.StylusPoints.Select(point => point.ToPoint()).ToArray();
-            return new SerializableStroke(attr, points);
-        }
+    public static bool operator ==(SerializableStroke stroke, SerializableStroke other) => stroke.Equals(other);
 
-        public Stroke ToStroke() => new(new System.Windows.Input.StylusPointCollection(Points),
-            new DrawingAttributes
-            {
-                Color = Attributes.Color.AsColor(),
-                Height = Attributes.Height,
-                Width = Attributes.Width,
-                IgnorePressure = Attributes.IgnorePressure,
-                IsHighlighter = Attributes.IsHighlighter,
-                StylusTip = Attributes.StylusTip
-            });
+    public static bool operator !=(SerializableStroke stroke, SerializableStroke other) => !stroke.Equals(other);
 
-        public static bool operator ==(SerializableStroke stroke, SerializableStroke other) => stroke.Equals(other);
+    public bool Equals([DisallowNull] SerializableStroke other)
+    {
+        return Attributes.Equals(other.Attributes) && Points.SequenceEqual(other.Points);
+    }
 
-        public static bool operator !=(SerializableStroke stroke, SerializableStroke other) => !stroke.Equals(other);
+    public override bool Equals([AllowNull] object obj) => obj is SerializableStroke stroke && Equals(stroke);
 
-        public bool Equals([DisallowNull] SerializableStroke other)
-        {
-            return Attributes.Equals(other.Attributes) && Points.SequenceEqual(other.Points);
-        }
-
-        public override bool Equals([AllowNull] object obj) => obj is SerializableStroke stroke && Equals(stroke);
-
-        public override int GetHashCode()
-        {
-            var pointsHash = Points.Aggregate(int.MaxValue,
-                (accumulator, point) => accumulator ^= point.X.GetHashCode() ^ point.Y.GetHashCode());
-            return Attributes.GetHashCode() ^ pointsHash;
-        }
+    public override int GetHashCode()
+    {
+        var pointsHash = Points.Aggregate(int.MaxValue,
+            (accumulator, point) => accumulator ^= point.X.GetHashCode() ^ point.Y.GetHashCode());
+        return Attributes.GetHashCode() ^ pointsHash;
     }
 }

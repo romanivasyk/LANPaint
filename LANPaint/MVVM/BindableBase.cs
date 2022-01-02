@@ -2,24 +2,23 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace LANPaint.MVVM
+namespace LANPaint.MVVM;
+
+public abstract class BindableBase : INotifyPropertyChanged
 {
-    public abstract class BindableBase : INotifyPropertyChanged
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        if (EqualityComparer<T>.Default.Equals(storage, value)) return false;
 
-        protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string propertyName = "")
-        {
-            if (EqualityComparer<T>.Default.Equals(storage, value)) return false;
+        storage = value;
+        NotifyPropertyChanged(propertyName);
+        return true;
+    }
 
-            storage = value;
-            NotifyPropertyChanged(propertyName);
-            return true;
-        }
-
-        protected void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+    protected void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
