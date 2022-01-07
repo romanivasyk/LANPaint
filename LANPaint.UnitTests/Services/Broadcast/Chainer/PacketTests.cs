@@ -1,5 +1,6 @@
 ﻿using System;
 using LANPaint.Services.Broadcast.Decorators;
+using LANPaint.Services.Broadcast.UDP.Chainer;
 using Xunit;
 
 namespace LANPaint.UnitTests.Services.Broadcast.Chainer;
@@ -14,7 +15,7 @@ public class PacketTests
         var guid = Guid.NewGuid();
         var segment = new Segment(0, new byte[] {10, 0, 155, 240});
 
-        var packet = new Packet(guid, DefaultSequenceLength, segment);
+        var packet = new Package(guid, DefaultSequenceLength, segment);
 
         Assert.Equal(guid, packet.SequenceGuid);
         Assert.Equal(DefaultSequenceLength, packet.SequenceLength);
@@ -27,7 +28,7 @@ public class PacketTests
         var guid = Guid.Empty;
         var segment = new Segment(0, new byte[] {10, 0, 155, 240});
 
-        Assert.Throws<ArgumentException>(() => new Packet(guid, DefaultSequenceLength, segment));
+        Assert.Throws<ArgumentException>(() => new Package(guid, DefaultSequenceLength, segment));
     }
 
     [InlineData(long.MinValue)]
@@ -39,7 +40,7 @@ public class PacketTests
         var guid = Guid.NewGuid();
         var segment = new Segment(0, new byte[] {10, 0, 155, 240});
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Packet(guid, sequenceLength, segment));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Package(guid, sequenceLength, segment));
     }
 
     [InlineData(5)]
@@ -52,6 +53,6 @@ public class PacketTests
         var data = new byte[] {50, 34, 124, 58, 255, 255, 0, 94, 183};
         var segment = new Segment(sequenceIndex, data);
 
-        Assert.Throws<ArgumentException>(() => new Packet(guid, sequenceLength, segment));
+        Assert.Throws<ArgumentException>(() => new Package(guid, sequenceLength, segment));
     }
 }

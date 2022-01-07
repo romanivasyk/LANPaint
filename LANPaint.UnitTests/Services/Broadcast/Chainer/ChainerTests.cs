@@ -24,34 +24,34 @@ public class ChainerTest
     [Fact]
     public void Ctor_PassNullBroadcastImpl()
     {
-        Assert.Throws<ArgumentNullException>(() => new LANPaint.Services.Broadcast.Decorators.Chainer(null));
+        Assert.Throws<ArgumentNullException>(() => new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(null));
     }
 
     [Fact]
     public void Ctor_LowerThanAllowedSegmentLength()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, LANPaint.Services.Broadcast.Decorators.Chainer.MinSegmentLength - 1));
+            new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, LANPaint.Services.Broadcast.UDP.Chainer.Chainer.MinSegmentLength - 1));
     }
 
     [Fact]
     public void Ctor_HigherThanAllowedSegmentLength()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, LANPaint.Services.Broadcast.Decorators.Chainer.MaxSegmentLength + 1));
+            new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, LANPaint.Services.Broadcast.UDP.Chainer.Chainer.MaxSegmentLength + 1));
     }
 
     [Fact]
     public void Ctor_ValidSegmentLength()
     {
-        var _ = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object,
-            LANPaint.Services.Broadcast.Decorators.Chainer.MinSegmentLength + (LANPaint.Services.Broadcast.Decorators.Chainer.MaxSegmentLength - LANPaint.Services.Broadcast.Decorators.Chainer.MinSegmentLength) / 2);
+        var _ = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object,
+            LANPaint.Services.Broadcast.UDP.Chainer.Chainer.MinSegmentLength + (LANPaint.Services.Broadcast.UDP.Chainer.Chainer.MaxSegmentLength - LANPaint.Services.Broadcast.UDP.Chainer.Chainer.MinSegmentLength) / 2);
     }
 
     [Fact]
     public void LocalEndPoint_CheckInnerCall()
     {
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
         var _ = chainer.LocalEndPoint;
         _broadcastImplMock.Verify(broadcast => broadcast.LocalEndPoint, Times.Once);
     }
@@ -62,7 +62,7 @@ public class ChainerTest
     {
         const int dataLength = 10000;
         var data = new byte[dataLength];
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
 
         var result = await chainer.SendAsync(data);
 
@@ -99,7 +99,7 @@ public class ChainerTest
         int expectedSendCallsNumber)
     {
         var data = new byte[dataLength];
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, maxSegmentLength);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, maxSegmentLength);
         await chainer.SendAsync(data);
         _broadcastImplMock.Verify(broadcast => broadcast.SendAsync(It.IsAny<byte[]>()),
             Times.Exactly(expectedSendCallsNumber));
@@ -108,7 +108,7 @@ public class ChainerTest
     [Fact]
     public async void SendAsync_PassingNullData()
     {
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
         await Assert.ThrowsAsync<ArgumentNullException>(() => chainer.SendAsync(null));
     }
 
@@ -127,7 +127,7 @@ public class ChainerTest
             });
 
         //It used just to fill chainStorage with payloadLength/packetLength packets with bytes to use it for receive
-        var chainerFiller = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, packetLength);
+        var chainerFiller = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, packetLength);
         await chainerFiller.SendAsync(data);
         using var enumerator = chainStorage.GetEnumerator();
         _broadcastImplMock.Setup(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
@@ -136,7 +136,7 @@ public class ChainerTest
                 enumerator.MoveNext();
                 return Task.FromResult(enumerator.Current);
             });
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, 5000);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, 5000);
 
         var result = await chainer.ReceiveAsync();
 
@@ -160,7 +160,7 @@ public class ChainerTest
             });
 
         //It used just to fill chainStorage with payloadLength/packetLength packets with bytes to use it for receive
-        var chainerFiller = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, packetLength);
+        var chainerFiller = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, packetLength);
         await chainerFiller.SendAsync(anotherData);
         await chainerFiller.SendAsync(data);
 
@@ -174,7 +174,7 @@ public class ChainerTest
                 enumerator.MoveNext();
                 return Task.FromResult(enumerator.Current);
             });
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, 5000);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, 5000);
 
         var result = await chainer.ReceiveAsync();
 
@@ -196,7 +196,7 @@ public class ChainerTest
             });
 
         //It used just to fill chainStorage with payloadLength/packetLength packets with bytes to use it for receive
-        var chainerFiller = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, packetLength);
+        var chainerFiller = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, packetLength);
         await chainerFiller.SendAsync(data);
 
         var tokenSource = new CancellationTokenSource();
@@ -214,7 +214,7 @@ public class ChainerTest
                     return Task.FromResult(chainStorage[1]);
                 })
             .Returns(() => throw new Exception());
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object, 5000);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object, 5000);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => chainer.ReceiveAsync(tokenSource.Token));
         Assert.True(isFirstIterationDone);
@@ -225,7 +225,7 @@ public class ChainerTest
     {
         var tokenSource = new CancellationTokenSource();
         tokenSource.Cancel();
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => chainer.ReceiveAsync(tokenSource.Token));
     }
@@ -233,7 +233,7 @@ public class ChainerTest
     [Fact]
     public async void ClearBufferAsync_CheckInnerCall()
     {
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
         await chainer.ClearBufferAsync();
         _broadcastImplMock.Verify(broadcast => broadcast.ClearBufferAsync(), Times.Once);
     }
@@ -241,7 +241,7 @@ public class ChainerTest
     [Fact]
     public void Dispose_CheckInnerCall()
     {
-        var chainer = new LANPaint.Services.Broadcast.Decorators.Chainer(_broadcastImplMock.Object);
+        var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
         chainer.Dispose();
         _broadcastImplMock.Verify(broadcast => broadcast.Dispose(), Times.Once);
     }

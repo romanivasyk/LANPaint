@@ -19,5 +19,9 @@ public abstract class BroadcastDecorator : IBroadcast
     public abstract Task<byte[]> ReceiveAsync(CancellationToken token = default);
     public abstract Task<int> SendAsync(byte[] bytes);
     public abstract ValueTask ClearBufferAsync();
-    public abstract void Dispose();
+
+    public virtual void Dispose()
+    {
+        Broadcast.Dispose();
+    }
 }

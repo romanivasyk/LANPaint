@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using LANPaint.Services.Broadcast.Decorators;
+using LANPaint.Services.Broadcast.UDP.Chainer;
 using Xunit;
 
 namespace LANPaint.UnitTests.Services.Broadcast.Chainer;
