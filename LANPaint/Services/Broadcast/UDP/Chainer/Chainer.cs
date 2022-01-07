@@ -103,11 +103,13 @@ public class Chainer : BroadcastDecorator
 
     private void CleanupCallback(object state)
     {
+        if(_segmentBuffer.IsEmpty) return;
+
         var cleanupTime = DateTime.Now;
         foreach (var bufferKey in _segmentBuffer.Keys)
         {
             var timeSinceLastChainUpdate = cleanupTime - _segmentBuffer[bufferKey].LastAddedAt;
-            if(timeSinceLastChainUpdate.Milliseconds < CleanupPeriodMs) continue;
+            if(timeSinceLastChainUpdate.TotalMilliseconds < CleanupPeriodMs) continue;
 
             _segmentBuffer.Remove(bufferKey, out _);
         }
