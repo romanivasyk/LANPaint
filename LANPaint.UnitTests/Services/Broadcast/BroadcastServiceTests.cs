@@ -32,8 +32,8 @@ public class BroadcastServiceTests
                 return Task.Run(() =>
                 {
                     Task.Delay(TimeSpan.FromSeconds(10));
-                    return new byte[] {10, 15, 20};
-                }).WithCancellation(token);
+                    return new byte[] { 10, 15, 20 };
+                }, token);
             });
         _broadcastFactoryMock = new Mock<IBroadcastFactory>();
         _broadcastFactoryMock.Setup(factory => factory.Create(It.IsAny<IPAddress>()))

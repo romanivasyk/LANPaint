@@ -13,19 +13,17 @@ public class BroadcastService : IBroadcastService
     public event EventHandler ConnectionLost;
     public event DataReceivedEventHandler DataReceived;
 
-    public IPEndPoint LocalEndPoint =>
-        _broadcastImpl == null ? new IPEndPoint(IPAddress.None, 0) : _broadcastImpl.LocalEndPoint;
+    public IPEndPoint LocalEndPoint => _broadcastImpl == null ? new IPEndPoint(IPAddress.None, 0) : _broadcastImpl.LocalEndPoint;
     public bool IsReady { get; private set; }
     public bool IsReceiving { get; private set; }
 
     private bool _isDisposed;
-
     private IBroadcast _broadcastImpl;
     private CancellationTokenSource _cancelReceiveTokenSource;
     private readonly IBroadcastFactory _broadcastFactory;
     private readonly INetworkWatcher _networkWatcher;
     private readonly INetworkUtility _networkUtility;
-        
+
     public BroadcastService(IBroadcastFactory broadcastFactory, INetworkWatcher networkWatcher, INetworkUtility networkUtility)
     {
         _broadcastFactory = broadcastFactory ?? throw new ArgumentNullException(nameof(broadcastFactory));
@@ -37,12 +35,13 @@ public class BroadcastService : IBroadcastService
     private void NetworkStateChangedHandler(object sender, EventArgs e)
     {
         if (!IsReady || _networkUtility.IsReadyToUse(_broadcastImpl.LocalEndPoint.Address)) return;
-            
+
+        if(IsReceiving && _cancelReceiveTokenSource is not null) _cancelReceiveTokenSource.Cancel();
         _cancelReceiveTokenSource?.Dispose();
         IsReady = IsReceiving = false;
         _broadcastImpl?.Dispose();
         _broadcastImpl = null;
-            
+
         ConnectionLost?.Invoke(this, EventArgs.Empty);
     }
 
@@ -53,7 +52,7 @@ public class BroadcastService : IBroadcastService
         if (IsReady && Equals(LocalEndPoint, new IPEndPoint(ipAddress, port))) return true;
 
         if (!_networkUtility.IsReadyToUse(ipAddress)) return false; //Throw exception here?
-
+        if(IsReceiving) CancelReceive();
         _broadcastImpl?.Dispose();
         _broadcastImpl = port == default
             ? _broadcastFactory.Create(ipAddress)
@@ -116,7 +115,7 @@ public class BroadcastService : IBroadcastService
             {
                 _cancelReceiveTokenSource?.Dispose();
                 IsReceiving = false;
-                    
+
                 if (_broadcastImpl is null || Equals(new IPEndPoint(IPAddress.None, 0), _broadcastImpl.LocalEndPoint))
                     IsReady = false;
             }
@@ -128,7 +127,7 @@ public class BroadcastService : IBroadcastService
 
             if (!IsReceiving) return;
 
-            if (data != null && data.Length > 0)
+            if (data is { Length: > 0 })
                 DataReceived?.Invoke(this, new DataReceivedEventArgs(data));
         }
     }
@@ -155,5 +154,6 @@ public class ServiceNotInitializedException : Exception
 {
     public ServiceNotInitializedException(string message = null, Exception innerException = null) : base(message,
         innerException)
-    { }
+    {
+    }
 }

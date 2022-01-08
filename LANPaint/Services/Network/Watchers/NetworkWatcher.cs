@@ -50,8 +50,7 @@ public class NetworkWatcher : INetworkWatcher
     private static ImmutableArray<NetworkInterface> GetIPv4Interfaces()
     {
         return NetworkInterface.GetAllNetworkInterfaces().Where(networkInterface =>
-            (networkInterface.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
-             networkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
+            networkInterface.NetworkInterfaceType is NetworkInterfaceType.Ethernet or NetworkInterfaceType.Wireless80211 &&
             !networkInterface.Name.Contains("Virtual") &&
             networkInterface.GetIPProperties().UnicastAddresses.Any(addressInformation =>
                 addressInformation.Address.AddressFamily == AddressFamily.InterNetwork)).ToImmutableArray();

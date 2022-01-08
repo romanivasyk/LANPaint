@@ -20,17 +20,17 @@ public class Chainer : BroadcastDecorator
     private readonly Timer _cleanupTimer;
     private readonly BinaryFormatter _formatter;
     private readonly int _payloadSegmentLength;
-    private readonly ConcurrentDictionary<Guid, Chain> _segmentBuffer;
+    private readonly ConcurrentDictionary<Guid, Chain> _receivedSegmentsBuffer;
 
     public Chainer(IBroadcast broadcast, int payloadSegmentLength = 8192) : base(broadcast)
     {
-        if (payloadSegmentLength < MinSegmentLength || payloadSegmentLength > MaxSegmentLength)
+        if (payloadSegmentLength is < MinSegmentLength or > MaxSegmentLength)
             throw new ArgumentOutOfRangeException(nameof(payloadSegmentLength),
                 $"Provided segment length should be in range from {MinSegmentLength} to {MaxSegmentLength}");
 
         _payloadSegmentLength = payloadSegmentLength;
         _formatter = new BinaryFormatter();
-        _segmentBuffer = new ConcurrentDictionary<Guid, Chain>();
+        _receivedSegmentsBuffer = new ConcurrentDictionary<Guid, Chain>();
         _cleanupTimer = new Timer(CleanupCallback, null, 0, CleanupPeriodMs);
     }
 
@@ -62,12 +62,11 @@ public class Chainer : BroadcastDecorator
             byte[] bytes;
             try
             {
-                token.ThrowIfCancellationRequested();
-                bytes = await Broadcast.ReceiveAsync(token);
+                bytes = await Broadcast.ReceiveAsync(token).ConfigureAwait(false);
             }
             catch
             {
-                _segmentBuffer.Clear();
+                _receivedSegmentsBuffer.Clear();
                 throw;
             }
 
@@ -82,13 +81,13 @@ public class Chainer : BroadcastDecorator
             }
 
 
-            if (_segmentBuffer.ContainsKey(package.SequenceGuid))
+            if (_receivedSegmentsBuffer.ContainsKey(package.SequenceGuid))
             {
-                _segmentBuffer[package.SequenceGuid].AddSegment(package.Segment);
+                _receivedSegmentsBuffer[package.SequenceGuid].AddSegment(package.Segment);
 
-                if (!_segmentBuffer[package.SequenceGuid].TryAssemble(out var assembledBytes)) continue;
+                if (!_receivedSegmentsBuffer[package.SequenceGuid].TryAssemble(out var assembledBytes)) continue;
 
-                _segmentBuffer.Remove(package.SequenceGuid, out _);
+                _receivedSegmentsBuffer.Remove(package.SequenceGuid, out _);
                 return assembledBytes;
             }
 
@@ -97,21 +96,21 @@ public class Chainer : BroadcastDecorator
             var chain = new Chain(package.SequenceLength);
             chain.AddSegment(package.Segment);
 
-            _segmentBuffer.TryAdd(package.SequenceGuid, chain);
+            _receivedSegmentsBuffer.TryAdd(package.SequenceGuid, chain);
         }
     }
 
     private void CleanupCallback(object state)
     {
-        if(_segmentBuffer.IsEmpty) return;
+        if(_receivedSegmentsBuffer.IsEmpty) return;
 
         var cleanupTime = DateTime.Now;
-        foreach (var bufferKey in _segmentBuffer.Keys)
+        foreach (var bufferKey in _receivedSegmentsBuffer.Keys)
         {
-            var timeSinceLastChainUpdate = cleanupTime - _segmentBuffer[bufferKey].LastAddedAt;
+            var timeSinceLastChainUpdate = cleanupTime - _receivedSegmentsBuffer[bufferKey].LastAddedAt;
             if(timeSinceLastChainUpdate.TotalMilliseconds < CleanupPeriodMs) continue;
 
-            _segmentBuffer.Remove(bufferKey, out _);
+            _receivedSegmentsBuffer.Remove(bufferKey, out _);
         }
     }
 

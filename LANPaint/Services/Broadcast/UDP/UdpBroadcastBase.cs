@@ -31,8 +31,7 @@ public abstract class UdpBroadcastBase : IBroadcast
 
     public void Dispose()
     {
-        Client?.Dispose();
-
+        Client.Dispose();
         LocalEndPoint.Address = IPAddress.None;
         LocalEndPoint.Port = 0;
     }

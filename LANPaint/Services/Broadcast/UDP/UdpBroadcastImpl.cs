@@ -1,9 +1,7 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using LANPaint.Extensions;
 
 namespace LANPaint.Services.Broadcast.UDP;
 
@@ -19,15 +17,7 @@ public class UdpBroadcastImpl : UdpBroadcastBase
         UdpReceiveResult result;
         do
         {
-            try
-            {
-                result = await Client.ReceiveAsync().WithCancellation(token);
-            }
-            catch (OperationCanceledException ex)
-            {
-                if (WindowsNative.CancelIoEx(Client.Client.Handle, IntPtr.Zero)) throw;
-                throw new ApplicationException("Unsuccessful attempt to cancel Socket I/O operation", ex);
-            }
+            result = await Client.ReceiveAsync(token);
         } while (Equals(result.RemoteEndPoint, LocalEndPoint));
 
         return result.Buffer;

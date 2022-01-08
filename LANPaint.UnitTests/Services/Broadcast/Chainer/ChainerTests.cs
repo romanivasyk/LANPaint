@@ -205,12 +205,13 @@ public class ChainerTest
             .Returns(() =>
             {
                 isFirstIterationDone = true;
+                tokenSource.Cancel();
                 return Task.FromResult(chainStorage[0]);
             })
             .Returns(
                 () =>
                 {
-                    tokenSource.Cancel();
+                    tokenSource.Token.ThrowIfCancellationRequested();
                     return Task.FromResult(chainStorage[1]);
                 })
             .Returns(() => throw new Exception());
@@ -225,6 +226,8 @@ public class ChainerTest
     {
         var tokenSource = new CancellationTokenSource();
         tokenSource.Cancel();
+        _broadcastImplMock.Setup(broadcast => broadcast.ReceiveAsync(It.IsAny<CancellationToken>()))
+            .Callback<CancellationToken>(token => token.ThrowIfCancellationRequested());
         var chainer = new LANPaint.Services.Broadcast.UDP.Chainer.Chainer(_broadcastImplMock.Object);
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => chainer.ReceiveAsync(tokenSource.Token));
